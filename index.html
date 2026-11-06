@@ -10,7 +10,7 @@
     .bg-dark-card { background-color: #161b22; }
     .border-dark { border-color: #30363d; }
     .bg-dark-hover:hover { background-color: #21262d; }
-      
+    
     /* Scrollbar estilizada para rolagem horizontal e vertical */
     .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
     .custom-scroll::-webkit-scrollbar-track { background: #161b22; border-radius: 4px; }
@@ -276,7 +276,7 @@
 
       groups.forEach((group) => {
         const card = document.createElement('div');
-        const cardWidth = group.isGeral ? "w-[440px] md:w-[480px]" : "w-[380px] md:w-[420px]";
+        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
         const stickyClasses = group.isGeral 
           ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
           : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
@@ -286,22 +286,22 @@
         let rowsHtml = group.teams.map((item, idx) => {
           const pos = getPosBadge(idx);
           const logo = item.logo ? `<img src="${item.logo}" class="w-8 h-8 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
-          const regionTd = group.isGeral ? `<td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
+          const regionTd = group.isGeral ? `<td class="px-3.5 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-3 py-3 text-center align-middle">${pos}</td>
-              <td class="px-3 py-3 font-bold text-white text-sm truncate">
-                <div class="flex items-center gap-2.5 truncate">${logo}<span class="truncate">${item.name}</span></div>
+              <td class="px-3.5 py-3 text-center align-middle">${pos}</td>
+              <td class="px-3.5 py-3 font-bold text-white text-sm">
+                <div class="flex items-center gap-2.5">${logo}<span>${item.name}</span></div>
               </td>
-              <td class="px-3 py-3 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
+              <td class="px-3.5 py-3 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
               ${regionTd}
-              <td class="px-3 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
+              <td class="px-3.5 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-3 py-3">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3.5 py-3">Região</th>` : '';
         const colCount = group.isGeral ? 5 : 4;
 
         card.innerHTML = `
@@ -315,11 +315,11 @@
             <table class="w-full text-left">
               <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
                 <tr>
-                  <th class="px-3 py-3 w-10 text-center">Pos</th>
-                  <th class="px-3 py-3">Time</th>
-                  <th class="px-3 py-3">TAG</th>
+                  <th class="px-3.5 py-3 w-10 text-center">Pos</th>
+                  <th class="px-3.5 py-3">Time</th>
+                  <th class="px-3.5 py-3">TAG</th>
                   ${regionTh}
-                  <th class="px-3 py-3 text-right">Títulos</th>
+                  <th class="px-3.5 py-3 text-right">Títulos</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
@@ -331,7 +331,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR: HISTÓRICO POR REGIÕES
+    // RENDERIZAR: HISTÓRICO POR REGIÕES (LARGURA AMPLIADA PARA COMPORTAR 5 COLUNAS INTEGRALMENTE)
     // -------------------------------------------------------------------------
     function renderSectionHistRegioes() {
       const container = document.getElementById('container-hist-regioes');
@@ -346,7 +346,8 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
+        // AUMENTADO PARA 640px/700px PARA NUNCA CORTAR A COLUNA DE REGIÃO
+        const cardWidth = group.isGeral ? "w-[620px] md:w-[680px]" : "w-[500px] md:w-[560px]";
         const stickyClasses = group.isGeral 
           ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
           : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
@@ -355,22 +356,22 @@
 
         let rowsHtml = group.list.map((item) => {
           const logo = item.logo ? `<img src="${item.logo}" class="w-7 h-7 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
-          const regionTd = group.isGeral ? `<td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
+          const regionTd = group.isGeral ? `<td class="px-3.5 py-3 text-xs font-bold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-3 py-3 font-bold text-white text-sm truncate">${item.comp}</td>
-              <td class="px-3 py-3 text-xs text-blue-400 font-mono font-bold">${item.season}</td>
-              <td class="px-3 py-3 text-sm font-bold text-yellow-400 truncate">
-                <div class="flex items-center gap-2.5 truncate">${logo}<span class="truncate">${item.champion}</span></div>
+              <td class="px-3.5 py-3 font-bold text-white text-sm">${item.comp}</td>
+              <td class="px-3.5 py-3 text-xs text-blue-400 font-mono font-bold whitespace-nowrap">${item.season}</td>
+              <td class="px-3.5 py-3 text-sm font-bold text-yellow-400">
+                <div class="flex items-center gap-2.5">${logo}<span class="whitespace-nowrap">${item.champion}</span></div>
               </td>
-              <td class="px-3 py-3 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
+              <td class="px-3.5 py-3 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>
               ${regionTd}
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-3 py-3">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3.5 py-3 whitespace-nowrap">Região</th>` : '';
         const colCount = group.isGeral ? 5 : 4;
 
         card.innerHTML = `
@@ -384,10 +385,10 @@
             <table class="w-full text-left">
               <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
                 <tr>
-                  <th class="px-3 py-3">Competição</th>
-                  <th class="px-3 py-3">Temp.</th>
-                  <th class="px-3 py-3">Campeão</th>
-                  <th class="px-3 py-3">TAG</th>
+                  <th class="px-3.5 py-3">Competição</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">Temp.</th>
+                  <th class="px-3.5 py-3">Campeão</th>
+                  <th class="px-3.5 py-3 whitespace-nowrap">TAG</th>
                   ${regionTh}
                 </tr>
               </thead>
@@ -433,18 +434,18 @@
 
       // CARTÃO 1: Histórico das Edições (Fixado no lado esquerdo)
       const cardHistory = document.createElement('div');
-      cardHistory.className = "sticky left-0 z-20 w-[480px] md:w-[520px] shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col";
+      cardHistory.className = "sticky left-0 z-20 w-[540px] md:w-[600px] shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col";
       
       let historyRows = filteredList.map(item => {
         const logo = item.logo ? `<img src="${item.logo}" class="w-7 h-7 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
         return `
           <tr class="hover:bg-dark-hover/50">
-            <td class="px-3 py-3 text-xs text-blue-400 font-mono font-bold">${item.season}</td>
-            <td class="px-3 py-3 text-sm font-bold text-white truncate">
-              <div class="flex items-center gap-2.5 truncate">${logo}<span class="truncate">${item.champion}</span></div>
+            <td class="px-3.5 py-3 text-xs text-blue-400 font-mono font-bold whitespace-nowrap">${item.season}</td>
+            <td class="px-3.5 py-3 text-sm font-bold text-white">
+              <div class="flex items-center gap-2.5">${logo}<span>${item.champion}</span></div>
             </td>
-            <td class="px-3 py-3 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
-            <td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>
+            <td class="px-3.5 py-3 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>
+            <td class="px-3.5 py-3 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>
           </tr>
         `;
       }).join('');
@@ -458,10 +459,10 @@
           <table class="w-full text-left">
             <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
               <tr>
-                <th class="px-3 py-3">Temporada</th>
-                <th class="px-3 py-3">Campeão</th>
-                <th class="px-3 py-3">TAG</th>
-                <th class="px-3 py-3">Região</th>
+                <th class="px-3.5 py-3 whitespace-nowrap">Temporada</th>
+                <th class="px-3.5 py-3">Campeão</th>
+                <th class="px-3.5 py-3 whitespace-nowrap">TAG</th>
+                <th class="px-3.5 py-3 whitespace-nowrap">Região</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-dark text-gray-200">${historyRows || '<tr><td colspan="4" class="p-5 text-center text-xs text-gray-500">Sem histórico</td></tr>'}</tbody>
@@ -471,20 +472,20 @@
 
       // CARTÃO 2: Maiores Campeões da Competição
       const cardRank = document.createElement('div');
-      cardRank.className = "w-[480px] md:w-[520px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+      cardRank.className = "w-[500px] md:w-[560px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
       let rankRows = topChampions.map((item, idx) => {
         const pos = getPosBadge(idx);
         const logo = item.logo ? `<img src="${item.logo}" class="w-7 h-7 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
         return `
           <tr class="hover:bg-dark-hover/50">
-            <td class="px-3 py-3 text-center align-middle">${pos}</td>
-            <td class="px-3 py-3 font-bold text-white text-sm truncate">
-              <div class="flex items-center gap-2.5 truncate">${logo}<span class="truncate">${item.name}</span></div>
+            <td class="px-3.5 py-3 text-center align-middle">${pos}</td>
+            <td class="px-3.5 py-3 font-bold text-white text-sm">
+              <div class="flex items-center gap-2.5">${logo}<span>${item.name}</span></div>
             </td>
-            <td class="px-3 py-3 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
-            <td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>
-            <td class="px-3 py-3 text-right font-extrabold text-yellow-400 text-base">${item.wins}x</td>
+            <td class="px-3.5 py-3 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>
+            <td class="px-3.5 py-3 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>
+            <td class="px-3.5 py-3 text-right font-extrabold text-yellow-400 text-base">${item.wins}x</td>
           </tr>
         `;
       }).join('');
@@ -498,11 +499,11 @@
           <table class="w-full text-left">
             <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
               <tr>
-                <th class="px-3 py-3 w-10 text-center">Pos</th>
-                <th class="px-3 py-3">Time</th>
-                <th class="px-3 py-3">TAG</th>
-                <th class="px-3 py-3">Região</th>
-                <th class="px-3 py-3 text-right">Títulos</th>
+                <th class="px-3.5 py-3 w-10 text-center">Pos</th>
+                <th class="px-3.5 py-3">Time</th>
+                <th class="px-3.5 py-3 whitespace-nowrap">TAG</th>
+                <th class="px-3.5 py-3 whitespace-nowrap">Região</th>
+                <th class="px-3.5 py-3 text-right">Títulos</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-dark text-gray-200">${rankRows || '<tr><td colspan="5" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
@@ -531,7 +532,7 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
+        const cardWidth = group.isGeral ? "w-[540px] md:w-[580px]" : "w-[440px] md:w-[480px]";
         const stickyClasses = group.isGeral 
           ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
           : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
@@ -541,23 +542,23 @@
         let rowsHtml = group.players.map((item, idx) => {
           const pos = getPosBadge(idx);
           const logo = item.logo ? `<img src="${item.logo}" class="w-7 h-7 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
-          const regionTd = group.isGeral ? `<td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
+          const regionTd = group.isGeral ? `<td class="px-3.5 py-3 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-3 py-3 text-center align-middle">${pos}</td>
-              <td class="px-3 py-3 font-bold text-white text-sm truncate">${item.name}</td>
-              <td class="px-3 py-3 font-semibold text-xs text-gray-300 truncate">
-                <div class="flex items-center gap-2 truncate">${logo}<span class="truncate">${item.team}</span></div>
+              <td class="px-3.5 py-3 text-center align-middle">${pos}</td>
+              <td class="px-3.5 py-3 font-bold text-white text-sm">${item.name}</td>
+              <td class="px-3.5 py-3 font-semibold text-xs text-gray-300">
+                <div class="flex items-center gap-2">${logo}<span>${item.team}</span></div>
               </td>
               ${regionTd}
-              <td class="px-3 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
-              <td class="px-3 py-3 text-right font-extrabold text-purple-400 text-base">${item.mvps}</td>
+              <td class="px-3.5 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
+              <td class="px-3.5 py-3 text-right font-extrabold text-purple-400 text-base">${item.mvps}</td>
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-3 py-3">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3.5 py-3 whitespace-nowrap">Região</th>` : '';
         const colCount = group.isGeral ? 6 : 5;
 
         card.innerHTML = `
@@ -571,12 +572,12 @@
             <table class="w-full text-left">
               <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
                 <tr>
-                  <th class="px-3 py-3 w-10 text-center">Pos</th>
-                  <th class="px-3 py-3">Jogador</th>
-                  <th class="px-3 py-3">Time</th>
+                  <th class="px-3.5 py-3 w-10 text-center">Pos</th>
+                  <th class="px-3.5 py-3">Jogador</th>
+                  <th class="px-3.5 py-3">Time</th>
                   ${regionTh}
-                  <th class="px-3 py-3 text-right">Títulos</th>
-                  <th class="px-3 py-3 text-right">MVPs</th>
+                  <th class="px-3.5 py-3 text-right">Títulos</th>
+                  <th class="px-3.5 py-3 text-right">MVPs</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
@@ -604,7 +605,7 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
+        const cardWidth = group.isGeral ? "w-[540px] md:w-[580px]" : "w-[440px] md:w-[480px]";
         const stickyClasses = group.isGeral 
           ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
           : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
@@ -614,23 +615,23 @@
         let rowsHtml = group.players.map((item, idx) => {
           const pos = getPosBadge(idx);
           const logo = item.logo ? `<img src="${item.logo}" class="w-7 h-7 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
-          const regionTd = group.isGeral ? `<td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
+          const regionTd = group.isGeral ? `<td class="px-3.5 py-3 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-3 py-3 text-center align-middle">${pos}</td>
-              <td class="px-3 py-3 font-bold text-white text-sm truncate">${item.name}</td>
-              <td class="px-3 py-3 font-semibold text-xs text-gray-300 truncate">
-                <div class="flex items-center gap-2 truncate">${logo}<span class="truncate">${item.team}</span></div>
+              <td class="px-3.5 py-3 text-center align-middle">${pos}</td>
+              <td class="px-3.5 py-3 font-bold text-white text-sm">${item.name}</td>
+              <td class="px-3.5 py-3 font-semibold text-xs text-gray-300">
+                <div class="flex items-center gap-2">${logo}<span>${item.team}</span></div>
               </td>
               ${regionTd}
-              <td class="px-3 py-3 text-right font-extrabold text-purple-400 text-base">${item.mvps}</td>
-              <td class="px-3 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
+              <td class="px-3.5 py-3 text-right font-extrabold text-purple-400 text-base">${item.mvps}</td>
+              <td class="px-3.5 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-3 py-3">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3.5 py-3 whitespace-nowrap">Região</th>` : '';
         const colCount = group.isGeral ? 6 : 5;
 
         card.innerHTML = `
@@ -644,12 +645,12 @@
             <table class="w-full text-left">
               <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
                 <tr>
-                  <th class="px-3 py-3 w-10 text-center">Pos</th>
-                  <th class="px-3 py-3">Jogador</th>
-                  <th class="px-3 py-3">Time</th>
+                  <th class="px-3.5 py-3 w-10 text-center">Pos</th>
+                  <th class="px-3.5 py-3">Jogador</th>
+                  <th class="px-3.5 py-3">Time</th>
                   ${regionTh}
-                  <th class="px-3 py-3 text-right">MVPs</th>
-                  <th class="px-3 py-3 text-right">Títulos</th>
+                  <th class="px-3.5 py-3 text-right">MVPs</th>
+                  <th class="px-3.5 py-3 text-right">Títulos</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
