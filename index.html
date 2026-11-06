@@ -3,111 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ranking de Títulos por Equipe</title>
+  <title>Central de E-sports - Rankings e Histórico</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #0d1117; color: #c9d1d9; font-family: system-ui, -apple-system, sans-serif; }
     .bg-dark-card { background-color: #161b22; }
     .border-dark { border-color: #30363d; }
     .bg-dark-hover:hover { background-color: #21262d; }
+    /* Scrollbar personalizada para as listas lado a lado */
+    .custom-scroll::-webkit-scrollbar { height: 8px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #161b22; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #484f58; }
   </style>
 </head>
 <body class="p-4 md:p-8">
 
-  <div class="max-w-6xl mx-auto space-y-8">
+  <div class="max-w-7xl mx-auto space-y-6">
     
-    <!-- Cabeçalho -->
+    <!-- Topo / Cabeçalho -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-dark">
       <div>
         <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-          <span>🏆</span> Ranking de Títulos por Equipe
+          <span>🏆</span> Central de Campeonatos & Rankings
         </h1>
         <p class="text-xs text-gray-400 mt-1" id="last-updated">Sincronizado com Google Sheets</p>
       </div>
-      <div class="flex items-center gap-2">
-        <input type="text" id="search-input" placeholder="Buscar por equipe ou TAG..." 
-               class="bg-dark-card border border-dark rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500 w-full md:w-64">
+      
+      <!-- Navegação das Abas Principais -->
+      <div class="flex items-center bg-dark-card border border-dark rounded-xl p-1 gap-1">
+        <button id="nav-times" onclick="switchMainTab('times')" class="px-4 py-2 text-xs font-bold rounded-lg transition text-white bg-blue-600">
+          Ranking Times
+        </button>
+        <button id="nav-historico" onclick="switchMainTab('historico')" class="px-4 py-2 text-xs font-bold rounded-lg transition text-gray-400 hover:text-white">
+          Histórico de Competições
+        </button>
+        <button id="nav-jogadores" onclick="switchMainTab('jogadores')" class="px-4 py-2 text-xs font-bold rounded-lg transition text-gray-400 hover:text-white">
+          Jogadores
+        </button>
       </div>
     </div>
 
-    <!-- Painel de Estatísticas -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-dark-card border border-dark rounded-xl p-4">
-        <span class="text-xs text-gray-400 uppercase font-semibold">Total de Equipes</span>
-        <div class="text-2xl font-bold text-white mt-1" id="stat-total-teams">0</div>
+    <!-- PAINEL CONTEÚDO: RANKING TIMES -->
+    <div id="section-times" class="space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>🛡️</span> Ranking de Equipes (Geral + Regiões)
+        </h2>
+        <span class="text-xs text-gray-400">Deslize para o lado para ver todas as regiões →</span>
       </div>
-      <div class="bg-dark-card border border-dark rounded-xl p-4">
-        <span class="text-xs text-gray-400 uppercase font-semibold">Total de Títulos</span>
-        <div class="text-2xl font-bold text-yellow-400 mt-1" id="stat-total-titles">0</div>
-      </div>
-      <div class="bg-dark-card border border-dark rounded-xl p-4">
-        <span class="text-xs text-gray-400 uppercase font-semibold">Regiões Ativas</span>
-        <div class="text-2xl font-bold text-blue-400 mt-1" id="stat-total-regions">0</div>
-      </div>
-      <div class="bg-dark-card border border-dark rounded-xl p-4">
-        <span class="text-xs text-gray-400 uppercase font-semibold">Líder do Ranking</span>
-        <div class="text-2xl font-bold text-emerald-400 truncate mt-1" id="stat-top-team">-</div>
+
+      <div class="flex gap-6 overflow-x-auto pb-4 custom-scroll" id="container-times">
+        <!-- Renderizado via JS -->
       </div>
     </div>
 
-    <!-- SEÇÃO 1: RANKING GERAL -->
-    <div class="space-y-3">
-      <h2 class="text-xl font-bold text-white flex items-center gap-2">
-        <span>🌐</span> Ranking Geral
-      </h2>
-      <div class="bg-dark-card border border-dark rounded-xl overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-semibold">
-              <tr>
-                <th class="px-4 py-3.5 w-16 text-center">Pos</th>
-                <th class="px-4 py-3.5">Equipe</th>
-                <th class="px-4 py-3.5 w-24">TAG</th>
-                <th class="px-4 py-3.5 w-28">Região</th>
-                <th class="px-4 py-3.5 w-28 text-right">Títulos</th>
-              </tr>
-            </thead>
-            <tbody id="geral-tbody" class="divide-y divide-dark text-gray-200"></tbody>
-          </table>
-        </div>
+    <!-- PAINEL CONTEÚDO: HISTÓRICO DE COMPETIÇÕES -->
+    <div id="section-historico" class="space-y-4 hidden">
+      <div class="flex justify-between items-center">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>📜</span> Histórico de Campeonatos (Geral + Regiões)
+        </h2>
+        <span class="text-xs text-gray-400">Deslize para o lado para ver todas as regiões →</span>
+      </div>
+
+      <div class="flex gap-6 overflow-x-auto pb-4 custom-scroll" id="container-historico">
+        <!-- Renderizado via JS -->
       </div>
     </div>
 
-    <!-- SEÇÃO 2: RANKINGS POR REGIÃO -->
-    <div class="space-y-6" id="regions-container">
-      <!-- Tabelas regionais geradas via JS -->
+    <!-- PAINEL CONTEÚDO: JOGADORES -->
+    <div id="section-jogadores" class="space-y-4 hidden">
+      <div class="flex justify-between items-center">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>👤</span> Ranking de Jogadores por Títulos (Geral + Regiões)
+        </h2>
+        <span class="text-xs text-gray-400">Deslize para o lado para ver todas as regiões →</span>
+      </div>
+
+      <div class="flex gap-6 overflow-x-auto pb-4 custom-scroll" id="container-jogadores">
+        <!-- Renderizado via JS -->
+      </div>
     </div>
 
   </div>
 
   <script>
-    // Cole seu link CSV publicado do Google Sheets abaixo
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?output=csv';
+    /* =========================================================================
+       CONFIGURAÇÃO DOS LINKS DAS ABAS DO GOOGLE SHEETS (CSV)
+       Cole os links CSV de cada uma das 3 abas da sua planilha.
+       Se deixar vazio, a página usará os dados de demonstração dos seus anexos.
+    ========================================================================= */
+    const CSV_URL_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=0&single=true&output=csv';     // Aba "Ranking Times"
+    const CSV_URL_HISTORICO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=195413319&single=true&output=csv'; // Aba "Histórico de Competições"
+    const CSV_URL_JOGADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1601155160&single=true&output=csv'; // Aba "Jogadores"
 
-    let rawTeamsData = [];
-    let searchQuery = '';
-
-    const DEMO_DATA = [
-      { name: 'Equipe A', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'SP', tag: 'TAG-A', titles: 5 },
-      { name: 'Equipe B', logo: '', region: 'MG', tag: 'TAG-B', titles: 3 },
-      { name: 'Equipe C', logo: '', region: 'RJ', tag: 'TAG-C', titles: 9 },
-      { name: 'Equipe D', logo: '', region: 'SP', tag: 'TAG-D', titles: 1 },
-      { name: 'Equipe E', logo: '', region: 'MG', tag: 'TAG-E', titles: 4 },
-      { name: 'Equipe F', logo: '', region: 'ES', tag: 'TAG-F', titles: 0 }
+    // -------------------------------------------------------------------------
+    // DADOS DE DEMONSTRAÇÃO (Filtros baseados nas suas imagens)
+    // -------------------------------------------------------------------------
+    const DEMO_TIMES = [
+      { name: 'Loud', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'BR', tag: 'LLL', titles: 5 },
+      { name: 'KRU', logo: '', region: 'LATAM', tag: 'B', titles: 3 },
+      { name: 'LEV', logo: '', region: 'LATAM', tag: 'C', titles: 9 },
+      { name: 'C9', logo: '', region: 'NA', tag: 'D', titles: 1 },
+      { name: 'SEN', logo: '', region: 'NA', tag: 'E', titles: 4 },
+      { name: 'F', logo: '', region: 'ES', tag: 'F', titles: 0 },
+      { name: 'Fluxo', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'BR', tag: 'FX', titles: 2 },
+      { name: 'RED', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'BR', tag: 'RED', titles: 6 }
     ];
 
-    function parseFullCsv(csvText) {
+    const DEMO_HISTORICO = [
+      { region: 'BR', comp: 'LIGA BR', season: '2026.1', champion: 'LOUD', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', tag: 'LLL' },
+      { region: 'LATAM', comp: 'LIGA LATAM', season: '2026.1', champion: 'KRU', logo: '', tag: 'B' },
+      { region: 'NA', comp: 'LIGA NA', season: '2026.1', champion: 'SEN', logo: '', tag: 'E' },
+      { region: 'BR', comp: 'COPA BR', season: '2026', champion: 'FLUXO', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', tag: 'FX' },
+      { region: 'LATAM', comp: 'COPA LATAM', season: '2026', champion: 'KRU', logo: '', tag: 'B' },
+      { region: 'NA', comp: 'COPA NA', season: '2026', champion: 'C9', logo: '', tag: 'D' },
+      { region: 'BR', comp: 'LIGA BR', season: '2026.2', champion: 'LOUD', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', tag: 'LLL' },
+      { region: 'LATAM', comp: 'LIGA LATAM', season: '2026.2', champion: 'LEV', logo: '', tag: 'C' },
+      { region: 'NA', comp: 'LIGA NA', season: '2026.2', champion: 'SEN', logo: '', tag: 'E' }
+    ];
+
+    const DEMO_JOGADORES = [
+      { name: 'Couto', team: 'Loud', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', titles: 5, mvps: 6, region: 'BR' },
+      { name: 'Ray', team: 'Fluxo', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', titles: 2, mvps: 2, region: 'NA' },
+      { name: 'Naty', team: 'Red', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', titles: 0, mvps: 0, region: 'LATAM' }
+    ];
+
+    let dataTimes = [];
+    let dataHistorico = [];
+    let dataJogadores = [];
+
+    // -------------------------------------------------------------------------
+    // LEITOR DE CSV ROBUSTO
+    // -------------------------------------------------------------------------
+    function parseCsvRows(text) {
       const rows = [];
-      let curRow = [];
-      let curVal = '';
-      let inQuotes = false;
-      const text = csvText.replace(/\r/g, '');
-      const firstLine = text.split('\n')[0] || '';
+      let curRow = [], curVal = '', inQuotes = false;
+      const cleanText = text.replace(/\r/g, '');
+      const firstLine = cleanText.split('\n')[0] || '';
       const delimiter = (firstLine.split(';').length > firstLine.split(',').length) ? ';' : ',';
 
-      for (let i = 0; i < text.length; i++) {
-        const c = text[i];
-        const next = text[i+1];
+      for (let i = 0; i < cleanText.length; i++) {
+        const c = cleanText[i], next = cleanText[i+1];
         if (inQuotes && c === '"' && next === '"') { curVal += '"'; i++; }
         else if (c === '"') { inQuotes = !inQuotes; }
         else if (c === delimiter && !inQuotes) { curRow.push(curVal.trim()); curVal = ''; }
@@ -115,185 +153,279 @@
           curRow.push(curVal.trim());
           if (curRow.some(v => v.length > 0)) rows.push(curRow);
           curRow = []; curVal = '';
-        } else { curVal += c; }
+        } else curVal += c;
       }
       if (curVal.length > 0 || curRow.length > 0) { curRow.push(curVal.trim()); if (curRow.some(v => v.length > 0)) rows.push(curRow); }
       return rows;
     }
 
-    function parseCsv(csvText) {
-      if (!csvText || !csvText.trim()) return DEMO_DATA;
-      const rows = parseFullCsv(csvText);
-      if (rows.length === 0) return DEMO_DATA;
+    // -------------------------------------------------------------------------
+    // TROCA DE ABAS NATIVAS DO SITE
+    // -------------------------------------------------------------------------
+    function switchMainTab(tab) {
+      const tabs = ['times', 'historico', 'jogadores'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`nav-${t}`);
+        const section = document.getElementById(`section-${t}`);
+        if (t === tab) {
+          btn.className = "px-4 py-2 text-xs font-bold rounded-lg transition text-white bg-blue-600";
+          section.classList.remove('hidden');
+        } else {
+          btn.className = "px-4 py-2 text-xs font-bold rounded-lg transition text-gray-400 hover:text-white";
+          section.classList.add('hidden');
+        }
+      });
+    }
 
-      const headerKeywords = ['time', 'equipe', 'nome', 'clube', 'team', 'logo', 'link', 'regiao', 'uf', 'estado', 'tag', 'titulo', 'titulos'];
-      const firstRow = rows[0];
-      const hasHeader = firstRow.some(col => headerKeywords.some(k => col.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(k)));
-      
-      let nameIdx = 0, logoIdx = 1, regionIdx = 2, tagIdx = 3, titlesIdx = 4;
-      const dataRows = hasHeader ? rows.slice(1) : rows;
+    // -------------------------------------------------------------------------
+    // RENDERIZAR ABA 1: RANKING TIMES
+    // -------------------------------------------------------------------------
+    function renderSectionTimes() {
+      const container = document.getElementById('container-times');
+      container.innerHTML = '';
 
-      if (hasHeader) {
-        const findIdx = (keywords) => firstRow.findIndex(h => keywords.some(k => h.toLowerCase().includes(k)));
-        const nIdx = findIdx(['time', 'equipe', 'nome', 'clube', 'team']);
-        const lIdx = findIdx(['logo', 'link', 'img', 'imagem']);
-        const rIdx = findIdx(['regiao', 'uf', 'estado']);
-        const tgIdx = findIdx(['tag']);
-        const tIdx = findIdx(['titulo', 'titulos', 'vitoria', 'ponto', 'pts']);
+      const sortedGeral = [...dataTimes].sort((a, b) => b.titles - a.titles);
+      const regions = Array.from(new Set(dataTimes.map(t => t.region).filter(Boolean))).sort();
+
+      const groups = [
+        { title: 'Ranking Geral', teams: sortedGeral },
+        ...regions.map(r => ({ title: `Ranking Região ${r}`, teams: dataTimes.filter(t => t.region === r).sort((a, b) => b.titles - a.titles) }))
+      ];
+
+      groups.forEach(group => {
+        const card = document.createElement('div');
+        card.className = "w-[360px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
         
-        if (nIdx !== -1) nameIdx = nIdx;
-        if (lIdx !== -1) logoIdx = lIdx;
-        if (rIdx !== -1) regionIdx = rIdx;
-        if (tgIdx !== -1) tagIdx = tgIdx;
-        if (tIdx !== -1) titlesIdx = tIdx;
-      }
+        let rowsHtml = group.teams.map((item, idx) => {
+          let pos = `${idx + 1}º`;
+          if (idx === 0) pos = '🥇'; else if (idx === 1) pos = '🥈'; else if (idx === 2) pos = '🥉';
+          const logo = item.logo ? `<img src="${item.logo}" class="w-5 h-5 object-contain rounded" onerror="this.style.display='none'">` : '';
 
-      return dataRows.map(cols => {
-        const cleanStr = (idx) => (cols[idx] !== undefined ? cols[idx].trim() : '');
-        let name = cleanStr(nameIdx);
-        if (!name) name = cols.find(c => c && !c.startsWith('http') && isNaN(c) && c.trim().length > 0) || '';
-        const logo = cleanStr(logoIdx);
-        const region = cleanStr(regionIdx).toUpperCase();
-        const tag = cleanStr(tagIdx).toUpperCase();
-        const titles = parseInt(cleanStr(titlesIdx), 10) || 0;
-        return { name, logo, region, tag, titles };
-      }).filter(t => t.name.length > 0);
-    }
+          return `
+            <tr class="hover:bg-dark-hover/50">
+              <td class="px-3 py-2 text-center font-bold text-xs">${pos}</td>
+              <td class="px-3 py-2 font-semibold text-white text-xs">
+                <div class="flex items-center gap-2">${logo}<span>${item.name}</span></div>
+              </td>
+              <td class="px-3 py-2 text-xs text-gray-400 font-mono">${item.tag || '-'}</td>
+              <td class="px-3 py-2 text-xs text-gray-400">${item.region || '-'}</td>
+              <td class="px-3 py-2 text-right font-bold text-yellow-400 text-xs">${item.titles}</td>
+            </tr>
+          `;
+        }).join('');
 
-    function updateUI() {
-      rawTeamsData.sort((a, b) => b.titles - a.titles);
-      document.getElementById('last-updated').textContent = `Última verificação: ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
-      renderStats();
-      renderAllTables();
-    }
-
-    function renderStats() {
-      document.getElementById('stat-total-teams').textContent = rawTeamsData.length;
-      document.getElementById('stat-total-titles').textContent = rawTeamsData.reduce((s, t) => s + t.titles, 0);
-      const regionsSet = new Set(rawTeamsData.map(t => t.region).filter(Boolean));
-      document.getElementById('stat-total-regions').textContent = regionsSet.size;
-      document.getElementById('stat-top-team').textContent = rawTeamsData.length > 0 ? rawTeamsData[0].name : '-';
-    }
-
-    function buildTableRows(teams) {
-      return teams.map((team, index) => {
-        let posBadge = `${index + 1}º`;
-        if (index === 0) posBadge = '🥇';
-        else if (index === 1) posBadge = '🥈';
-        else if (index === 2) posBadge = '🥉';
-
-        const logoHtml = team.logo 
-          ? `<img src="${team.logo}" class="w-6 h-6 object-contain rounded" alt="" onerror="this.style.display='none'">` 
-          : `<div class="w-6 h-6 rounded bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-300">${team.tag || 'T'}</div>`;
-
-        return `
-          <tr class="hover:bg-dark-hover/50 transition duration-150">
-            <td class="px-4 py-3 text-center font-bold text-base">${posBadge}</td>
-            <td class="px-4 py-3 font-semibold text-white">
-              <div class="flex items-center space-x-3">
-                ${logoHtml}
-                <span>${team.name}</span>
-              </div>
-            </td>
-            <td class="px-4 py-3"><span class="bg-gray-800 border border-dark text-gray-300 text-xs px-2 py-0.5 rounded font-mono">${team.tag || '-'}</span></td>
-            <td class="px-4 py-3"><span class="text-xs text-gray-400 font-medium">${team.region || '-'}</span></td>
-            <td class="px-4 py-3 text-right font-bold text-base text-yellow-400">${team.titles}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function renderAllTables() {
-      let data = [...rawTeamsData];
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        data = data.filter(t => t.name.toLowerCase().includes(q) || t.tag.toLowerCase().includes(q));
-      }
-
-      // Ranking Geral
-      const geralTbody = document.getElementById('geral-tbody');
-      if (data.length === 0) {
-        geralTbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">Nenhuma equipe encontrada.</td></tr>`;
-      } else {
-        geralTbody.innerHTML = buildTableRows(data);
-      }
-
-      // Rankings por Região
-      const regionsContainer = document.getElementById('regions-container');
-      regionsContainer.innerHTML = '';
-
-      const regions = Array.from(new Set(rawTeamsData.map(t => t.region).filter(Boolean))).sort();
-
-      regions.forEach(region => {
-        const regionTeams = data.filter(t => t.region === region);
-        if (searchQuery && regionTeams.length === 0) return;
-
-        const regionSection = document.createElement('div');
-        regionSection.className = 'space-y-3';
-        regionSection.innerHTML = `
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
-              <span>📍</span> Ranking Região ${region}
-            </h2>
-            <span class="text-xs bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">
-              ${regionTeams.length} equipes
-            </span>
+        card.innerHTML = `
+          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center">
+            <h3 class="font-bold text-sm text-white">${group.title}</h3>
+            <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">${group.teams.length} times</span>
           </div>
-          <div class="bg-dark-card border border-dark rounded-xl overflow-hidden shadow-xl">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-sm">
-                <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-semibold">
-                  <tr>
-                    <th class="px-4 py-3.5 w-16 text-center">Pos</th>
-                    <th class="px-4 py-3.5">Equipe</th>
-                    <th class="px-4 py-3.5 w-24">TAG</th>
-                    <th class="px-4 py-3.5 w-28">Região</th>
-                    <th class="px-4 py-3.5 w-28 text-right">Títulos</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-dark text-gray-200">
-                  ${regionTeams.length > 0 ? buildTableRows(regionTeams) : `<tr><td colspan="5" class="p-6 text-center text-gray-400">Nenhuma equipe nesta região.</td></tr>`}
-                </tbody>
-              </table>
-            </div>
+          <div class="overflow-y-auto max-h-[480px]">
+            <table class="w-full text-left">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase">
+                <tr>
+                  <th class="px-3 py-2 w-10 text-center">Pos</th>
+                  <th class="px-3 py-2">Time</th>
+                  <th class="px-3 py-2">TAG</th>
+                  <th class="px-3 py-2">Região</th>
+                  <th class="px-3 py-2 text-right">Títulos</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || '<tr><td colspan="5" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
+            </table>
           </div>
         `;
-        regionsContainer.appendChild(regionSection);
+        container.appendChild(card);
       });
     }
 
-    function init() {
-      document.getElementById('search-input').addEventListener('input', (e) => {
-        searchQuery = e.target.value.trim();
-        renderAllTables();
+    // -------------------------------------------------------------------------
+    // RENDERIZAR ABA 2: HISTÓRICO DE COMPETIÇÕES
+    // -------------------------------------------------------------------------
+    function renderSectionHistorico() {
+      const container = document.getElementById('container-historico');
+      container.innerHTML = '';
+
+      const regions = Array.from(new Set(dataHistorico.map(h => h.region).filter(Boolean))).sort();
+
+      const groups = [
+        { title: 'Geral', list: dataHistorico },
+        ...regions.map(r => ({ title: `Região ${r}`, list: dataHistorico.filter(h => h.region === r) }))
+      ];
+
+      groups.forEach(group => {
+        const card = document.createElement('div');
+        card.className = "w-[420px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+
+        let rowsHtml = group.list.map((item) => {
+          const logo = item.logo ? `<img src="${item.logo}" class="w-4 h-4 object-contain rounded" onerror="this.style.display='none'">` : '';
+          return `
+            <tr class="hover:bg-dark-hover/50">
+              <td class="px-3 py-2 font-semibold text-white text-xs">${item.comp}</td>
+              <td class="px-3 py-2 text-xs text-blue-400 font-mono">${item.season}</td>
+              <td class="px-3 py-2 text-xs font-bold text-yellow-400">
+                <div class="flex items-center gap-1.5">${logo}<span>${item.champion}</span></div>
+              </td>
+              <td class="px-3 py-2 text-xs text-gray-400 font-mono">${item.tag || '-'}</td>
+            </tr>
+          `;
+        }).join('');
+
+        card.innerHTML = `
+          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center">
+            <h3 class="font-bold text-sm text-white">${group.title}</h3>
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">${group.list.length} torneios</span>
+          </div>
+          <div class="overflow-y-auto max-h-[480px]">
+            <table class="w-full text-left">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase">
+                <tr>
+                  <th class="px-3 py-2">Competição</th>
+                  <th class="px-3 py-2">Temp.</th>
+                  <th class="px-3 py-2">Campeão</th>
+                  <th class="px-3 py-2">TAG</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || '<tr><td colspan="4" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
+            </table>
+          </div>
+        `;
+        container.appendChild(card);
       });
+    }
 
-      if (!CSV_URL || CSV_URL.includes('COLE_SEU_LINK')) {
-        rawTeamsData = DEMO_DATA;
-        updateUI();
-        return;
+    // -------------------------------------------------------------------------
+    // RENDERIZAR ABA 3: JOGADORES
+    // -------------------------------------------------------------------------
+    function renderSectionJogadores() {
+      const container = document.getElementById('container-jogadores');
+      container.innerHTML = '';
+
+      const sortedGeral = [...dataJogadores].sort((a, b) => b.titles - a.titles || b.mvps - a.mvps);
+      const regions = Array.from(new Set(dataJogadores.map(j => j.region).filter(Boolean))).sort();
+
+      const groups = [
+        { title: 'Ranking Geral', players: sortedGeral },
+        ...regions.map(r => ({ title: `Ranking Região ${r}`, players: dataJogadores.filter(j => j.region === r).sort((a, b) => b.titles - a.titles || b.mvps - a.mvps) }))
+      ];
+
+      groups.forEach(group => {
+        const card = document.createElement('div');
+        card.className = "w-[400px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+
+        let rowsHtml = group.players.map((item, idx) => {
+          let pos = `${idx + 1}º`;
+          if (idx === 0) pos = '🥇'; else if (idx === 1) pos = '🥈'; else if (idx === 2) pos = '🥉';
+          const logo = item.logo ? `<img src="${item.logo}" class="w-4 h-4 object-contain rounded" onerror="this.style.display='none'">` : '';
+
+          return `
+            <tr class="hover:bg-dark-hover/50">
+              <td class="px-3 py-2 text-center font-bold text-xs">${pos}</td>
+              <td class="px-3 py-2 font-bold text-white text-xs">${item.name}</td>
+              <td class="px-3 py-2 font-semibold text-xs text-gray-300">
+                <div class="flex items-center gap-1.5">${logo}<span>${item.team}</span></div>
+              </td>
+              <td class="px-3 py-2 text-right font-bold text-yellow-400 text-xs">${item.titles}</td>
+              <td class="px-3 py-2 text-right font-bold text-purple-400 text-xs">${item.mvps}</td>
+            </tr>
+          `;
+        }).join('');
+
+        card.innerHTML = `
+          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center">
+            <h3 class="font-bold text-sm text-white">${group.title}</h3>
+            <span class="text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full font-semibold">${group.players.length} jogadores</span>
+          </div>
+          <div class="overflow-y-auto max-h-[480px]">
+            <table class="w-full text-left">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase">
+                <tr>
+                  <th class="px-3 py-2 w-10 text-center">Pos</th>
+                  <th class="px-3 py-2">Jogador</th>
+                  <th class="px-3 py-2">Time Atual</th>
+                  <th class="px-3 py-2 text-right">Títulos</th>
+                  <th class="px-3 py-2 text-right">MVPs</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || '<tr><td colspan="5" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
+            </table>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // CARREGAMENTO DAS FONTES DE DADOS (CSV / GOOGLE SHEETS)
+    // -------------------------------------------------------------------------
+    async function fetchCsvData(url, defaultData, parseFn) {
+      if (!url || url.includes('COLE_SEU_LINK')) return defaultData;
+      let cleanUrl = url;
+      if (cleanUrl.includes('/pubhtml')) cleanUrl = cleanUrl.replace('/pubhtml', '/pub?output=csv');
+      if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv');
+      cleanUrl += (cleanUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+
+      try {
+        const res = await fetch(cleanUrl);
+        const text = await res.text();
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) return defaultData;
+        return parseFn(text);
+      } catch (e) {
+        console.error('Erro ao carregar CSV:', e);
+        return defaultData;
       }
+    }
 
-      let fetchUrl = CSV_URL;
-      if (fetchUrl.includes('/pubhtml')) fetchUrl = fetchUrl.replace('/pubhtml', '/pub?output=csv');
-      if (fetchUrl.includes('/edit')) fetchUrl = fetchUrl.replace(/\/edit.*$/, '/export?format=csv');
-      fetchUrl += (fetchUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+    function parseTimesCsv(csvText) {
+      const rows = parseCsvRows(csvText);
+      const dataRows = (rows[0] && rows[0][0].toLowerCase().includes('time')) ? rows.slice(1) : rows;
+      return dataRows.map(r => ({
+        name: r[0] || '',
+        logo: r[1] || '',
+        region: (r[2] || '').toUpperCase(),
+        tag: (r[3] || '').toUpperCase(),
+        titles: parseInt(r[4] || '0', 10) || 0
+      })).filter(t => t.name);
+    }
 
-      fetch(fetchUrl)
-        .then(res => res.text())
-        .then(csvText => {
-          rawTeamsData = parseCsv(csvText);
-          updateUI();
-        })
-        .catch(err => {
-          console.error('Erro ao carregar CSV:', err);
-          rawTeamsData = DEMO_DATA;
-          updateUI();
-        });
+    function parseHistoricoCsv(csvText) {
+      const rows = parseCsvRows(csvText);
+      const dataRows = (rows[0] && rows[0][0].toLowerCase().includes('regi')) ? rows.slice(1) : rows;
+      return dataRows.map(r => ({
+        region: (r[0] || '').toUpperCase(),
+        comp: r[1] || '',
+        season: r[2] || '',
+        champion: r[3] || '',
+        logo: r[4] || '',
+        tag: (r[5] || '').toUpperCase()
+      })).filter(h => h.comp || h.champion);
+    }
+
+    function parseJogadoresCsv(csvText) {
+      const rows = parseCsvRows(csvText);
+      const dataRows = (rows[0] && rows[0][0].toLowerCase().includes('jogador')) ? rows.slice(1) : rows;
+      return dataRows.map(r => ({
+        name: r[0] || '',
+        team: r[1] || '',
+        logo: r[2] || '',
+        titles: parseInt(r[3] || '0', 10) || 0,
+        mvps: parseInt(r[4] || '0', 10) || 0,
+        region: (r[5] || '').toUpperCase()
+      })).filter(j => j.name);
+    }
+
+    async function init() {
+      dataTimes = await fetchCsvData(CSV_URL_TIMES, DEMO_TIMES, parseTimesCsv);
+      dataHistorico = await fetchCsvData(CSV_URL_HISTORICO, DEMO_HISTORICO, parseHistoricoCsv);
+      dataJogadores = await fetchCsvData(CSV_URL_JOGADORES, DEMO_JOGADORES, parseJogadoresCsv);
+
+      document.getElementById('last-updated').textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
+
+      renderSectionTimes();
+      renderSectionHistorico();
+      renderSectionJogadores();
     }
 
     init();
   </script>
 </body>
 </html>
- 
