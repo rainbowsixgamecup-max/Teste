@@ -3,185 +3,287 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ranking de Títulos</title>
+  <title>Ranking de Títulos por Equipa</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      --bg-color: #0d1117;
-      --card-bg: #161b22;
-      --border-color: #30363d;
-      --text-main: #c9d1d9;
-      --text-muted: #8b949e;
-      --accent-color: #58a6ff;
-    }
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      margin: 0;
-      padding: 24px;
-    }
-    .container { max-width: 1000px; margin: 0 auto; }
-    h1 { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 1.8rem; }
-    
-    .nav-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; overflow-x: auto; }
-    .tab-btn {
-      background: none; border: none; color: var(--text-muted); padding: 10px 16px;
-      font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent;
-    }
-    .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
-
-    table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); }
-    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
-    th { background: #21262d; font-weight: 600; color: var(--text-main); }
-    tr:last-child td { border-bottom: none; }
-    
-    .team-logo { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
-    .tag-badge { background: #21262d; border: 1px solid var(--border-color); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
-    .alert-box { background: #381e1e; border: 1px solid #f85149; color: #ff7b72; padding: 16px; border-radius: 6px; margin-bottom: 20px; display: none; }
+    body { background-color: #0d1117; color: #c9d1d9; font-family: system-ui, -apple-system, sans-serif; }
+    .bg-dark-card { background-color: #161b22; }
+    .border-dark { border-color: #30363d; }
+    .bg-dark-hover:hover { background-color: #21262d; }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h1>🏆 Ranking de Títulos por Equipa</h1>
-    
-    <div id="error-alert" class="alert-box"></div>
+<body class="p-4 md:p-8">
 
-    <div class="nav-tabs" id="tabs-container">
-      <button class="tab-btn active" onclick="switchTab('Geral')">Geral</button>
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Cabeçalho -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-dark">
+      <div>
+        <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+          <span>🏆</span> Ranking de Títulos por Equipa
+        </h1>
+        <p class="text-xs text-gray-400 mt-1" id="last-updated">Sincronizado com Google Sheets</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="text" id="search-input" placeholder="Buscar por equipa ou TAG..." 
+               class="bg-dark-card border border-dark rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500 w-full md:w-64">
+      </div>
     </div>
 
-    <table id="ranking-table">
-      <thead>
-        <tr>
-          <th>Posição</th>
-          <th>Equipa</th>
-          <th>TAG</th>
-          <th>Região</th>
-          <th>Títulos</th>
-        </tr>
-      </thead>
-      <tbody id="table-body"></tbody>
-    </table>
+    <!-- Painel de Estatísticas -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-dark-card border border-dark rounded-xl p-4">
+        <span class="text-xs text-gray-400 uppercase font-semibold">Total de Equipas</span>
+        <div class="text-2xl font-bold text-white mt-1" id="stat-total-teams">0</div>
+      </div>
+      <div class="bg-dark-card border border-dark rounded-xl p-4">
+        <span class="text-xs text-gray-400 uppercase font-semibold">Total de Títulos</span>
+        <div class="text-2xl font-bold text-yellow-400 mt-1" id="stat-total-titles">0</div>
+      </div>
+      <div class="bg-dark-card border border-dark rounded-xl p-4">
+        <span class="text-xs text-gray-400 uppercase font-semibold">Regiões Ativas</span>
+        <div class="text-2xl font-bold text-blue-400 mt-1" id="stat-total-regions">0</div>
+      </div>
+      <div class="bg-dark-card border border-dark rounded-xl p-4">
+        <span class="text-xs text-gray-400 uppercase font-semibold">Líder do Ranking</span>
+        <div class="text-2xl font-bold text-emerald-400 truncate mt-1" id="stat-top-team">-</div>
+      </div>
+    </div>
+
+    <!-- Navegação por Abas (Geral + Regiões) -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-dark" id="tabs-nav">
+      <!-- Gerado automaticamente via JS -->
+    </div>
+
+    <!-- Tabela de Ranking -->
+    <div class="bg-dark-card border border-dark rounded-xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-semibold">
+            <tr>
+              <th class="px-4 py-3.5 w-16 text-center">Pos</th>
+              <th class="px-4 py-3.5">Equipa</th>
+              <th class="px-4 py-3.5 w-24">TAG</th>
+              <th class="px-4 py-3.5 w-28">Região</th>
+              <th class="px-4 py-3.5 w-28 text-right">Títulos</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-tbody" class="divide-y divide-dark text-gray-200">
+            <!-- Linhas geradas via JS -->
+          </tbody>
+        </table>
+      </div>
+      <div id="empty-state" class="hidden p-8 text-center text-gray-400">
+        Nenhuma equipa encontrada para os critérios selecionados.
+      </div>
+    </div>
+
   </div>
 
   <script>
-    // Cole aqui o seu link publicado em CSV
-    let CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?output=csv';
+    // Cole aqui o seu link CSV do Google Sheets
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?output=csv';
 
-    let allTeamsData = [];
-    let currentTab = 'Geral';
+    let rawTeamsData = [];
+    let currentActiveTab = 'GERAL';
+    let searchQuery = '';
 
-    function formatCsvUrl(url) {
-      if (!url) return '';
-      if (url.includes('/pubhtml')) return url.replace('/pubhtml', '/pub?output=csv');
-      if (url.includes('/edit')) return url.replace(/\/edit.*$/, '/export?format=csv');
-      return url;
+    const DEMO_DATA = [
+      { name: 'Equipa A', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'SP', tag: 'TAG-A', titles: 5 },
+      { name: 'Equipa B', logo: '', region: 'MG', tag: 'TAG-B', titles: 3 },
+      { name: 'Equipa C', logo: '', region: 'RJ', tag: 'TAG-C', titles: 9 },
+      { name: 'Equipa D', logo: '', region: 'SP', tag: 'TAG-D', titles: 1 },
+      { name: 'Equipa E', logo: '', region: 'MG', tag: 'TAG-E', titles: 4 },
+      { name: 'Equipa F', logo: '', region: 'ES', tag: 'TAG-F', titles: 0 }
+    ];
+
+    function parseFullCsv(csvText) {
+      const rows = [];
+      let curRow = [];
+      let curVal = '';
+      let inQuotes = false;
+      const text = csvText.replace(/\r/g, '');
+      const firstLine = text.split('\n')[0] || '';
+      const delimiter = (firstLine.split(';').length > firstLine.split(',').length) ? ';' : ',';
+
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const next = text[i+1];
+        if (inQuotes && c === '"' && next === '"') { curVal += '"'; i++; }
+        else if (c === '"') { inQuotes = !inQuotes; }
+        else if (c === delimiter && !inQuotes) { curRow.push(curVal.trim()); curVal = ''; }
+        else if (c === '\n' && !inQuotes) {
+          curRow.push(curVal.trim());
+          if (curRow.some(v => v.length > 0)) rows.push(curRow);
+          curRow = []; curVal = '';
+        } else { curVal += c; }
+      }
+      if (curVal.length > 0 || curRow.length > 0) { curRow.push(curVal.trim()); if (curRow.some(v => v.length > 0)) rows.push(curRow); }
+      return rows;
     }
 
-    function parseCSV(text) {
-      const lines = text.trim().split(/\r?\n/);
-      if (lines.length === 0) return [];
+    function parseCsv(csvText) {
+      if (!csvText || !csvText.trim()) return DEMO_DATA;
+      const rows = parseFullCsv(csvText);
+      if (rows.length === 0) return DEMO_DATA;
 
-      const rows = lines.map(line => {
-        const matches = [];
-        let match;
-        const regex = /(?:^|,)("(?:[^"]|"")*"|[^,]*)/g;
-        while ((match = regex.exec(line)) !== null) {
-          let val = match[1].replace(/^"|"$/g, '').replace(/""/g, '"').trim();
-          matches.push(val);
-        }
-        return matches;
-      });
+      const headerKeywords = ['time', 'equipe', 'nome', 'clube', 'team', 'logo', 'link', 'regiao', 'uf', 'estado', 'tag', 'titulo', 'titulos'];
+      const firstRow = rows[0];
+      const hasHeader = firstRow.some(col => headerKeywords.some(k => col.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(k)));
+      
+      let nameIdx = 0, logoIdx = 1, regionIdx = 2, tagIdx = 3, titlesIdx = 4;
+      const dataRows = hasHeader ? rows.slice(1) : rows;
 
-      // Se a primeira linha contiver nomes de colunas, remove o cabeçalho
-      const isHeader = rows[0][0].toLowerCase().includes('time') || rows[0][0].toLowerCase().includes('equipa');
-      const dataRows = isHeader ? rows.slice(1) : rows;
-
-      return dataRows.map(row => ({
-        name: row[0] || '',
-        logo: row[1] || '',
-        region: row[2] || '',
-        tag: row[3] || '',
-        titles: parseInt(row[4] || '0', 10) || 0
-      }));
-    }
-
-    function showError(msg) {
-      const box = document.getElementById('error-alert');
-      box.innerHTML = msg;
-      box.style.display = 'block';
-    }
-
-    function loadData() {
-      const cleanUrl = formatCsvUrl(CSV_URL);
-      if (!cleanUrl || cleanUrl.includes('COLE_SEU_LINK')) {
-        showError('⚠️ Configure o link do seu Google Sheets publicado em CSV na variável CSV_URL.');
-        return;
+      if (hasHeader) {
+        const findIdx = (keywords) => firstRow.findIndex(h => keywords.some(k => h.toLowerCase().includes(k)));
+        const nIdx = findIdx(['time', 'equipe', 'nome', 'clube', 'team']);
+        const lIdx = findIdx(['logo', 'link', 'img', 'imagem']);
+        const rIdx = findIdx(['regiao', 'uf', 'estado']);
+        const tgIdx = findIdx(['tag']);
+        const tIdx = findIdx(['titulo', 'titulos', 'vitoria', 'ponto', 'pts']);
+        
+        if (nIdx !== -1) nameIdx = nIdx;
+        if (lIdx !== -1) logoIdx = lIdx;
+        if (rIdx !== -1) regionIdx = rIdx;
+        if (tgIdx !== -1) tagIdx = tgIdx;
+        if (tIdx !== -1) titlesIdx = tIdx;
       }
 
-      const fetchUrl = cleanUrl + (cleanUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-
-      fetch(fetchUrl)
-        .then(res => res.text())
-        .then(text => {
-          // Validação para impedir a leitura de ficheiros HTML/JS
-          if (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('var n=')) {
-            showError('<strong>Erro no formato da Planilha:</strong> O link fornecido retornou uma página HTML/JS em vez de um CSV.<br>No Google Sheets, certifique-se de escolher <strong>Valores separados por vírgulas (.csv)</strong> ao publicar.');
-            return;
-          }
-
-          document.getElementById('error-alert').style.display = 'none';
-          allTeamsData = parseCSV(text);
-          renderTabs();
-          renderTable();
-        })
-        .catch(err => {
-          showError('Erro ao carregar dados do Google Sheets: ' + err.message);
-        });
+      return dataRows.map(cols => {
+        const cleanStr = (idx) => (cols[idx] !== undefined ? cols[idx].trim() : '');
+        let name = cleanStr(nameIdx);
+        if (!name) name = cols.find(c => c && !c.startsWith('http') && isNaN(c) && c.trim().length > 0) || '';
+        const logo = cleanStr(logoIdx);
+        const region = cleanStr(regionIdx).toUpperCase();
+        const tag = cleanStr(tagIdx).toUpperCase();
+        const titles = parseInt(cleanStr(titlesIdx), 10) || 0;
+        return { name, logo, region, tag, titles };
+      }).filter(t => t.name.length > 0);
     }
 
-    function renderTabs() {
-      const regions = [...new Set(allTeamsData.map(t => t.region).filter(Boolean))].sort();
-      const container = document.getElementById('tabs-container');
-      
-      let html = `<button class="tab-btn ${currentTab === 'Geral' ? 'active' : ''}" onclick="switchTab('Geral')">Geral</button>`;
-      regions.forEach(reg => {
-        html += `<button class="tab-btn ${currentTab === reg ? 'active' : ''}" onclick="switchTab('${reg}')">${reg}</button>`;
-      });
-      container.innerHTML = html;
-    }
-
-    function switchTab(tab) {
-      currentTab = tab;
+    function updateUI() {
+      rawTeamsData.sort((a, b) => b.titles - a.titles);
+      document.getElementById('last-updated').textContent = `Última verificação: ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+      renderStats();
       renderTabs();
       renderTable();
     }
 
+    function renderStats() {
+      document.getElementById('stat-total-teams').textContent = rawTeamsData.length;
+      document.getElementById('stat-total-titles').textContent = rawTeamsData.reduce((s, t) => s + t.titles, 0);
+      const regionsSet = new Set(rawTeamsData.map(t => t.region).filter(Boolean));
+      document.getElementById('stat-total-regions').textContent = regionsSet.size;
+      document.getElementById('stat-top-team').textContent = rawTeamsData.length > 0 ? rawTeamsData[0].name : '-';
+    }
+
+    function renderTabs() {
+      const tabsNav = document.getElementById('tabs-nav');
+      const regions = Array.from(new Set(rawTeamsData.map(t => t.region).filter(Boolean))).sort();
+      
+      if (currentActiveTab !== 'GERAL' && !regions.includes(currentActiveTab)) currentActiveTab = 'GERAL';
+
+      const tabList = [
+        { id: 'GERAL', label: 'Geral', count: rawTeamsData.length },
+        ...regions.map(r => ({ id: r, label: `Região ${r}`, count: rawTeamsData.filter(t => t.region === r).length }))
+      ];
+
+      tabsNav.innerHTML = '';
+      tabList.forEach(tab => {
+        const isActive = currentActiveTab === tab.id;
+        const btn = document.createElement('button');
+        btn.className = `px-4 py-2 text-xs font-semibold rounded-xl transition duration-150 flex items-center space-x-2 shrink-0 ${
+          isActive 
+            ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' 
+            : 'bg-dark-card text-gray-400 hover:text-white border border-dark hover:bg-dark-hover'
+        }`;
+        btn.innerHTML = `<span>${tab.label}</span> <span class="bg-black/30 px-1.5 py-0.5 rounded-full text-[10px]">${tab.count}</span>`;
+        btn.addEventListener('click', () => {
+          currentActiveTab = tab.id;
+          renderTabs();
+          renderTable();
+        });
+        tabsNav.appendChild(btn);
+      });
+    }
+
     function renderTable() {
-      const tbody = document.getElementById('table-body');
+      const tbody = document.getElementById('ranking-tbody');
+      const emptyState = document.getElementById('empty-state');
       tbody.innerHTML = '';
 
-      let filtered = currentTab === 'Geral' 
-        ? [...allTeamsData] 
-        : allTeamsData.filter(t => t.region === currentTab);
+      let filtered = currentActiveTab === 'GERAL' 
+        ? [...rawTeamsData] 
+        : rawTeamsData.filter(t => t.region === currentActiveTab);
 
-      filtered.sort((a, b) => b.titles - a.titles);
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(t => t.name.toLowerCase().includes(q) || t.tag.toLowerCase().includes(q));
+      }
 
-      filtered.forEach((item, idx) => {
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      filtered.forEach((team, index) => {
         const tr = document.createElement('tr');
-        const logoHtml = item.logo ? `<img src="${item.logo}" class="team-logo" alt="">` : '';
+        tr.className = 'hover:bg-dark-hover/50 transition duration-150';
+
+        let posBadge = `${index + 1}º`;
+        if (index === 0) posBadge = '🥇';
+        else if (index === 1) posBadge = '🥈';
+        else if (index === 2) posBadge = '🥉';
+
+        const logoHtml = team.logo 
+          ? `<img src="${team.logo}" class="w-6 h-6 object-contain rounded" alt="" onerror="this.style.display='none'">` 
+          : `<div class="w-6 h-6 rounded bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-300">${team.tag || 'T'}</div>`;
+
         tr.innerHTML = `
-          <td>${idx + 1}º</td>
-          <td>${logoHtml}${item.name}</td>
-          <td><span class="tag-badge">${item.tag}</span></td>
-          <td>${item.region}</td>
-          <td><strong>${item.titles}</strong></td>
+          <td class="px-4 py-3 text-center font-bold text-base">${posBadge}</td>
+          <td class="px-4 py-3 font-semibold text-white">
+            <div class="flex items-center space-x-3">
+              ${logoHtml}
+              <span>${team.name}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3"><span class="bg-gray-800 border border-dark text-gray-300 text-xs px-2 py-0.5 rounded font-mono">${team.tag || '-'}</span></td>
+          <td class="px-4 py-3"><span class="text-xs text-gray-400 font-medium">${team.region || '-'}</span></td>
+          <td class="px-4 py-3 text-right font-bold text-base text-yellow-400">${team.titles}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    loadData();
+    function init() {
+      document.getElementById('search-input').addEventListener('input', (e) => {
+        searchQuery = e.target.value.trim();
+        renderTable();
+      });
+
+      if (!CSV_URL || CSV_URL.includes('COLE_SEU_LINK')) {
+        rawTeamsData = DEMO_DATA;
+        updateUI();
+        return;
+      }
+
+      const fetchUrl = CSV_URL + (CSV_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+
+      fetch(fetchUrl)
+        .then(res => res.text())
+        .then(csvText => {
+          rawTeamsData = parseCsv(csvText);
+          updateUI();
+        })
+        .catch(err => {
+          console.error('Erro ao carregar CSV:', err);
+          rawTeamsData = DEMO_DATA;
+          updateUI();
+        });
+    }
+
+    init();
   </script>
 </body>
 </html>
