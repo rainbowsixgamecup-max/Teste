@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <title>Ranking de Títulos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; background: #0d1117; color: #c9d1d9; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #30363d; padding: 12px; text-align: left; vertical-align: middle; }
+    th { background-color: #161b22; }
+    tr:nth-child(even) { background-color: #161b22; }
+    .logo-img { width: 28px; height: 28px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
+    .tag-badge { background-color: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 2px 6px; font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <h1>🏆 Ranking de Títulos por Equipa</h1>
+  <table id="ranking-table">
+    <thead>
+      <tr>
+        <th>Posição</th>
+        <th>Equipa</th>
+        <th>TAG</th>
+        <th>Região</th>
+        <th>Títulos</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?output=csv';
+
+    fetch(CSV_URL)
+      .then(response => response.text())
+      .then(csvText => {
+        // Divide as linhas e ignora o cabeçalho (linha 1)
+        const rows = csvText.trim().split('\n').slice(1);
+        
+        const teams = rows.map(row => {
+          const cols = row.split(',');
+          return {
+            name: cols[0] ? cols[0].trim() : '',
+            logo: cols[1] ? cols[1].trim() : '',
+            region: cols[2] ? cols[2].trim() : '',
+            tag: cols[3] ? cols[3].trim() : '',
+            titles: parseInt(cols[4] ? cols[4].trim() : '0', 10) || 0
+          };
+        });
+
+        // Ordenar as equipas por quantidade de títulos (decrescente)
+        teams.sort((a, b) => b.titles - a.titles);
+
+        const tbody = document.querySelector('#ranking-table tbody');
+        tbody.innerHTML = '';
+
+        teams.forEach((item, index) => {
+          const tr = document.createElement('tr');
+          const logoHtml = item.logo ? `<img src="${item.logo}" class="logo-img" alt="${item.name}">` : '';
+          
+          tr.innerHTML = `
+            <td>${index + 1}º</td>
+            <td>${logoHtml}${item.name}</td>
+            <td><span class="tag-badge">${item.tag}</span></td>
+            <td>${item.region}</td>
+            <td><strong>${item.titles}</strong></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => console.error('Erro ao carregar os dados:', err));
+  </script>
+</body>
+</html>
