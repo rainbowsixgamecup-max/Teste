@@ -1,74 +1,303 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
-<head>
-  <meta charset="UTF-8">
-  <title>Ranking de Títulos</title>
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 20px; background: #0d1117; color: #c9d1d9; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #30363d; padding: 12px; text-align: left; vertical-align: middle; }
-    th { background-color: #161b22; }
-    tr:nth-child(even) { background-color: #161b22; }
-    .logo-img { width: 28px; height: 28px; object-fit: contain; vertical-align: middle; margin-right: 8px; }
-    .tag-badge { background-color: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 2px 6px; font-size: 0.85em; }
-  </style>
-</head>
-<body>
-  <h1>🏆 Ranking de Títulos por Equipa</h1>
-  <table id="ranking-table">
-    <thead>
-      <tr>
-        <th>Posição</th>
-        <th>Equipa</th>
-        <th>TAG</th>
-        <th>Região</th>
-        <th>Títulos</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <!-- Dados em memória -->
+    let rawTeamsData = [];
+    let currentActiveTab = 'GERAL'; // 'GERAL' ou o nome de uma Região (ex: 'SP', 'RJ')
+    let searchQuery = '';
 
-  <script>
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?output=csv?cache=' + new Date().getTime();
+    // Dados de demonstração ampliados (refletindo o exemplo da planilha e mais times)
+    const DEMO_DATA = [
+      { name: 'Time A', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'SP', tag: 'TAG-A', titles: 5 },
+      { name: 'Time B', logo: '', region: 'MG', tag: 'TAG-B', titles: 3 },
+      { name: 'Time C', logo: '', region: 'RJ', tag: 'TAG-C', titles: 9 },
+      { name: 'Time D', logo: '', region: 'SP', tag: 'TAG-D', titles: 1 },
+      { name: 'Time E', logo: '', region: 'MG', tag: 'TAG-E', titles: 4 },
+      { name: 'Time F', logo: '', region: 'ES', tag: 'TAG-F', titles: 0 },
+      { name: 'Time G', logo: '', region: 'PR', tag: 'TAG-G', titles: 7 },
+      { name: 'Time H', logo: '', region: 'RJ', tag: 'TAG-H', titles: 2 },
+      { name: 'Time I', logo: '', region: 'SP', tag: 'TAG-I', titles: 6 },
+      { name: 'Time J', logo: '', region: 'SC', tag: 'TAG-J', titles: 3 }
+    ];
 
-    fetch(CSV_URL)
-      .then(response => response.text())
-      .then(csvText => {
-        // Divide as linhas e ignora o cabeçalho (linha 1)
-        const rows = csvText.trim().split('\n').slice(1);
+    // Paleta de cores para os badges das Regiões
+<!-- ... existing code -->
+    // --- PARSER DE CSV ROBUSTO (SUPORTA MULTILINHAS, CÉLULAS VAZIAS E COM/SEM CABEÇALHO) ---
+    function parseCsv(csvText) {
+      if (!csvText || !csvText.trim()) {
+        rawTeamsData = [];
+        return;
+      }
+
+      // 1. Extrai todas as linhas e colunas respeitando aspas e quebras de linha
+      const { rows } = parseFullCsv(csvText);
+      if (rows.length === 0) {
+        rawTeamsData = [];
+        return;
+      }
+
+      // 2. Identifica se a primeira linha é um cabeçalho
+      const firstRow = rows[0];
+      const headerKeywords = ['time', 'equipe', 'nome', 'clube', 'team', 'logo', 'link', 'regiao', 'uf', 'estado', 'tag', 'titulo', 'titulos', 'vitoria', 'ponto'];
+      
+      const hasHeader = firstRow.some(col => {
+        const norm = col.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return headerKeywords.some(k => norm.includes(k));
+      });
+
+      let nameIdx = 0, logoIdx = 1, regionIdx = 2, tagIdx = 3, titlesIdx = 4;
+      let dataRows = rows;
+
+      if (hasHeader) {
+        dataRows = rows.slice(1); // Remove a linha de cabeçalho apenas se ela existir
+        const headers = firstRow.map(h => h.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
         
-        const teams = rows.map(row => {
-          const cols = row.split(',');
-          return {
-            name: cols[0] ? cols[0].trim() : '',
-            logo: cols[1] ? cols[1].trim() : '',
-            region: cols[2] ? cols[2].trim() : '',
-            tag: cols[3] ? cols[3].trim() : '',
-            titles: parseInt(cols[4] ? cols[4].trim() : '0', 10) || 0
-          };
+        const findIdx = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
+
+        const nIdx = findIdx(['time', 'equipe', 'nome', 'clube', 'team']);
+        const lIdx = findIdx(['logo', 'link', 'img', 'imagem']);
+        const rIdx = findIdx(['regiao', 'uf', 'estado']);
+        const tgIdx = findIdx(['tag']);
+        const tIdx = findIdx(['titulo', 'titulos', 'vitoria', 'ponto', 'pts']);
+
+        if (nIdx !== -1) nameIdx = nIdx;
+        if (lIdx !== -1) logoIdx = lIdx;
+        if (rIdx !== -1) regionIdx = rIdx;
+        if (tgIdx !== -1) tagIdx = tgIdx;
+        if (tIdx !== -1) titlesIdx = tIdx;
+      }
+
+      // 3. Processa cada linha de dados sem descartar a primeira se não houver cabeçalho
+      rawTeamsData = dataRows.map(cols => {
+        const cleanStr = (idx) => (cols[idx] !== undefined ? cols[idx].trim() : '');
+
+        let name = cleanStr(nameIdx);
+        // Fallback: se o nome estiver vazio na coluna esperada, procura a primeira coluna com texto válido
+        if (!name) {
+          name = cols.find(c => c && !c.startsWith('http') && isNaN(c) && c.trim().length > 0) || '';
+        }
+
+        const logo = cleanStr(logoIdx);
+        const region = cleanStr(regionIdx).toUpperCase();
+        const tag = cleanStr(tagIdx).toUpperCase();
+        const titlesRaw = cleanStr(titlesIdx);
+        const titles = parseInt(titlesRaw, 10) || 0;
+
+        return { name, logo, region, tag, titles };
+      }).filter(team => team && team.name.trim().length > 0);
+    }
+
+    // Leitor completo de matriz CSV inteligente
+    function parseFullCsv(csvText) {
+      const rows = [];
+      let curRow = [];
+      let curVal = '';
+      let inQuotes = false;
+      
+      const text = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const firstLine = text.split('\n')[0] || '';
+      const delimiter = (firstLine.split(';').length > firstLine.split(',').length) ? ';' : ',';
+
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const next = text[i+1];
+        
+        if (c === '"') {
+          if (inQuotes && next === '"') {
+            curVal += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (c === delimiter && !inQuotes) {
+          curRow.push(curVal.trim());
+          curVal = '';
+        } else if (c === '\n' && !inQuotes) {
+          curRow.push(curVal.trim());
+          if (curRow.some(val => val.length > 0)) {
+            rows.push(curRow);
+          }
+          curRow = [];
+          curVal = '';
+        } else {
+          curVal += c;
+        }
+      }
+      if (curVal.length > 0 || curRow.length > 0) {
+        curRow.push(curVal.trim());
+        if (curRow.some(val => val.length > 0)) {
+          rows.push(curRow);
+        }
+      }
+      return { rows, delimiter };
+    }
+
+    // --- ATUALIZA A INTERFACE COMPLETA ---
+    function updateUI() {
+      document.getElementById('loading-state').classList.add('hidden');
+      
+      // Ordenar decrescente por títulos
+      rawTeamsData.sort((a, b) => b.titles - a.titles);
+
+      renderStats();
+      renderTabs();
+      renderTable();
+
+      // Atualiza timestamp de checagem
+      const now = new Date();
+      document.getElementById('last-updated-text').textContent = 
+        `Última checagem: ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+    }
+
+    // --- EXIBIR ESTATÍSTICAS ---
+    function renderStats() {
+      const totalTeams = rawTeamsData.length;
+      const totalTitles = rawTeamsData.reduce((sum, t) => sum + t.titles, 0);
+      
+      const regionsSet = new Set(rawTeamsData.map(t => t.region).filter(Boolean));
+      const totalRegions = regionsSet.size;
+
+      const topTeam = rawTeamsData.length > 0 ? rawTeamsData[0].name : '-';
+
+      document.getElementById('stat-total-teams').textContent = totalTeams;
+      document.getElementById('stat-total-titles').textContent = totalTitles;
+      document.getElementById('stat-total-regions').textContent = totalRegions;
+      document.getElementById('stat-top-team').textContent = topTeam;
+    }
+
+    // --- GERAR ABAS DINÂMICAS (GERAL + REGIÕES) ---
+    function renderTabs() {
+      const tabsNav = document.getElementById('tabs-nav');
+      tabsNav.innerHTML = '';
+
+      // 1. Obter lista de regiões únicas presentes nos dados
+      const regions = Array.from(new Set(rawTeamsData.map(t => t.region).filter(Boolean))).sort();
+
+      // Se a aba ativa atual não existe mais nas regiões e não é GERAL, reseta para GERAL
+      if (currentActiveTab !== 'GERAL' && !regions.includes(currentActiveTab)) {
+        currentActiveTab = 'GERAL';
+      }
+
+      // Lista de abas a serem criadas
+      const tabList = [
+        { id: 'GERAL', label: 'Geral', count: rawTeamsData.length },
+        ...regions.map(r => ({
+          id: r,
+          label: `Região ${r}`,
+          count: rawTeamsData.filter(t => t.region === r).length
+        }))
+      ];
+
+      tabList.forEach(tab => {
+        const isActive = currentActiveTab === tab.id;
+        const btn = document.createElement('button');
+        
+        btn.className = `px-4 py-2 text-xs font-semibold rounded-xl transition duration-150 flex items-center space-x-2 shrink-0 ${
+          isActive 
+            ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' 
+            : 'bg-dark-card text-gray-400 hover:text-white border border-dark-border hover:bg-dark-hover'
+        }`;
+
+        btn.innerHTML = `
+          <span>${tab.label}</span>
+          <span class="px-1.5 py-0.5 rounded-full text-[10px] ${
+            isActive ? 'bg-white/20 text-white' : 'bg-dark-border text-gray-400'
+          }">${tab.count}</span>
+        `;
+
+        btn.addEventListener('click', () => {
+          currentActiveTab = tab.id;
+          renderTabs();
+          renderTable();
         });
 
-        // Ordenar as equipas por quantidade de títulos (decrescente)
-        teams.sort((a, b) => b.titles - a.titles);
+        tabsNav.appendChild(btn);
+      });
+    }
 
-        const tbody = document.querySelector('#ranking-table tbody');
-        tbody.innerHTML = '';
+    // --- RENDERIZAR TABELA DE RANKING ---
+    function renderTable() {
+      const tbody = document.getElementById('ranking-tbody');
+      const emptyState = document.getElementById('empty-state');
+      tbody.innerHTML = '';
 
-        teams.forEach((item, index) => {
-          const tr = document.createElement('tr');
-          const logoHtml = item.logo ? `<img src="${item.logo}" class="logo-img" alt="${item.name}">` : '';
-          
-          tr.innerHTML = `
-            <td>${index + 1}º</td>
-            <td>${logoHtml}${item.name}</td>
-            <td><span class="tag-badge">${item.tag}</span></td>
-            <td>${item.region}</td>
-            <td><strong>${item.titles}</strong></td>
-          `;
-          tbody.appendChild(tr);
-        });
-      })
-      .catch(err => console.error('Erro ao carregar os dados:', err));
+      // 1. Filtrar por aba ativa (Geral ou Região específica)
+      let filtered = rawTeamsData;
+      if (currentActiveTab !== 'GERAL') {
+        filtered = filtered.filter(t => t.region === currentActiveTab);
+      }
+
+      // 2. Filtrar por busca (nome ou tag)
+      if (searchQuery) {
+        filtered = filtered.filter(t => 
+          t.name.toLowerCase().includes(searchQuery) || 
+          t.tag.toLowerCase().includes(searchQuery)
+        );
+      }
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      // 3. Montar linhas da tabela
+      filtered.forEach((team, index) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-dark-hover/50 transition duration-150';
+
+        // Posição no Ranking (Posição relativa ao filtro atual)
+        const pos = index + 1;
+        let posBadgeHtml = `<span class="font-bold text-gray-400 text-xs">${pos}º</span>`;
+        
+        if (pos === 1) {
+          posBadgeHtml = `<div class="w-7 h-7 mx-auto rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-black text-xs shadow-sm shadow-amber-500/20">🥇</div>`;
+        } else if (pos === 2) {
+          posBadgeHtml = `<div class="w-7 h-7 mx-auto rounded-full bg-slate-300/20 text-slate-300 border border-slate-300/30 flex items-center justify-center font-black text-xs">🥈</div>`;
+        } else if (pos === 3) {
+          posBadgeHtml = `<div class="w-7 h-7 mx-auto rounded-full bg-amber-700/20 text-amber-600 border border-amber-700/30 flex items-center justify-center font-black text-xs">🥉</div>`;
+        }
+
+        // Avatar / Logo
+        const initial = team.name.charAt(0).toUpperCase();
+        const logoHtml = team.logo 
+          ? `<img src="${team.logo}" alt="${team.name}" class="w-8 h-8 rounded-lg object-contain bg-dark-bg p-0.5 border border-dark-border" onerror="this.onerror=null; this.src='https://placehold.co/40x40/21262d/c9d1d9?text=${initial}'">`
+          : `<div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">${initial}</div>`;
+
+        // Badge de Região
+        const regionClass = REGION_COLORS[team.region] || 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+        const regionBadge = team.region 
+          ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-semibold border ${regionClass}">${team.region}</span>`
+          : `<span class="text-gray-600 text-xs">-</span>`;
+
+        // TAG Badge
+        const tagBadge = team.tag 
+          ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-mono bg-dark-bg border border-dark-border text-gray-300">${team.tag}</span>`
+          : `<span class="text-gray-600 text-xs">-</span>`;
+
+        tr.innerHTML = `
+          <td class="py-3.5 px-4 text-center">${posBadgeHtml}</td>
+          <td class="py-3.5 px-4">
+            <div class="flex items-center space-x-3">
+              ${logoHtml}
+              <span class="font-semibold text-white tracking-wide">${team.name}</span>
+            </div>
+          </td>
+          <td class="py-3.5 px-4 text-center">${tagBadge}</td>
+          <td class="py-3.5 px-4 text-center">${regionBadge}</td>
+          <td class="py-3.5 px-4 text-right">
+            <span class="inline-flex items-center space-x-1 font-extrabold text-white text-base bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-lg">
+              <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-400 mr-1"></i>
+              ${team.titles}
+            </span>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      // Recria ícones gerados dinamicamente
+      lucide.createIcons();
+    }
   </script>
 </body>
 </html>
