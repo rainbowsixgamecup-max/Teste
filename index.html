@@ -51,9 +51,7 @@
     </div>
 
     <!-- Navegação por Abas (Geral + Regiões) -->
-    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-dark" id="tabs-nav">
-      <!-- Gerado automaticamente via JS -->
-    </div>
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-dark" id="tabs-nav"></div>
 
     <!-- Tabela de Ranking -->
     <div class="bg-dark-card border border-dark rounded-xl overflow-hidden shadow-xl">
@@ -68,9 +66,7 @@
               <th class="px-4 py-3.5 w-28 text-right">Títulos</th>
             </tr>
           </thead>
-          <tbody id="ranking-tbody" class="divide-y divide-dark text-gray-200">
-            <!-- Linhas geradas via JS -->
-          </tbody>
+          <tbody id="ranking-tbody" class="divide-y divide-dark text-gray-200"></tbody>
         </table>
       </div>
       <div id="empty-state" class="hidden p-8 text-center text-gray-400">
@@ -268,7 +264,10 @@
         return;
       }
 
-      const fetchUrl = CSV_URL + (CSV_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+      let fetchUrl = CSV_URL;
+      if (fetchUrl.includes('/pubhtml')) fetchUrl = fetchUrl.replace('/pubhtml', '/pub?output=csv');
+      if (fetchUrl.includes('/edit')) fetchUrl = fetchUrl.replace(/\/edit.*$/, '/export?format=csv');
+      fetchUrl += (fetchUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
 
       fetch(fetchUrl)
         .then(res => res.text())
