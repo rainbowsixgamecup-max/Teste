@@ -11,14 +11,14 @@
     .border-dark { border-color: #30363d; }
     .bg-dark-hover:hover { background-color: #21262d; }
     
-    /* Scrollbar vertical interna para as tabelas */
-    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    /* Scrollbar estilizada para rolagem horizontal e vertical */
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #161b22; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #484f58; }
   </style>
 </head>
-<body class="p-3 md:p-6 w-full min-h-screen overflow-x-hidden">
+<body class="p-3 md:p-6 w-full min-h-screen">
 
   <div class="w-full space-y-5">
     
@@ -51,20 +51,34 @@
       </div>
     </div>
 
+    <!-- Filtro de Seleção de Regiões Exibidas -->
+    <div id="region-filter-bar" class="flex flex-wrap items-center gap-2 bg-dark-card border border-dark rounded-xl p-3">
+      <span class="text-xs font-bold text-gray-300 mr-2 flex items-center gap-1">
+        <span>📍</span> Selecionar Regiões Exibidas:
+      </span>
+      <div id="region-checkboxes" class="flex flex-wrap items-center gap-1.5">
+        <!-- Botões de filtro gerados via JS -->
+      </div>
+    </div>
+
     <!-- PAINEL 1: RANKING TIMES -->
     <div id="section-times" class="space-y-3 w-full">
       <h2 class="text-base font-bold text-white flex items-center gap-2">
-        <span>🛡️</span> Ranking de Equipes (Geral + Regiões)
+        <span>🛡️</span> Ranking de Equipes (Geral + Regiões Selecionadas)
       </h2>
-      <div class="flex flex-row w-full gap-3 items-start flex-nowrap" id="container-times"></div>
+      <div class="relative overflow-x-auto custom-scroll pb-2">
+        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-times"></div>
+      </div>
     </div>
 
     <!-- PAINEL 2: HISTÓRICO POR REGIÕES -->
     <div id="section-hist-regioes" class="space-y-3 w-full hidden">
       <h2 class="text-base font-bold text-white flex items-center gap-2">
-        <span>📜</span> Histórico de Campeonatos (Geral + Regiões)
+        <span>📜</span> Histórico de Campeonatos (Geral + Regiões Selecionadas)
       </h2>
-      <div class="flex flex-row w-full gap-3 items-start flex-nowrap" id="container-hist-regioes"></div>
+      <div class="relative overflow-x-auto custom-scroll pb-2">
+        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-hist-regioes"></div>
+      </div>
     </div>
 
     <!-- PAINEL 3: HISTÓRICO POR COMPETIÇÃO -->
@@ -74,7 +88,7 @@
           <h2 class="text-base font-bold text-white flex items-center gap-2">
             <span>🎯</span> Consulta por Competição
           </h2>
-          <p class="text-xs text-gray-400">Selecione um torneio para visualizar a galeria de edições e os maiores campeões.</p>
+          <p class="text-xs text-gray-400">Selecione um torneio para visualizar o histórico de edições e os maiores campeões.</p>
         </div>
         <div class="flex items-center gap-2">
           <label for="select-competition" class="text-xs font-semibold text-gray-300">Competição:</label>
@@ -83,23 +97,29 @@
         </div>
       </div>
       
-      <div class="flex flex-row w-full gap-3 items-start flex-nowrap" id="container-hist-competicoes"></div>
+      <div class="relative overflow-x-auto custom-scroll pb-2">
+        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-hist-competicoes"></div>
+      </div>
     </div>
 
     <!-- PAINEL 4: JOGADORES POR TÍTULOS -->
     <div id="section-jogadores-titulos" class="space-y-3 w-full hidden">
       <h2 class="text-base font-bold text-white flex items-center gap-2">
-        <span>👑</span> Ranking de Jogadores por Títulos (Geral + Regiões)
+        <span>👑</span> Ranking de Jogadores por Títulos (Geral + Regiões Selecionadas)
       </h2>
-      <div class="flex flex-row w-full gap-3 items-start flex-nowrap" id="container-jogadores-titulos"></div>
+      <div class="relative overflow-x-auto custom-scroll pb-2">
+        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-jogadores-titulos"></div>
+      </div>
     </div>
 
     <!-- PAINEL 5: JOGADORES POR MVPS -->
     <div id="section-jogadores-mvps" class="space-y-3 w-full hidden">
       <h2 class="text-base font-bold text-white flex items-center gap-2">
-        <span>⭐</span> Ranking de Jogadores por MVPs (Geral + Regiões)
+        <span>⭐</span> Ranking de Jogadores por MVPs (Geral + Regiões Selecionadas)
       </h2>
-      <div class="flex flex-row w-full gap-3 items-start flex-nowrap" id="container-jogadores-mvps"></div>
+      <div class="relative overflow-x-auto custom-scroll pb-2">
+        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-jogadores-mvps"></div>
+      </div>
     </div>
 
   </div>
@@ -115,6 +135,10 @@
     let dataTimes = [];
     let dataHistorico = [];
     let dataJogadores = [];
+
+    // Estado das regiões selecionadas
+    let availableRegions = [];
+    let activeRegions = new Set();
 
     function parseCsvRows(text) {
       const rows = [];
@@ -151,6 +175,8 @@
           section.classList.add('hidden');
         }
       });
+      // Esconde o filtro de região apenas na aba de consulta por competição
+      document.getElementById('region-filter-bar').style.display = (tabId === 'hist-competicoes') ? 'none' : 'flex';
     }
 
     function getPosBadge(idx) {
@@ -161,6 +187,70 @@
     }
 
     // -------------------------------------------------------------------------
+    // SISTEMA DE FILTRO DE REGIÕES
+    // -------------------------------------------------------------------------
+    function updateAvailableRegions() {
+      const regTimes = dataTimes.map(t => t.region);
+      const regHist = dataHistorico.map(h => h.region);
+      const regJog = dataJogadores.map(j => j.region);
+
+      availableRegions = Array.from(new Set([...regTimes, ...regHist, ...regJog].filter(Boolean))).sort();
+      activeRegions = new Set(availableRegions); // Por padrão, seleciona todas
+      renderRegionFilterUI();
+    }
+
+    function toggleRegion(region) {
+      if (region === 'ALL') {
+        if (activeRegions.size === availableRegions.length) {
+          activeRegions.clear();
+        } else {
+          activeRegions = new Set(availableRegions);
+        }
+      } else {
+        if (activeRegions.has(region)) {
+          activeRegions.delete(region);
+        } else {
+          activeRegions.add(region);
+        }
+      }
+      renderRegionFilterUI();
+      renderAllSections();
+    }
+
+    function renderRegionFilterUI() {
+      const container = document.getElementById('region-checkboxes');
+      container.innerHTML = '';
+
+      const isAllSelected = activeRegions.size === availableRegions.length;
+      
+      const allBtn = document.createElement('button');
+      allBtn.className = `px-3 py-1 text-xs font-bold rounded-lg transition ${
+        isAllSelected ? 'bg-blue-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'
+      }`;
+      allBtn.textContent = 'Todas';
+      allBtn.onclick = () => toggleRegion('ALL');
+      container.appendChild(allBtn);
+
+      availableRegions.forEach(reg => {
+        const isSelected = activeRegions.has(reg);
+        const btn = document.createElement('button');
+        btn.className = `px-3 py-1 text-xs font-bold rounded-lg transition flex items-center gap-1.5 ${
+          isSelected ? 'bg-blue-600/30 border border-blue-500 text-blue-300' : 'bg-[#21262d] border border-dark text-gray-400 hover:text-white'
+        }`;
+        btn.innerHTML = `<span>${isSelected ? '✓' : '+'}</span> <span>${reg}</span>`;
+        btn.onclick = () => toggleRegion(reg);
+        container.appendChild(btn);
+      });
+    }
+
+    function renderAllSections() {
+      renderSectionTimes();
+      renderSectionHistRegioes();
+      renderSectionJogadoresTitulos();
+      renderSectionJogadoresMVPs();
+    }
+
+    // -------------------------------------------------------------------------
     // RENDERIZAR: RANKING TIMES
     // -------------------------------------------------------------------------
     function renderSectionTimes() {
@@ -168,16 +258,21 @@
       container.innerHTML = '';
 
       const sortedGeral = [...dataTimes].sort((a, b) => b.titles - a.titles);
-      const regions = Array.from(new Set(dataTimes.map(t => t.region).filter(Boolean))).sort();
+      const selectedRegs = availableRegions.filter(r => activeRegions.has(r));
 
       const groups = [
         { title: 'Ranking Geral', teams: sortedGeral, isGeral: true },
-        ...regions.map(r => ({ title: `Ranking Região ${r}`, teams: dataTimes.filter(t => t.region === r).sort((a, b) => b.titles - a.titles), isGeral: false }))
+        ...selectedRegs.map(r => ({ title: `Ranking Região ${r}`, teams: dataTimes.filter(t => t.region === r).sort((a, b) => b.titles - a.titles), isGeral: false }))
       ];
 
-      groups.forEach(group => {
+      groups.forEach((group, index) => {
         const card = document.createElement('div');
-        card.className = "flex-1 min-w-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        // FIXADO O GERAL NO LADO ESQUERDO
+        const stickyClasses = group.isGeral 
+          ? "sticky left-0 z-20 w-[380px] shrink-0 bg-dark-card border-2 border-blue-500/50 rounded-xl overflow-hidden shadow-2xl flex flex-col" 
+          : "w-[340px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        
+        card.className = stickyClasses;
         
         let rowsHtml = group.teams.map((item, idx) => {
           const pos = getPosBadge(idx);
@@ -202,7 +297,9 @@
 
         card.innerHTML = `
           <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-xs text-white truncate">${group.title}</h3>
+            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
+              ${group.isGeral ? '📌 ' : ''}${group.title}
+            </h3>
             <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${group.teams.length} times</span>
           </div>
           <div class="overflow-y-auto max-h-[600px] custom-scroll">
@@ -231,16 +328,20 @@
       const container = document.getElementById('container-hist-regioes');
       container.innerHTML = '';
 
-      const regions = Array.from(new Set(dataHistorico.map(h => h.region).filter(Boolean))).sort();
+      const selectedRegs = availableRegions.filter(r => activeRegions.has(r));
 
       const groups = [
         { title: 'Geral', list: dataHistorico, isGeral: true },
-        ...regions.map(r => ({ title: `Região ${r}`, list: dataHistorico.filter(h => h.region === r), isGeral: false }))
+        ...selectedRegs.map(r => ({ title: `Região ${r}`, list: dataHistorico.filter(h => h.region === r), isGeral: false }))
       ];
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        card.className = "flex-1 min-w-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        const stickyClasses = group.isGeral 
+          ? "sticky left-0 z-20 w-[420px] shrink-0 bg-dark-card border-2 border-blue-500/50 rounded-xl overflow-hidden shadow-2xl flex flex-col" 
+          : "w-[360px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        
+        card.className = stickyClasses;
 
         let rowsHtml = group.list.map((item) => {
           const logo = item.logo ? `<img src="${item.logo}" class="w-5 h-5 object-contain rounded shrink-0" onerror="this.style.display='none'">` : '';
@@ -264,7 +365,9 @@
 
         card.innerHTML = `
           <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-xs text-white truncate">${group.title}</h3>
+            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
+              ${group.isGeral ? '📌 ' : ''}${group.title}
+            </h3>
             <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${group.list.length} edições</span>
           </div>
           <div class="overflow-y-auto max-h-[600px] custom-scroll">
@@ -318,9 +421,9 @@
       });
       const topChampions = Object.values(teamStats).sort((a, b) => b.wins - a.wins);
 
-      // CARTÃO 1: Histórico das Edições
+      // CARTÃO 1: Histórico das Edições (Fixado no lado esquerdo)
       const cardHistory = document.createElement('div');
-      cardHistory.className = "flex-1 min-w-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+      cardHistory.className = "sticky left-0 z-20 w-[420px] shrink-0 bg-dark-card border-2 border-blue-500/50 rounded-xl overflow-hidden shadow-2xl flex flex-col";
       
       let historyRows = filteredList.map(item => {
         const logo = item.logo ? `<img src="${item.logo}" class="w-5 h-5 object-contain rounded shrink-0" onerror="this.style.display='none'">` : '';
@@ -338,7 +441,7 @@
 
       cardHistory.innerHTML = `
         <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-          <h3 class="font-bold text-xs text-white truncate">Histórico de Edições - ${selectedComp}</h3>
+          <h3 class="font-bold text-xs text-white truncate">📌 Histórico de Edições - ${selectedComp}</h3>
           <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${filteredList.length} edições</span>
         </div>
         <div class="overflow-y-auto max-h-[600px] custom-scroll">
@@ -358,7 +461,7 @@
 
       // CARTÃO 2: Maiores Campeões da Competição
       const cardRank = document.createElement('div');
-      cardRank.className = "flex-1 min-w-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+      cardRank.className = "w-[420px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
       let rankRows = topChampions.map((item, idx) => {
         const pos = getPosBadge(idx);
@@ -409,16 +512,20 @@
       container.innerHTML = '';
 
       const sortedGeral = [...dataJogadores].sort((a, b) => b.titles - a.titles || b.mvps - a.mvps);
-      const regions = Array.from(new Set(dataJogadores.map(j => j.region).filter(Boolean))).sort();
+      const selectedRegs = availableRegions.filter(r => activeRegions.has(r));
 
       const groups = [
         { title: 'Ranking Geral (Títulos)', players: sortedGeral, isGeral: true },
-        ...regions.map(r => ({ title: `Região ${r}`, players: dataJogadores.filter(j => j.region === r).sort((a, b) => b.titles - a.titles || b.mvps - a.mvps), isGeral: false }))
+        ...selectedRegs.map(r => ({ title: `Região ${r}`, players: dataJogadores.filter(j => j.region === r).sort((a, b) => b.titles - a.titles || b.mvps - a.mvps), isGeral: false }))
       ];
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        card.className = "flex-1 min-w-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        const stickyClasses = group.isGeral 
+          ? "sticky left-0 z-20 w-[420px] shrink-0 bg-dark-card border-2 border-blue-500/50 rounded-xl overflow-hidden shadow-2xl flex flex-col" 
+          : "w-[360px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        
+        card.className = stickyClasses;
 
         let rowsHtml = group.players.map((item, idx) => {
           const pos = getPosBadge(idx);
@@ -444,7 +551,9 @@
 
         card.innerHTML = `
           <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-xs text-white truncate">${group.title}</h3>
+            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
+              ${group.isGeral ? '📌 ' : ''}${group.title}
+            </h3>
             <span class="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${group.players.length} jogadores</span>
           </div>
           <div class="overflow-y-auto max-h-[600px] custom-scroll">
@@ -475,16 +584,20 @@
       container.innerHTML = '';
 
       const sortedGeral = [...dataJogadores].sort((a, b) => b.mvps - a.mvps || b.titles - a.titles);
-      const regions = Array.from(new Set(dataJogadores.map(j => j.region).filter(Boolean))).sort();
+      const selectedRegs = availableRegions.filter(r => activeRegions.has(r));
 
       const groups = [
         { title: 'Ranking Geral (MVPs)', players: sortedGeral, isGeral: true },
-        ...regions.map(r => ({ title: `Região ${r}`, players: dataJogadores.filter(j => j.region === r).sort((a, b) => b.mvps - a.mvps || b.titles - a.titles), isGeral: false }))
+        ...selectedRegs.map(r => ({ title: `Região ${r}`, players: dataJogadores.filter(j => j.region === r).sort((a, b) => b.mvps - a.mvps || b.titles - a.titles), isGeral: false }))
       ];
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        card.className = "flex-1 min-w-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        const stickyClasses = group.isGeral 
+          ? "sticky left-0 z-20 w-[420px] shrink-0 bg-dark-card border-2 border-blue-500/50 rounded-xl overflow-hidden shadow-2xl flex flex-col" 
+          : "w-[360px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        
+        card.className = stickyClasses;
 
         let rowsHtml = group.players.map((item, idx) => {
           const pos = getPosBadge(idx);
@@ -510,7 +623,9 @@
 
         card.innerHTML = `
           <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-xs text-white truncate">${group.title}</h3>
+            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
+              ${group.isGeral ? '📌 ' : ''}${group.title}
+            </h3>
             <span class="text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${group.players.length} jogadores</span>
           </div>
           <div class="overflow-y-auto max-h-[600px] custom-scroll">
@@ -616,11 +731,9 @@
 
       document.getElementById('last-updated').textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
 
-      renderSectionTimes();
-      renderSectionHistRegioes();
+      updateAvailableRegions();
+      renderAllSections();
       setupCompetitionOptions();
-      renderSectionJogadoresTitulos();
-      renderSectionJogadoresMVPs();
     }
 
     init();
