@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ranking de Títulos por Equipa</title>
+  <title>Ranking de Títulos por Equipe</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #0d1117; color: #c9d1d9; font-family: system-ui, -apple-system, sans-serif; }
@@ -14,18 +14,18 @@
 </head>
 <body class="p-4 md:p-8">
 
-  <div class="max-w-6xl mx-auto space-y-6">
+  <div class="max-w-6xl mx-auto space-y-8">
     
     <!-- Cabeçalho -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-dark">
       <div>
         <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-          <span>🏆</span> Ranking de Títulos por Equipa
+          <span>🏆</span> Ranking de Títulos por Equipe
         </h1>
         <p class="text-xs text-gray-400 mt-1" id="last-updated">Sincronizado com Google Sheets</p>
       </div>
       <div class="flex items-center gap-2">
-        <input type="text" id="search-input" placeholder="Buscar por equipa ou TAG..." 
+        <input type="text" id="search-input" placeholder="Buscar por equipe ou TAG..." 
                class="bg-dark-card border border-dark rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500 w-full md:w-64">
       </div>
     </div>
@@ -33,7 +33,7 @@
     <!-- Painel de Estatísticas -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="bg-dark-card border border-dark rounded-xl p-4">
-        <span class="text-xs text-gray-400 uppercase font-semibold">Total de Equipas</span>
+        <span class="text-xs text-gray-400 uppercase font-semibold">Total de Equipes</span>
         <div class="text-2xl font-bold text-white mt-1" id="stat-total-teams">0</div>
       </div>
       <div class="bg-dark-card border border-dark rounded-xl p-4">
@@ -50,47 +50,50 @@
       </div>
     </div>
 
-    <!-- Navegação por Abas (Geral + Regiões) -->
-    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-dark" id="tabs-nav"></div>
+    <!-- SEÇÃO 1: RANKING GERAL -->
+    <div class="space-y-3">
+      <h2 class="text-xl font-bold text-white flex items-center gap-2">
+        <span>🌐</span> Ranking Geral
+      </h2>
+      <div class="bg-dark-card border border-dark rounded-xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-semibold">
+              <tr>
+                <th class="px-4 py-3.5 w-16 text-center">Pos</th>
+                <th class="px-4 py-3.5">Equipe</th>
+                <th class="px-4 py-3.5 w-24">TAG</th>
+                <th class="px-4 py-3.5 w-28">Região</th>
+                <th class="px-4 py-3.5 w-28 text-right">Títulos</th>
+              </tr>
+            </thead>
+            <tbody id="geral-tbody" class="divide-y divide-dark text-gray-200"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-    <!-- Tabela de Ranking -->
-    <div class="bg-dark-card border border-dark rounded-xl overflow-hidden shadow-xl">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-semibold">
-            <tr>
-              <th class="px-4 py-3.5 w-16 text-center">Pos</th>
-              <th class="px-4 py-3.5">Equipa</th>
-              <th class="px-4 py-3.5 w-24">TAG</th>
-              <th class="px-4 py-3.5 w-28">Região</th>
-              <th class="px-4 py-3.5 w-28 text-right">Títulos</th>
-            </tr>
-          </thead>
-          <tbody id="ranking-tbody" class="divide-y divide-dark text-gray-200"></tbody>
-        </table>
-      </div>
-      <div id="empty-state" class="hidden p-8 text-center text-gray-400">
-        Nenhuma equipa encontrada para os critérios selecionados.
-      </div>
+    <!-- SEÇÃO 2: RANKINGS POR REGIÃO -->
+    <div class="space-y-6" id="regions-container">
+      <!-- Tabelas regionais geradas via JS -->
     </div>
 
   </div>
 
   <script>
-    // Cole aqui o seu link CSV do Google Sheets
+    // Cole seu link CSV publicado do Google Sheets abaixo
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?output=csv';
 
     let rawTeamsData = [];
-    let currentActiveTab = 'GERAL';
     let searchQuery = '';
 
     const DEMO_DATA = [
-      { name: 'Equipa A', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'SP', tag: 'TAG-A', titles: 5 },
-      { name: 'Equipa B', logo: '', region: 'MG', tag: 'TAG-B', titles: 3 },
-      { name: 'Equipa C', logo: '', region: 'RJ', tag: 'TAG-C', titles: 9 },
-      { name: 'Equipa D', logo: '', region: 'SP', tag: 'TAG-D', titles: 1 },
-      { name: 'Equipa E', logo: '', region: 'MG', tag: 'TAG-E', titles: 4 },
-      { name: 'Equipa F', logo: '', region: 'ES', tag: 'TAG-F', titles: 0 }
+      { name: 'Equipe A', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'SP', tag: 'TAG-A', titles: 5 },
+      { name: 'Equipe B', logo: '', region: 'MG', tag: 'TAG-B', titles: 3 },
+      { name: 'Equipe C', logo: '', region: 'RJ', tag: 'TAG-C', titles: 9 },
+      { name: 'Equipe D', logo: '', region: 'SP', tag: 'TAG-D', titles: 1 },
+      { name: 'Equipe E', logo: '', region: 'MG', tag: 'TAG-E', titles: 4 },
+      { name: 'Equipe F', logo: '', region: 'ES', tag: 'TAG-F', titles: 0 }
     ];
 
     function parseFullCsv(csvText) {
@@ -161,8 +164,7 @@
       rawTeamsData.sort((a, b) => b.titles - a.titles);
       document.getElementById('last-updated').textContent = `Última verificação: ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
       renderStats();
-      renderTabs();
-      renderTable();
+      renderAllTables();
     }
 
     function renderStats() {
@@ -173,60 +175,8 @@
       document.getElementById('stat-top-team').textContent = rawTeamsData.length > 0 ? rawTeamsData[0].name : '-';
     }
 
-    function renderTabs() {
-      const tabsNav = document.getElementById('tabs-nav');
-      const regions = Array.from(new Set(rawTeamsData.map(t => t.region).filter(Boolean))).sort();
-      
-      if (currentActiveTab !== 'GERAL' && !regions.includes(currentActiveTab)) currentActiveTab = 'GERAL';
-
-      const tabList = [
-        { id: 'GERAL', label: 'Geral', count: rawTeamsData.length },
-        ...regions.map(r => ({ id: r, label: `Região ${r}`, count: rawTeamsData.filter(t => t.region === r).length }))
-      ];
-
-      tabsNav.innerHTML = '';
-      tabList.forEach(tab => {
-        const isActive = currentActiveTab === tab.id;
-        const btn = document.createElement('button');
-        btn.className = `px-4 py-2 text-xs font-semibold rounded-xl transition duration-150 flex items-center space-x-2 shrink-0 ${
-          isActive 
-            ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' 
-            : 'bg-dark-card text-gray-400 hover:text-white border border-dark hover:bg-dark-hover'
-        }`;
-        btn.innerHTML = `<span>${tab.label}</span> <span class="bg-black/30 px-1.5 py-0.5 rounded-full text-[10px]">${tab.count}</span>`;
-        btn.addEventListener('click', () => {
-          currentActiveTab = tab.id;
-          renderTabs();
-          renderTable();
-        });
-        tabsNav.appendChild(btn);
-      });
-    }
-
-    function renderTable() {
-      const tbody = document.getElementById('ranking-tbody');
-      const emptyState = document.getElementById('empty-state');
-      tbody.innerHTML = '';
-
-      let filtered = currentActiveTab === 'GERAL' 
-        ? [...rawTeamsData] 
-        : rawTeamsData.filter(t => t.region === currentActiveTab);
-
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        filtered = filtered.filter(t => t.name.toLowerCase().includes(q) || t.tag.toLowerCase().includes(q));
-      }
-
-      if (filtered.length === 0) {
-        emptyState.classList.remove('hidden');
-        return;
-      }
-      emptyState.classList.add('hidden');
-
-      filtered.forEach((team, index) => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-dark-hover/50 transition duration-150';
-
+    function buildTableRows(teams) {
+      return teams.map((team, index) => {
         let posBadge = `${index + 1}º`;
         if (index === 0) posBadge = '🥇';
         else if (index === 1) posBadge = '🥈';
@@ -236,26 +186,86 @@
           ? `<img src="${team.logo}" class="w-6 h-6 object-contain rounded" alt="" onerror="this.style.display='none'">` 
           : `<div class="w-6 h-6 rounded bg-gray-700 flex items-center justify-center text-[10px] font-bold text-gray-300">${team.tag || 'T'}</div>`;
 
-        tr.innerHTML = `
-          <td class="px-4 py-3 text-center font-bold text-base">${posBadge}</td>
-          <td class="px-4 py-3 font-semibold text-white">
-            <div class="flex items-center space-x-3">
-              ${logoHtml}
-              <span>${team.name}</span>
-            </div>
-          </td>
-          <td class="px-4 py-3"><span class="bg-gray-800 border border-dark text-gray-300 text-xs px-2 py-0.5 rounded font-mono">${team.tag || '-'}</span></td>
-          <td class="px-4 py-3"><span class="text-xs text-gray-400 font-medium">${team.region || '-'}</span></td>
-          <td class="px-4 py-3 text-right font-bold text-base text-yellow-400">${team.titles}</td>
+        return `
+          <tr class="hover:bg-dark-hover/50 transition duration-150">
+            <td class="px-4 py-3 text-center font-bold text-base">${posBadge}</td>
+            <td class="px-4 py-3 font-semibold text-white">
+              <div class="flex items-center space-x-3">
+                ${logoHtml}
+                <span>${team.name}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3"><span class="bg-gray-800 border border-dark text-gray-300 text-xs px-2 py-0.5 rounded font-mono">${team.tag || '-'}</span></td>
+            <td class="px-4 py-3"><span class="text-xs text-gray-400 font-medium">${team.region || '-'}</span></td>
+            <td class="px-4 py-3 text-right font-bold text-base text-yellow-400">${team.titles}</td>
+          </tr>
         `;
-        tbody.appendChild(tr);
+      }).join('');
+    }
+
+    function renderAllTables() {
+      let data = [...rawTeamsData];
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        data = data.filter(t => t.name.toLowerCase().includes(q) || t.tag.toLowerCase().includes(q));
+      }
+
+      // Ranking Geral
+      const geralTbody = document.getElementById('geral-tbody');
+      if (data.length === 0) {
+        geralTbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">Nenhuma equipe encontrada.</td></tr>`;
+      } else {
+        geralTbody.innerHTML = buildTableRows(data);
+      }
+
+      // Rankings por Região
+      const regionsContainer = document.getElementById('regions-container');
+      regionsContainer.innerHTML = '';
+
+      const regions = Array.from(new Set(rawTeamsData.map(t => t.region).filter(Boolean))).sort();
+
+      regions.forEach(region => {
+        const regionTeams = data.filter(t => t.region === region);
+        if (searchQuery && regionTeams.length === 0) return;
+
+        const regionSection = document.createElement('div');
+        regionSection.className = 'space-y-3';
+        regionSection.innerHTML = `
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <span>📍</span> Ranking Região ${region}
+            </h2>
+            <span class="text-xs bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">
+              ${regionTeams.length} equipes
+            </span>
+          </div>
+          <div class="bg-dark-card border border-dark rounded-xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-semibold">
+                  <tr>
+                    <th class="px-4 py-3.5 w-16 text-center">Pos</th>
+                    <th class="px-4 py-3.5">Equipe</th>
+                    <th class="px-4 py-3.5 w-24">TAG</th>
+                    <th class="px-4 py-3.5 w-28">Região</th>
+                    <th class="px-4 py-3.5 w-28 text-right">Títulos</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-dark text-gray-200">
+                  ${regionTeams.length > 0 ? buildTableRows(regionTeams) : `<tr><td colspan="5" class="p-6 text-center text-gray-400">Nenhuma equipe nesta região.</td></tr>`}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        regionsContainer.appendChild(regionSection);
       });
     }
 
     function init() {
       document.getElementById('search-input').addEventListener('input', (e) => {
         searchQuery = e.target.value.trim();
-        renderTable();
+        renderAllTables();
       });
 
       if (!CSV_URL || CSV_URL.includes('COLE_SEU_LINK')) {
