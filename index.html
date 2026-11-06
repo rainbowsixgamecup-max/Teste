@@ -10,11 +10,6 @@
     .bg-dark-card { background-color: #161b22; }
     .border-dark { border-color: #30363d; }
     .bg-dark-hover:hover { background-color: #21262d; }
-    /* Scrollbar personalizada para as listas lado a lado */
-    .custom-scroll::-webkit-scrollbar { height: 8px; }
-    .custom-scroll::-webkit-scrollbar-track { background: #161b22; border-radius: 4px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #484f58; }
   </style>
 </head>
 <body class="p-4 md:p-8">
@@ -46,42 +41,33 @@
 
     <!-- PAINEL CONTEÚDO: RANKING TIMES -->
     <div id="section-times" class="space-y-4">
-      <div class="flex justify-between items-center">
-        <h2 class="text-lg font-bold text-white flex items-center gap-2">
-          <span>🛡️</span> Ranking de Equipes (Geral + Regiões)
-        </h2>
-        <span class="text-xs text-gray-400">Deslize para o lado para ver todas as regiões →</span>
-      </div>
-
-      <div class="flex gap-6 overflow-x-auto pb-4 custom-scroll" id="container-times">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+        <span>🛡️</span> Ranking de Equipes (Geral + Regiões)
+      </h2>
+      <!-- Layout Grid (Sem Scroll Lateral) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="container-times">
         <!-- Renderizado via JS -->
       </div>
     </div>
 
     <!-- PAINEL CONTEÚDO: HISTÓRICO DE COMPETIÇÕES -->
     <div id="section-historico" class="space-y-4 hidden">
-      <div class="flex justify-between items-center">
-        <h2 class="text-lg font-bold text-white flex items-center gap-2">
-          <span>📜</span> Histórico de Campeonatos (Geral + Regiões)
-        </h2>
-        <span class="text-xs text-gray-400">Deslize para o lado para ver todas as regiões →</span>
-      </div>
-
-      <div class="flex gap-6 overflow-x-auto pb-4 custom-scroll" id="container-historico">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+        <span>📜</span> Histórico de Campeonatos (Geral + Regiões)
+      </h2>
+      <!-- Layout Grid (Sem Scroll Lateral) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="container-historico">
         <!-- Renderizado via JS -->
       </div>
     </div>
 
     <!-- PAINEL CONTEÚDO: JOGADORES -->
     <div id="section-jogadores" class="space-y-4 hidden">
-      <div class="flex justify-between items-center">
-        <h2 class="text-lg font-bold text-white flex items-center gap-2">
-          <span>👤</span> Ranking de Jogadores por Títulos (Geral + Regiões)
-        </h2>
-        <span class="text-xs text-gray-400">Deslize para o lado para ver todas as regiões →</span>
-      </div>
-
-      <div class="flex gap-6 overflow-x-auto pb-4 custom-scroll" id="container-jogadores">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+        <span>👤</span> Ranking de Jogadores por Títulos (Geral + Regiões)
+      </h2>
+      <!-- Layout Grid (Sem Scroll Lateral) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="container-jogadores">
         <!-- Renderizado via JS -->
       </div>
     </div>
@@ -91,15 +77,14 @@
   <script>
     /* =========================================================================
        CONFIGURAÇÃO DOS LINKS DAS ABAS DO GOOGLE SHEETS (CSV)
-       Cole os links CSV de cada uma das 3 abas da sua planilha.
-       Se deixar vazio, a página usará os dados de demonstração dos seus anexos.
+       Cole os seus links CSV entre as aspas simples ' '.
     ========================================================================= */
     const CSV_URL_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=0&single=true&output=csv';     // Aba "Ranking Times"
     const CSV_URL_HISTORICO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=195413319&single=true&output=csv'; // Aba "Histórico de Competições"
     const CSV_URL_JOGADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1601155160&single=true&output=csv'; // Aba "Jogadores"
 
     // -------------------------------------------------------------------------
-    // DADOS DE DEMONSTRAÇÃO (Filtros baseados nas suas imagens)
+    // DADOS DE DEMONSTRAÇÃO
     // -------------------------------------------------------------------------
     const DEMO_TIMES = [
       { name: 'Loud', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'BR', tag: 'LLL', titles: 5 },
@@ -134,9 +119,6 @@
     let dataHistorico = [];
     let dataJogadores = [];
 
-    // -------------------------------------------------------------------------
-    // LEITOR DE CSV ROBUSTO
-    // -------------------------------------------------------------------------
     function parseCsvRows(text) {
       const rows = [];
       let curRow = [], curVal = '', inQuotes = false;
@@ -159,9 +141,6 @@
       return rows;
     }
 
-    // -------------------------------------------------------------------------
-    // TROCA DE ABAS NATIVAS DO SITE
-    // -------------------------------------------------------------------------
     function switchMainTab(tab) {
       const tabs = ['times', 'historico', 'jogadores'];
       tabs.forEach(t => {
@@ -178,7 +157,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR ABA 1: RANKING TIMES
+    // RENDERIZAR RANKING TIMES
     // -------------------------------------------------------------------------
     function renderSectionTimes() {
       const container = document.getElementById('container-times');
@@ -194,7 +173,7 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        card.className = "w-[360px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        card.className = "w-full bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
         
         let rowsHtml = group.teams.map((item, idx) => {
           let pos = `${idx + 1}º`;
@@ -239,7 +218,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR ABA 2: HISTÓRICO DE COMPETIÇÕES
+    // RENDERIZAR HISTÓRICO DE COMPETIÇÕES
     // -------------------------------------------------------------------------
     function renderSectionHistorico() {
       const container = document.getElementById('container-historico');
@@ -254,7 +233,7 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        card.className = "w-[420px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        card.className = "w-full bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
         let rowsHtml = group.list.map((item) => {
           const logo = item.logo ? `<img src="${item.logo}" class="w-4 h-4 object-contain rounded" onerror="this.style.display='none'">` : '';
@@ -294,7 +273,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR ABA 3: JOGADORES
+    // RENDERIZAR JOGADORES
     // -------------------------------------------------------------------------
     function renderSectionJogadores() {
       const container = document.getElementById('container-jogadores');
@@ -310,7 +289,7 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        card.className = "w-[400px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        card.className = "w-full bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
         let rowsHtml = group.players.map((item, idx) => {
           let pos = `${idx + 1}º`;
@@ -355,7 +334,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // CARREGAMENTO DAS FONTES DE DADOS (CSV / GOOGLE SHEETS)
+    // CARREGAMENTO E PARSERS COM FILTROS DE CABEÇALHO/TÍTULO
     // -------------------------------------------------------------------------
     async function fetchCsvData(url, defaultData, parseFn) {
       if (!url || url.includes('COLE_SEU_LINK')) return defaultData;
@@ -377,40 +356,56 @@
 
     function parseTimesCsv(csvText) {
       const rows = parseCsvRows(csvText);
-      const dataRows = (rows[0] && rows[0][0].toLowerCase().includes('time')) ? rows.slice(1) : rows;
-      return dataRows.map(r => ({
+      const invalidNames = ['ranking geral', 'time', 'equipe', 'clube', 'nome', 'team'];
+
+      return rows.map(r => ({
         name: r[0] || '',
         logo: r[1] || '',
         region: (r[2] || '').toUpperCase(),
         tag: (r[3] || '').toUpperCase(),
         titles: parseInt(r[4] || '0', 10) || 0
-      })).filter(t => t.name);
+      })).filter(t => {
+        if (!t.name) return false;
+        const norm = t.name.toLowerCase().trim();
+        return !invalidNames.includes(norm);
+      });
     }
 
     function parseHistoricoCsv(csvText) {
       const rows = parseCsvRows(csvText);
-      const dataRows = (rows[0] && rows[0][0].toLowerCase().includes('regi')) ? rows.slice(1) : rows;
-      return dataRows.map(r => ({
+      const invalidWords = ['região', 'regiao', 'geral', 'competição', 'competicao'];
+
+      return rows.map(r => ({
         region: (r[0] || '').toUpperCase(),
         comp: r[1] || '',
         season: r[2] || '',
         champion: r[3] || '',
         logo: r[4] || '',
         tag: (r[5] || '').toUpperCase()
-      })).filter(h => h.comp || h.champion);
+      })).filter(h => {
+        if (!h.comp && !h.champion) return false;
+        const normComp = (h.comp || '').toLowerCase().trim();
+        const normReg = (h.region || '').toLowerCase().trim();
+        return !invalidWords.includes(normComp) && !invalidWords.includes(normReg);
+      });
     }
 
     function parseJogadoresCsv(csvText) {
       const rows = parseCsvRows(csvText);
-      const dataRows = (rows[0] && rows[0][0].toLowerCase().includes('jogador')) ? rows.slice(1) : rows;
-      return dataRows.map(r => ({
+      const invalidNames = ['jogador', 'nome', 'player', 'time atual'];
+
+      return rows.map(r => ({
         name: r[0] || '',
         team: r[1] || '',
         logo: r[2] || '',
         titles: parseInt(r[3] || '0', 10) || 0,
         mvps: parseInt(r[4] || '0', 10) || 0,
         region: (r[5] || '').toUpperCase()
-      })).filter(j => j.name);
+      })).filter(j => {
+        if (!j.name) return false;
+        const norm = j.name.toLowerCase().trim();
+        return !invalidNames.includes(norm);
+      });
     }
 
     async function init() {
