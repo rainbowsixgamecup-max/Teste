@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Central de E-sports - Rankings e Histórico</title>
+  <title>Game Cup Rainbow Six Siege</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #0d1117; color: #c9d1d9; font-family: system-ui, -apple-system, sans-serif; }
@@ -11,8 +11,7 @@
     .border-dark { border-color: #30363d; }
     .bg-dark-hover:hover { background-color: #21262d; }
     
-    /* Scrollbar personalizada para navegação horizontal side-by-side */
-    .custom-scroll::-webkit-scrollbar { height: 8px; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #161b22; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #484f58; }
@@ -26,7 +25,7 @@
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-dark">
       <div>
         <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-          <span>🏆</span> Central de Campeonatos & Rankings
+          <span>🏆</span> Game Cup Rainbow Six Siege
         </h1>
         <p class="text-xs text-gray-400 mt-1" id="last-updated">Sincronizado em tempo real com o Google Sheets</p>
       </div>
@@ -57,9 +56,9 @@
         <h2 class="text-lg font-bold text-white flex items-center gap-2">
           <span>🛡️</span> Ranking de Equipes (Geral + Regiões)
         </h2>
-        <span class="text-xs text-gray-400">Deslize lateralmente para ver todas as regiões →</span>
       </div>
-      <div class="flex flex-nowrap gap-6 overflow-x-auto pb-4 custom-scroll" id="container-times"></div>
+      <!-- Grid Responsivo Sem Scroll Lateral -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full" id="container-times"></div>
     </div>
 
     <!-- PAINEL 2: HISTÓRICO POR REGIÕES -->
@@ -68,9 +67,9 @@
         <h2 class="text-lg font-bold text-white flex items-center gap-2">
           <span>📜</span> Histórico de Campeonatos (Geral + Regiões)
         </h2>
-        <span class="text-xs text-gray-400">Deslize lateralmente para ver todas as regiões →</span>
       </div>
-      <div class="flex flex-nowrap gap-6 overflow-x-auto pb-4 custom-scroll" id="container-hist-regioes"></div>
+      <!-- Grid Responsivo Sem Scroll Lateral -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full" id="container-hist-regioes"></div>
     </div>
 
     <!-- PAINEL 3: HISTÓRICO POR COMPETIÇÃO -->
@@ -90,7 +89,8 @@
         </div>
       </div>
       
-      <div class="flex flex-nowrap gap-6 overflow-x-auto pb-4 custom-scroll" id="container-hist-competicoes"></div>
+      <!-- Grid Responsivo Sem Scroll Lateral -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full" id="container-hist-competicoes"></div>
     </div>
 
     <!-- PAINEL 4: JOGADORES POR TÍTULOS -->
@@ -99,9 +99,9 @@
         <h2 class="text-lg font-bold text-white flex items-center gap-2">
           <span>👑</span> Ranking de Jogadores por Títulos (Geral + Regiões)
         </h2>
-        <span class="text-xs text-gray-400">Deslize lateralmente para ver todas as regiões →</span>
       </div>
-      <div class="flex flex-nowrap gap-6 overflow-x-auto pb-4 custom-scroll" id="container-jogadores-titulos"></div>
+      <!-- Grid Responsivo Sem Scroll Lateral -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full" id="container-jogadores-titulos"></div>
     </div>
 
     <!-- PAINEL 5: JOGADORES POR MVPS -->
@@ -110,9 +110,9 @@
         <h2 class="text-lg font-bold text-white flex items-center gap-2">
           <span>⭐</span> Ranking de Jogadores por MVPs (Geral + Regiões)
         </h2>
-        <span class="text-xs text-gray-400">Deslize lateralmente para ver todas as regiões →</span>
       </div>
-      <div class="flex flex-nowrap gap-6 overflow-x-auto pb-4 custom-scroll" id="container-jogadores-mvps"></div>
+      <!-- Grid Responsivo Sem Scroll Lateral -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full" id="container-jogadores-mvps"></div>
     </div>
 
   </div>
@@ -120,43 +120,10 @@
   <script>
     /* =========================================================================
        LINKS DAS ABAS DO GOOGLE SHEETS (CSV)
-       Insira a URL publicada CSV dentro de cada par de aspas simples.
     ========================================================================= */
-    const CSV_URL_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=0&single=true&output=csv';     // Aba "Ranking Times"
-    const CSV_URL_HISTORICO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=195413319&single=true&output=csv'; // Aba "Histórico de Competições"
-    const CSV_URL_JOGADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1601155160&single=true&output=csv'; // Aba "Jogadores"
-
-    // -------------------------------------------------------------------------
-    // DADOS DE DEMONSTRAÇÃO DE FALLBACK
-    // -------------------------------------------------------------------------
-    const DEMO_TIMES = [
-      { name: 'Loud', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'BR', tag: 'LLL', titles: 5 },
-      { name: 'KRU', logo: '', region: 'LATAM', tag: 'B', titles: 3 },
-      { name: 'LEV', logo: '', region: 'LATAM', tag: 'C', titles: 9 },
-      { name: 'C9', logo: '', region: 'NA', tag: 'D', titles: 1 },
-      { name: 'SEN', logo: '', region: 'NA', tag: 'E', titles: 4 },
-      { name: 'F', logo: '', region: 'ES', tag: 'F', titles: 0 },
-      { name: 'Fluxo', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'BR', tag: 'FX', titles: 2 },
-      { name: 'RED', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', region: 'BR', tag: 'RED', titles: 6 }
-    ];
-
-    const DEMO_HISTORICO = [
-      { region: 'BR', comp: 'LIGA BR', season: '2026.1', champion: 'LOUD', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', tag: 'LLL' },
-      { region: 'LATAM', comp: 'LIGA LATAM', season: '2026.1', champion: 'KRU', logo: '', tag: 'B' },
-      { region: 'NA', comp: 'LIGA NA', season: '2026.1', champion: 'SEN', logo: '', tag: 'E' },
-      { region: 'BR', comp: 'COPA BR', season: '2026', champion: 'FLUXO', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', tag: 'FX' },
-      { region: 'LATAM', comp: 'COPA LATAM', season: '2026', champion: 'KRU', logo: '', tag: 'B' },
-      { region: 'NA', comp: 'COPA NA', season: '2026', champion: 'C9', logo: '', tag: 'D' },
-      { region: 'BR', comp: 'LIGA BR', season: '2026.2', champion: 'LOUD', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', tag: 'LLL' },
-      { region: 'LATAM', comp: 'LIGA LATAM', season: '2026.2', champion: 'LEV', logo: '', tag: 'C' },
-      { region: 'NA', comp: 'LIGA NA', season: '2026.2', champion: 'SEN', logo: '', tag: 'E' }
-    ];
-
-    const DEMO_JOGADORES = [
-      { name: 'Couto', team: 'Loud', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', titles: 5, mvps: 6, region: 'BR' },
-      { name: 'Ray', team: 'Fluxo', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', titles: 2, mvps: 2, region: 'NA' },
-      { name: 'Naty', team: 'Red', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo-Shield-Sample.svg', titles: 0, mvps: 0, region: 'LATAM' }
-    ];
+    const CSV_URL_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=0&single=true&output=csv';
+    const CSV_URL_HISTORICO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=195413319&single=true&output=csv';
+    const CSV_URL_JOGADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1601155160&single=true&output=csv';
 
     let dataTimes = [];
     let dataHistorico = [];
@@ -188,7 +155,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // SISTEMA DE TROCA DE ABAS
+    // TROCA DE ABAS NATIVAS
     // -------------------------------------------------------------------------
     function switchMainTab(tabId) {
       const allTabs = ['times', 'hist-regioes', 'hist-competicoes', 'jogadores-titulos', 'jogadores-mvps'];
@@ -206,7 +173,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR: RANKING TIMES (SIDE-BY-SIDE)
+    // RENDERIZAR: RANKING TIMES
     // -------------------------------------------------------------------------
     function renderSectionTimes() {
       const container = document.getElementById('container-times');
@@ -216,13 +183,13 @@
       const regions = Array.from(new Set(dataTimes.map(t => t.region).filter(Boolean))).sort();
 
       const groups = [
-        { title: 'Ranking Geral', teams: sortedGeral },
-        ...regions.map(r => ({ title: `Ranking Região ${r}`, teams: dataTimes.filter(t => t.region === r).sort((a, b) => b.titles - a.titles) }))
+        { title: 'Ranking Geral', teams: sortedGeral, isGeral: true },
+        ...regions.map(r => ({ title: `Ranking Região ${r}`, teams: dataTimes.filter(t => t.region === r).sort((a, b) => b.titles - a.titles), isGeral: false }))
       ];
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        card.className = "w-[360px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        card.className = "w-full bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
         
         let rowsHtml = group.teams.map((item, idx) => {
           let pos = `${idx + 1}º`;
@@ -236,7 +203,7 @@
                 <div class="flex items-center gap-2">${logo}<span>${item.name}</span></div>
               </td>
               <td class="px-3 py-2 text-xs text-gray-400 font-mono">${item.tag || '-'}</td>
-              <td class="px-3 py-2 text-xs text-gray-400">${item.region || '-'}</td>
+              <td class="px-3 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>
               <td class="px-3 py-2 text-right font-bold text-yellow-400 text-xs">${item.titles}</td>
             </tr>
           `;
@@ -247,7 +214,7 @@
             <h3 class="font-bold text-sm text-white">${group.title}</h3>
             <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">${group.teams.length} times</span>
           </div>
-          <div class="overflow-y-auto max-h-[500px]">
+          <div class="overflow-y-auto max-h-[500px] custom-scroll">
             <table class="w-full text-left">
               <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase">
                 <tr>
@@ -267,7 +234,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR: HISTÓRICO POR REGIÕES (SIDE-BY-SIDE)
+    // RENDERIZAR: HISTÓRICO POR REGIÕES
     // -------------------------------------------------------------------------
     function renderSectionHistRegioes() {
       const container = document.getElementById('container-hist-regioes');
@@ -276,13 +243,13 @@
       const regions = Array.from(new Set(dataHistorico.map(h => h.region).filter(Boolean))).sort();
 
       const groups = [
-        { title: 'Geral', list: dataHistorico },
-        ...regions.map(r => ({ title: `Região ${r}`, list: dataHistorico.filter(h => h.region === r) }))
+        { title: 'Geral', list: dataHistorico, isGeral: true },
+        ...regions.map(r => ({ title: `Região ${r}`, list: dataHistorico.filter(h => h.region === r), isGeral: false }))
       ];
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        card.className = "w-[420px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        card.className = "w-full bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
         let rowsHtml = group.list.map((item) => {
           const logo = item.logo ? `<img src="${item.logo}" class="w-4 h-4 object-contain rounded" onerror="this.style.display='none'">` : '';
@@ -294,6 +261,7 @@
                 <div class="flex items-center gap-1.5">${logo}<span>${item.champion}</span></div>
               </td>
               <td class="px-3 py-2 text-xs text-gray-400 font-mono">${item.tag || '-'}</td>
+              <td class="px-3 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>
             </tr>
           `;
         }).join('');
@@ -303,7 +271,7 @@
             <h3 class="font-bold text-sm text-white">${group.title}</h3>
             <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">${group.list.length} edições</span>
           </div>
-          <div class="overflow-y-auto max-h-[500px]">
+          <div class="overflow-y-auto max-h-[500px] custom-scroll">
             <table class="w-full text-left">
               <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase">
                 <tr>
@@ -311,9 +279,10 @@
                   <th class="px-3 py-2">Temp.</th>
                   <th class="px-3 py-2">Campeão</th>
                   <th class="px-3 py-2">TAG</th>
+                  <th class="px-3 py-2">Região</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || '<tr><td colspan="4" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || '<tr><td colspan="5" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
             </table>
           </div>
         `;
@@ -322,7 +291,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR: HISTÓRICO POR COMPETIÇÃO (SELETOR + TABELAS LADO A LADO)
+    // RENDERIZAR: HISTÓRICO POR COMPETIÇÃO
     // -------------------------------------------------------------------------
     function setupCompetitionOptions() {
       const select = document.getElementById('select-competition');
@@ -342,7 +311,6 @@
 
       const filteredList = dataHistorico.filter(h => h.comp === selectedComp);
 
-      // Calcular campeões mais vitoriosos desta competição específica
       const teamStats = {};
       filteredList.forEach(item => {
         const champ = item.champion;
@@ -356,7 +324,7 @@
 
       // CARTÃO 1: Histórico das Edições
       const cardHistory = document.createElement('div');
-      cardHistory.className = "w-[480px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+      cardHistory.className = "w-full bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
       
       let historyRows = filteredList.map(item => {
         const logo = item.logo ? `<img src="${item.logo}" class="w-4 h-4 object-contain rounded" onerror="this.style.display='none'">` : '';
@@ -367,7 +335,7 @@
               <div class="flex items-center gap-2">${logo}<span>${item.champion}</span></div>
             </td>
             <td class="px-3 py-2 text-xs text-gray-400 font-mono">${item.tag || '-'}</td>
-            <td class="px-3 py-2 text-xs text-gray-400">${item.region || '-'}</td>
+            <td class="px-3 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>
           </tr>
         `;
       }).join('');
@@ -377,7 +345,7 @@
           <h3 class="font-bold text-sm text-white">Histórico de Edições - ${selectedComp}</h3>
           <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">${filteredList.length} edições</span>
         </div>
-        <div class="overflow-y-auto max-h-[500px]">
+        <div class="overflow-y-auto max-h-[500px] custom-scroll">
           <table class="w-full text-left">
             <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase">
               <tr>
@@ -394,7 +362,7 @@
 
       // CARTÃO 2: Maiores Campeões da Competição
       const cardRank = document.createElement('div');
-      cardRank.className = "w-[480px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+      cardRank.className = "w-full bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
       let rankRows = topChampions.map((item, idx) => {
         let pos = `${idx + 1}º`;
@@ -407,7 +375,7 @@
               <div class="flex items-center gap-2">${logo}<span>${item.name}</span></div>
             </td>
             <td class="px-3 py-2 text-xs text-gray-400 font-mono">${item.tag || '-'}</td>
-            <td class="px-3 py-2 text-xs text-gray-400">${item.region || '-'}</td>
+            <td class="px-3 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>
             <td class="px-3 py-2 text-right font-bold text-yellow-400 text-xs">${item.wins}x</td>
           </tr>
         `;
@@ -418,7 +386,7 @@
           <h3 class="font-bold text-sm text-white">Maiores Campeões - ${selectedComp}</h3>
           <span class="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full font-semibold">${topChampions.length} equipes</span>
         </div>
-        <div class="overflow-y-auto max-h-[500px]">
+        <div class="overflow-y-auto max-h-[500px] custom-scroll">
           <table class="w-full text-left">
             <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase">
               <tr>
@@ -439,7 +407,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR: JOGADORES POR TÍTULOS (SIDE-BY-SIDE)
+    // RENDERIZAR: JOGADORES POR TÍTULOS
     // -------------------------------------------------------------------------
     function renderSectionJogadoresTitulos() {
       const container = document.getElementById('container-jogadores-titulos');
@@ -455,7 +423,7 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        card.className = "w-[400px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        card.className = "w-full bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
         let rowsHtml = group.players.map((item, idx) => {
           let pos = `${idx + 1}º`;
@@ -469,6 +437,7 @@
               <td class="px-3 py-2 font-semibold text-xs text-gray-300">
                 <div class="flex items-center gap-1.5">${logo}<span>${item.team}</span></div>
               </td>
+              <td class="px-3 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>
               <td class="px-3 py-2 text-right font-bold text-yellow-400 text-xs">${item.titles}</td>
               <td class="px-3 py-2 text-right font-bold text-purple-400 text-xs">${item.mvps}</td>
             </tr>
@@ -480,18 +449,19 @@
             <h3 class="font-bold text-sm text-white">${group.title}</h3>
             <span class="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full font-semibold">${group.players.length} jogadores</span>
           </div>
-          <div class="overflow-y-auto max-h-[500px]">
+          <div class="overflow-y-auto max-h-[500px] custom-scroll">
             <table class="w-full text-left">
               <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase">
                 <tr>
                   <th class="px-3 py-2 w-10 text-center">Pos</th>
                   <th class="px-3 py-2">Jogador</th>
                   <th class="px-3 py-2">Time</th>
+                  <th class="px-3 py-2">Região</th>
                   <th class="px-3 py-2 text-right">Títulos</th>
                   <th class="px-3 py-2 text-right">MVPs</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || '<tr><td colspan="5" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || '<tr><td colspan="6" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
             </table>
           </div>
         `;
@@ -500,7 +470,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR: JOGADORES POR MVPS (SIDE-BY-SIDE)
+    // RENDERIZAR: JOGADORES POR MVPS
     // -------------------------------------------------------------------------
     function renderSectionJogadoresMVPs() {
       const container = document.getElementById('container-jogadores-mvps');
@@ -516,7 +486,7 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        card.className = "w-[400px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+        card.className = "w-full bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
         let rowsHtml = group.players.map((item, idx) => {
           let pos = `${idx + 1}º`;
@@ -530,6 +500,7 @@
               <td class="px-3 py-2 font-semibold text-xs text-gray-300">
                 <div class="flex items-center gap-1.5">${logo}<span>${item.team}</span></div>
               </td>
+              <td class="px-3 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>
               <td class="px-3 py-2 text-right font-bold text-purple-400 text-xs">${item.mvps}</td>
               <td class="px-3 py-2 text-right font-bold text-yellow-400 text-xs">${item.titles}</td>
             </tr>
@@ -541,18 +512,19 @@
             <h3 class="font-bold text-sm text-white">${group.title}</h3>
             <span class="text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full font-semibold">${group.players.length} jogadores</span>
           </div>
-          <div class="overflow-y-auto max-h-[500px]">
+          <div class="overflow-y-auto max-h-[500px] custom-scroll">
             <table class="w-full text-left">
               <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase">
                 <tr>
                   <th class="px-3 py-2 w-10 text-center">Pos</th>
                   <th class="px-3 py-2">Jogador</th>
                   <th class="px-3 py-2">Time</th>
+                  <th class="px-3 py-2">Região</th>
                   <th class="px-3 py-2 text-right">MVPs</th>
                   <th class="px-3 py-2 text-right">Títulos</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || '<tr><td colspan="5" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || '<tr><td colspan="6" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
             </table>
           </div>
         `;
@@ -561,25 +533,24 @@
     }
 
     // -------------------------------------------------------------------------
-    // FETCH COM SISTEMA ANTI-CACHE REATIVADO (TIMESTAMP EM MS)
+    // FETCH ANTI-CACHE E PARSERS
     // -------------------------------------------------------------------------
-    async function fetchCsvData(url, defaultData, parseFn) {
-      if (!url || url.includes('COLE_SEU_LINK')) return defaultData;
+    async function fetchCsvData(url, parseFn) {
+      if (!url) return [];
       let cleanUrl = url.trim();
       if (cleanUrl.includes('/pubhtml')) cleanUrl = cleanUrl.replace('/pubhtml', '/pub?output=csv');
       if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv');
       
-      // ANTI-CACHE: adiciona timestamp único na URL para evitar requisições de cache do navegador
       cleanUrl += (cleanUrl.includes('?') ? '&' : '?') + 'cache=' + new Date().getTime();
 
       try {
         const res = await fetch(cleanUrl);
         const text = await res.text();
-        if (text.includes('<!DOCTYPE') || text.includes('<html')) return defaultData;
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) return [];
         return parseFn(text);
       } catch (e) {
         console.error('Erro ao carregar CSV:', e);
-        return defaultData;
+        return [];
       }
     }
 
@@ -638,9 +609,9 @@
     }
 
     async function init() {
-      dataTimes = await fetchCsvData(CSV_URL_TIMES, DEMO_TIMES, parseTimesCsv);
-      dataHistorico = await fetchCsvData(CSV_URL_HISTORICO, DEMO_HISTORICO, parseHistoricoCsv);
-      dataJogadores = await fetchCsvData(CSV_URL_JOGADORES, DEMO_JOGADORES, parseJogadoresCsv);
+      dataTimes = await fetchCsvData(CSV_URL_TIMES, parseTimesCsv);
+      dataHistorico = await fetchCsvData(CSV_URL_HISTORICO, parseHistoricoCsv);
+      dataJogadores = await fetchCsvData(CSV_URL_JOGADORES, parseJogadoresCsv);
 
       document.getElementById('last-updated').textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
 
