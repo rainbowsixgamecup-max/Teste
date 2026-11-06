@@ -29,7 +29,7 @@
   </table>
 
   <script>
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?output=csv';
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?output=csv?cache=' + new Date().getTime();
 
     fetch(CSV_URL)
       .then(response => response.text())
