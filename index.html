@@ -12,113 +12,113 @@
     .bg-dark-hover:hover { background-color: #21262d; }
     
     /* Scrollbar estilizada para rolagem horizontal e vertical */
-    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
     .custom-scroll::-webkit-scrollbar-track { background: #161b22; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #484f58; }
   </style>
 </head>
-<body class="p-3 md:p-6 w-full min-h-screen">
+<body class="p-4 md:p-8 w-full min-h-screen">
 
-  <div class="w-full space-y-5">
+  <div class="w-full space-y-6">
     
     <!-- Topo / Cabeçalho -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-dark">
       <div>
-        <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+        <h1 class="text-3xl font-extrabold text-white flex items-center gap-2">
           <span>🏆</span> Game Cup Rainbow Six Siege
         </h1>
-        <p class="text-xs text-gray-400 mt-1" id="last-updated">Sincronizado em tempo real com o Google Sheets</p>
+        <p class="text-sm text-gray-400 mt-1" id="last-updated">Sincronizado em tempo real com o Google Sheets</p>
       </div>
       
       <!-- Navegação das 5 Abas Principais -->
-      <div class="flex items-center bg-dark-card border border-dark rounded-xl p-1 gap-1 overflow-x-auto custom-scroll">
-        <button id="nav-times" onclick="switchMainTab('times')" class="px-3 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow-md">
+      <div class="flex items-center bg-dark-card border border-dark rounded-xl p-1.5 gap-1.5 overflow-x-auto custom-scroll">
+        <button id="nav-times" onclick="switchMainTab('times')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow-md">
           Ranking Times
         </button>
-        <button id="nav-hist-regioes" onclick="switchMainTab('hist-regioes')" class="px-3 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+        <button id="nav-hist-regioes" onclick="switchMainTab('hist-regioes')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Histórico (Regiões)
         </button>
-        <button id="nav-hist-competicoes" onclick="switchMainTab('hist-competicoes')" class="px-3 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+        <button id="nav-hist-competicoes" onclick="switchMainTab('hist-competicoes')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Histórico (Por Competição)
         </button>
-        <button id="nav-jogadores-titulos" onclick="switchMainTab('jogadores-titulos')" class="px-3 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+        <button id="nav-jogadores-titulos" onclick="switchMainTab('jogadores-titulos')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Jogadores (Títulos)
         </button>
-        <button id="nav-jogadores-mvps" onclick="switchMainTab('jogadores-mvps')" class="px-3 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+        <button id="nav-jogadores-mvps" onclick="switchMainTab('jogadores-mvps')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Jogadores (MVPs)
         </button>
       </div>
     </div>
 
     <!-- Filtro de Seleção de Regiões Exibidas -->
-    <div id="region-filter-bar" class="flex flex-wrap items-center gap-2 bg-dark-card border border-dark rounded-xl p-3">
-      <span class="text-xs font-bold text-gray-300 mr-2 flex items-center gap-1">
+    <div id="region-filter-bar" class="flex flex-wrap items-center gap-3 bg-dark-card border border-dark rounded-xl p-4">
+      <span class="text-sm font-bold text-gray-200 mr-2 flex items-center gap-1.5">
         <span>📍</span> Selecionar Regiões Exibidas:
       </span>
-      <div id="region-checkboxes" class="flex flex-wrap items-center gap-1.5">
+      <div id="region-checkboxes" class="flex flex-wrap items-center gap-2">
         <!-- Botões de filtro gerados via JS -->
       </div>
     </div>
 
     <!-- PAINEL 1: RANKING TIMES -->
-    <div id="section-times" class="space-y-3 w-full">
-      <h2 class="text-base font-bold text-white flex items-center gap-2">
+    <div id="section-times" class="space-y-4 w-full">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
         <span>🛡️</span> Ranking de Equipes (Geral + Regiões Selecionadas)
       </h2>
-      <div class="relative overflow-x-auto custom-scroll pb-2">
-        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-times"></div>
+      <div class="relative overflow-x-auto custom-scroll pb-3">
+        <div class="flex flex-row gap-5 items-start flex-nowrap min-w-max" id="container-times"></div>
       </div>
     </div>
 
     <!-- PAINEL 2: HISTÓRICO POR REGIÕES -->
-    <div id="section-hist-regioes" class="space-y-3 w-full hidden">
-      <h2 class="text-base font-bold text-white flex items-center gap-2">
+    <div id="section-hist-regioes" class="space-y-4 w-full hidden">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
         <span>📜</span> Histórico de Campeonatos (Geral + Regiões Selecionadas)
       </h2>
-      <div class="relative overflow-x-auto custom-scroll pb-2">
-        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-hist-regioes"></div>
+      <div class="relative overflow-x-auto custom-scroll pb-3">
+        <div class="flex flex-row gap-5 items-start flex-nowrap min-w-max" id="container-hist-regioes"></div>
       </div>
     </div>
 
     <!-- PAINEL 3: HISTÓRICO POR COMPETIÇÃO -->
-    <div id="section-hist-competicoes" class="space-y-3 w-full hidden">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dark-card border border-dark rounded-xl p-3">
+    <div id="section-hist-competicoes" class="space-y-4 w-full hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dark-card border border-dark rounded-xl p-4">
         <div>
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
             <span>🎯</span> Consulta por Competição
           </h2>
-          <p class="text-xs text-gray-400">Selecione um torneio para visualizar o histórico de edições e os maiores campeões.</p>
+          <p class="text-sm text-gray-400">Selecione um torneio para visualizar o histórico de edições e os maiores campeões.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <label for="select-competition" class="text-xs font-semibold text-gray-300">Competição:</label>
-          <select id="select-competition" onchange="renderSectionHistCompeticoes()" class="bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+        <div class="flex items-center gap-2.5">
+          <label for="select-competition" class="text-sm font-semibold text-gray-300">Competição:</label>
+          <select id="select-competition" onchange="renderSectionHistCompeticoes()" class="bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-sm font-bold text-white focus:outline-none focus:border-blue-500">
           </select>
         </div>
       </div>
       
-      <div class="relative overflow-x-auto custom-scroll pb-2">
-        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-hist-competicoes"></div>
+      <div class="relative overflow-x-auto custom-scroll pb-3">
+        <div class="flex flex-row gap-5 items-start flex-nowrap min-w-max" id="container-hist-competicoes"></div>
       </div>
     </div>
 
     <!-- PAINEL 4: JOGADORES POR TÍTULOS -->
-    <div id="section-jogadores-titulos" class="space-y-3 w-full hidden">
-      <h2 class="text-base font-bold text-white flex items-center gap-2">
+    <div id="section-jogadores-titulos" class="space-y-4 w-full hidden">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
         <span>👑</span> Ranking de Jogadores por Títulos (Geral + Regiões Selecionadas)
       </h2>
-      <div class="relative overflow-x-auto custom-scroll pb-2">
-        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-jogadores-titulos"></div>
+      <div class="relative overflow-x-auto custom-scroll pb-3">
+        <div class="flex flex-row gap-5 items-start flex-nowrap min-w-max" id="container-jogadores-titulos"></div>
       </div>
     </div>
 
     <!-- PAINEL 5: JOGADORES POR MVPS -->
-    <div id="section-jogadores-mvps" class="space-y-3 w-full hidden">
-      <h2 class="text-base font-bold text-white flex items-center gap-2">
+    <div id="section-jogadores-mvps" class="space-y-4 w-full hidden">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
         <span>⭐</span> Ranking de Jogadores por MVPs (Geral + Regiões Selecionadas)
       </h2>
-      <div class="relative overflow-x-auto custom-scroll pb-2">
-        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-jogadores-mvps"></div>
+      <div class="relative overflow-x-auto custom-scroll pb-3">
+        <div class="flex flex-row gap-5 items-start flex-nowrap min-w-max" id="container-jogadores-mvps"></div>
       </div>
     </div>
 
@@ -168,22 +168,31 @@
         const btn = document.getElementById(`nav-${t}`);
         const section = document.getElementById(`section-${t}`);
         if (t === tabId) {
-          btn.className = "px-3 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow-md";
+          btn.className = "px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow-md";
           section.classList.remove('hidden');
         } else {
-          btn.className = "px-3 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white";
+          btn.className = "px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white";
           section.classList.add('hidden');
         }
       });
-      // Esconde o filtro de região apenas na aba de consulta por competição
       document.getElementById('region-filter-bar').style.display = (tabId === 'hist-competicoes') ? 'none' : 'flex';
     }
 
     function getPosBadge(idx) {
-      if (idx === 0) return '<span class="text-lg drop-shadow">🥇</span>';
-      if (idx === 1) return '<span class="text-lg drop-shadow">🥈</span>';
-      if (idx === 2) return '<span class="text-lg drop-shadow">🥉</span>';
-      return `<span class="text-xs font-bold text-gray-400">${idx + 1}º</span>`;
+      if (idx === 0) return '<span class="text-2xl drop-shadow">🥇</span>';
+      if (idx === 1) return '<span class="text-2xl drop-shadow">🥈</span>';
+      if (idx === 2) return '<span class="text-2xl drop-shadow">🥉</span>';
+      return `<span class="text-sm font-bold text-gray-400">${idx + 1}º</span>`;
+    }
+
+    // Ordena priorizando a região BR em primeiro lugar
+    function sortRegionsBRFirst(array) {
+      const unique = Array.from(new Set(array.filter(Boolean)));
+      return unique.sort((a, b) => {
+        if (a === 'BR') return -1;
+        if (b === 'BR') return 1;
+        return a.localeCompare(b);
+      });
     }
 
     // -------------------------------------------------------------------------
@@ -194,8 +203,8 @@
       const regHist = dataHistorico.map(h => h.region);
       const regJog = dataJogadores.map(j => j.region);
 
-      availableRegions = Array.from(new Set([...regTimes, ...regHist, ...regJog].filter(Boolean))).sort();
-      activeRegions = new Set(availableRegions); // Por padrão, seleciona todas
+      availableRegions = sortRegionsBRFirst([...regTimes, ...regHist, ...regJog]);
+      activeRegions = new Set(availableRegions);
       renderRegionFilterUI();
     }
 
@@ -224,8 +233,8 @@
       const isAllSelected = activeRegions.size === availableRegions.length;
       
       const allBtn = document.createElement('button');
-      allBtn.className = `px-3 py-1 text-xs font-bold rounded-lg transition ${
-        isAllSelected ? 'bg-blue-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'
+      allBtn.className = `px-3.5 py-1.5 text-xs font-bold rounded-lg transition ${
+        isAllSelected ? 'bg-blue-600 text-white shadow' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'
       }`;
       allBtn.textContent = 'Todas';
       allBtn.onclick = () => toggleRegion('ALL');
@@ -234,7 +243,7 @@
       availableRegions.forEach(reg => {
         const isSelected = activeRegions.has(reg);
         const btn = document.createElement('button');
-        btn.className = `px-3 py-1 text-xs font-bold rounded-lg transition flex items-center gap-1.5 ${
+        btn.className = `px-3.5 py-1.5 text-xs font-bold rounded-lg transition flex items-center gap-1.5 ${
           isSelected ? 'bg-blue-600/30 border border-blue-500 text-blue-300' : 'bg-[#21262d] border border-dark text-gray-400 hover:text-white'
         }`;
         btn.innerHTML = `<span>${isSelected ? '✓' : '+'}</span> <span>${reg}</span>`;
@@ -265,55 +274,55 @@
         ...selectedRegs.map(r => ({ title: `Ranking Região ${r}`, teams: dataTimes.filter(t => t.region === r).sort((a, b) => b.titles - a.titles), isGeral: false }))
       ];
 
-      groups.forEach((group, index) => {
+      groups.forEach((group) => {
         const card = document.createElement('div');
-        // FIXADO O GERAL NO LADO ESQUERDO
+        const cardWidth = group.isGeral ? "w-[440px] md:w-[480px]" : "w-[380px] md:w-[420px]";
         const stickyClasses = group.isGeral 
-          ? "sticky left-0 z-20 w-[380px] shrink-0 bg-dark-card border-2 border-blue-500/50 rounded-xl overflow-hidden shadow-2xl flex flex-col" 
-          : "w-[340px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+          ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
+          : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
         
         card.className = stickyClasses;
         
         let rowsHtml = group.teams.map((item, idx) => {
           const pos = getPosBadge(idx);
-          const logo = item.logo ? `<img src="${item.logo}" class="w-6 h-6 object-contain rounded shrink-0" onerror="this.style.display='none'">` : '';
-          const regionTd = group.isGeral ? `<td class="px-2.5 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>` : '';
+          const logo = item.logo ? `<img src="${item.logo}" class="w-8 h-8 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
+          const regionTd = group.isGeral ? `<td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-2.5 py-2 text-center align-middle">${pos}</td>
-              <td class="px-2.5 py-2 font-bold text-white text-xs truncate">
-                <div class="flex items-center gap-2 truncate">${logo}<span class="truncate">${item.name}</span></div>
+              <td class="px-3 py-3 text-center align-middle">${pos}</td>
+              <td class="px-3 py-3 font-bold text-white text-sm truncate">
+                <div class="flex items-center gap-2.5 truncate">${logo}<span class="truncate">${item.name}</span></div>
               </td>
-              <td class="px-2.5 py-2 text-xs text-gray-400 font-mono">${item.tag || '-'}</td>
+              <td class="px-3 py-3 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
               ${regionTd}
-              <td class="px-2.5 py-2 text-right font-bold text-yellow-400 text-sm">${item.titles}</td>
+              <td class="px-3 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-2.5 py-2">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3 py-3">Região</th>` : '';
         const colCount = group.isGeral ? 5 : 4;
 
         card.innerHTML = `
-          <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
+          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-sm text-white truncate flex items-center gap-2">
               ${group.isGeral ? '📌 ' : ''}${group.title}
             </h3>
-            <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${group.teams.length} times</span>
+            <span class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.teams.length} times</span>
           </div>
-          <div class="overflow-y-auto max-h-[600px] custom-scroll">
+          <div class="overflow-y-auto max-h-[650px] custom-scroll">
             <table class="w-full text-left">
-              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
                 <tr>
-                  <th class="px-2.5 py-2 w-8 text-center">Pos</th>
-                  <th class="px-2.5 py-2">Time</th>
-                  <th class="px-2.5 py-2">TAG</th>
+                  <th class="px-3 py-3 w-10 text-center">Pos</th>
+                  <th class="px-3 py-3">Time</th>
+                  <th class="px-3 py-3">TAG</th>
                   ${regionTh}
-                  <th class="px-2.5 py-2 text-right">Títulos</th>
+                  <th class="px-3 py-3 text-right">Títulos</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
             </table>
           </div>
         `;
@@ -337,51 +346,52 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
+        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
         const stickyClasses = group.isGeral 
-          ? "sticky left-0 z-20 w-[420px] shrink-0 bg-dark-card border-2 border-blue-500/50 rounded-xl overflow-hidden shadow-2xl flex flex-col" 
-          : "w-[360px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+          ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
+          : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
         
         card.className = stickyClasses;
 
         let rowsHtml = group.list.map((item) => {
-          const logo = item.logo ? `<img src="${item.logo}" class="w-5 h-5 object-contain rounded shrink-0" onerror="this.style.display='none'">` : '';
-          const regionTd = group.isGeral ? `<td class="px-2.5 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>` : '';
+          const logo = item.logo ? `<img src="${item.logo}" class="w-7 h-7 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
+          const regionTd = group.isGeral ? `<td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-2.5 py-2 font-bold text-white text-xs truncate">${item.comp}</td>
-              <td class="px-2.5 py-2 text-xs text-blue-400 font-mono font-semibold">${item.season}</td>
-              <td class="px-2.5 py-2 text-xs font-bold text-yellow-400 truncate">
-                <div class="flex items-center gap-2 truncate">${logo}<span class="truncate">${item.champion}</span></div>
+              <td class="px-3 py-3 font-bold text-white text-sm truncate">${item.comp}</td>
+              <td class="px-3 py-3 text-xs text-blue-400 font-mono font-bold">${item.season}</td>
+              <td class="px-3 py-3 text-sm font-bold text-yellow-400 truncate">
+                <div class="flex items-center gap-2.5 truncate">${logo}<span class="truncate">${item.champion}</span></div>
               </td>
-              <td class="px-2.5 py-2 text-xs text-gray-400 font-mono">${item.tag || '-'}</td>
+              <td class="px-3 py-3 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
               ${regionTd}
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-2.5 py-2">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3 py-3">Região</th>` : '';
         const colCount = group.isGeral ? 5 : 4;
 
         card.innerHTML = `
-          <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
+          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-sm text-white truncate flex items-center gap-2">
               ${group.isGeral ? '📌 ' : ''}${group.title}
             </h3>
-            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${group.list.length} edições</span>
+            <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.list.length} edições</span>
           </div>
-          <div class="overflow-y-auto max-h-[600px] custom-scroll">
+          <div class="overflow-y-auto max-h-[650px] custom-scroll">
             <table class="w-full text-left">
-              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
                 <tr>
-                  <th class="px-2.5 py-2">Competição</th>
-                  <th class="px-2.5 py-2">Temp.</th>
-                  <th class="px-2.5 py-2">Campeão</th>
-                  <th class="px-2.5 py-2">TAG</th>
+                  <th class="px-3 py-3">Competição</th>
+                  <th class="px-3 py-3">Temp.</th>
+                  <th class="px-3 py-3">Campeão</th>
+                  <th class="px-3 py-3">TAG</th>
                   ${regionTh}
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
             </table>
           </div>
         `;
@@ -423,79 +433,79 @@
 
       // CARTÃO 1: Histórico das Edições (Fixado no lado esquerdo)
       const cardHistory = document.createElement('div');
-      cardHistory.className = "sticky left-0 z-20 w-[420px] shrink-0 bg-dark-card border-2 border-blue-500/50 rounded-xl overflow-hidden shadow-2xl flex flex-col";
+      cardHistory.className = "sticky left-0 z-20 w-[480px] md:w-[520px] shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col";
       
       let historyRows = filteredList.map(item => {
-        const logo = item.logo ? `<img src="${item.logo}" class="w-5 h-5 object-contain rounded shrink-0" onerror="this.style.display='none'">` : '';
+        const logo = item.logo ? `<img src="${item.logo}" class="w-7 h-7 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
         return `
           <tr class="hover:bg-dark-hover/50">
-            <td class="px-2.5 py-2 text-xs text-blue-400 font-mono font-bold">${item.season}</td>
-            <td class="px-2.5 py-2 text-xs font-bold text-white truncate">
-              <div class="flex items-center gap-2 truncate">${logo}<span class="truncate">${item.champion}</span></div>
+            <td class="px-3 py-3 text-xs text-blue-400 font-mono font-bold">${item.season}</td>
+            <td class="px-3 py-3 text-sm font-bold text-white truncate">
+              <div class="flex items-center gap-2.5 truncate">${logo}<span class="truncate">${item.champion}</span></div>
             </td>
-            <td class="px-2.5 py-2 text-xs text-gray-400 font-mono">${item.tag || '-'}</td>
-            <td class="px-2.5 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>
+            <td class="px-3 py-3 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
+            <td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>
           </tr>
         `;
       }).join('');
 
       cardHistory.innerHTML = `
-        <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-          <h3 class="font-bold text-xs text-white truncate">📌 Histórico de Edições - ${selectedComp}</h3>
-          <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${filteredList.length} edições</span>
+        <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
+          <h3 class="font-bold text-sm text-white truncate">📌 Histórico de Edições - ${selectedComp}</h3>
+          <span class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${filteredList.length} edições</span>
         </div>
-        <div class="overflow-y-auto max-h-[600px] custom-scroll">
+        <div class="overflow-y-auto max-h-[650px] custom-scroll">
           <table class="w-full text-left">
-            <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
+            <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
               <tr>
-                <th class="px-2.5 py-2">Temporada</th>
-                <th class="px-2.5 py-2">Campeão</th>
-                <th class="px-2.5 py-2">TAG</th>
-                <th class="px-2.5 py-2">Região</th>
+                <th class="px-3 py-3">Temporada</th>
+                <th class="px-3 py-3">Campeão</th>
+                <th class="px-3 py-3">TAG</th>
+                <th class="px-3 py-3">Região</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-dark text-gray-200">${historyRows || '<tr><td colspan="4" class="p-4 text-center text-xs text-gray-500">Sem histórico</td></tr>'}</tbody>
+            <tbody class="divide-y divide-dark text-gray-200">${historyRows || '<tr><td colspan="4" class="p-5 text-center text-xs text-gray-500">Sem histórico</td></tr>'}</tbody>
           </table>
         </div>
       `;
 
       // CARTÃO 2: Maiores Campeões da Competição
       const cardRank = document.createElement('div');
-      cardRank.className = "w-[420px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+      cardRank.className = "w-[480px] md:w-[520px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
       let rankRows = topChampions.map((item, idx) => {
         const pos = getPosBadge(idx);
-        const logo = item.logo ? `<img src="${item.logo}" class="w-5 h-5 object-contain rounded shrink-0" onerror="this.style.display='none'">` : '';
+        const logo = item.logo ? `<img src="${item.logo}" class="w-7 h-7 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
         return `
           <tr class="hover:bg-dark-hover/50">
-            <td class="px-2.5 py-2 text-center align-middle">${pos}</td>
-            <td class="px-2.5 py-2 font-bold text-white text-xs truncate">
-              <div class="flex items-center gap-2 truncate">${logo}<span class="truncate">${item.name}</span></div>
+            <td class="px-3 py-3 text-center align-middle">${pos}</td>
+            <td class="px-3 py-3 font-bold text-white text-sm truncate">
+              <div class="flex items-center gap-2.5 truncate">${logo}<span class="truncate">${item.name}</span></div>
             </td>
-            <td class="px-2.5 py-2 text-xs text-gray-400 font-mono">${item.tag || '-'}</td>
-            <td class="px-2.5 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>
-            <td class="px-2.5 py-2 text-right font-bold text-yellow-400 text-sm">${item.wins}x</td>
+            <td class="px-3 py-3 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
+            <td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>
+            <td class="px-3 py-3 text-right font-extrabold text-yellow-400 text-base">${item.wins}x</td>
           </tr>
         `;
       }).join('');
 
       cardRank.innerHTML = `
-        <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-          <h3 class="font-bold text-xs text-white truncate">Maiores Campeões - ${selectedComp}</h3>
-          <span class="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${topChampions.length} equipes</span>
+        <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
+          <h3 class="font-bold text-sm text-white truncate">Maiores Campeões - ${selectedComp}</h3>
+          <span class="text-xs bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${topChampions.length} equipes</span>
         </div>
-        <div class="overflow-y-auto max-h-[600px] custom-scroll">
+        <div class="overflow-y-auto max-h-[650px] custom-scroll">
           <table class="w-full text-left">
-            <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
+            <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
               <tr>
-                <th class="px-2.5 py-2 w-8 text-center">Pos</th>
-                <th class="px-2.5 py-2">Time</th>
-                <th class="px-2.5 py-2">TAG</th>
-                <th class="px-2.5 py-2">Região</th>
-                <th class="px-2.5 py-2 text-right">Títulos</th>
+                <th class="px-3 py-3 w-10 text-center">Pos</th>
+                <th class="px-3 py-3">Time</th>
+                <th class="px-3 py-3">TAG</th>
+                <th class="px-3 py-3">Região</th>
+                <th class="px-3 py-3 text-right">Títulos</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-dark text-gray-200">${rankRows || '<tr><td colspan="5" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
+            <tbody class="divide-y divide-dark text-gray-200">${rankRows || '<tr><td colspan="5" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
           </table>
         </div>
       `;
@@ -521,54 +531,55 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
+        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
         const stickyClasses = group.isGeral 
-          ? "sticky left-0 z-20 w-[420px] shrink-0 bg-dark-card border-2 border-blue-500/50 rounded-xl overflow-hidden shadow-2xl flex flex-col" 
-          : "w-[360px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+          ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
+          : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
         
         card.className = stickyClasses;
 
         let rowsHtml = group.players.map((item, idx) => {
           const pos = getPosBadge(idx);
-          const logo = item.logo ? `<img src="${item.logo}" class="w-5 h-5 object-contain rounded shrink-0" onerror="this.style.display='none'">` : '';
-          const regionTd = group.isGeral ? `<td class="px-2.5 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>` : '';
+          const logo = item.logo ? `<img src="${item.logo}" class="w-7 h-7 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
+          const regionTd = group.isGeral ? `<td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-2.5 py-2 text-center align-middle">${pos}</td>
-              <td class="px-2.5 py-2 font-bold text-white text-xs truncate">${item.name}</td>
-              <td class="px-2.5 py-2 font-semibold text-xs text-gray-300 truncate">
-                <div class="flex items-center gap-1.5 truncate">${logo}<span class="truncate">${item.team}</span></div>
+              <td class="px-3 py-3 text-center align-middle">${pos}</td>
+              <td class="px-3 py-3 font-bold text-white text-sm truncate">${item.name}</td>
+              <td class="px-3 py-3 font-semibold text-xs text-gray-300 truncate">
+                <div class="flex items-center gap-2 truncate">${logo}<span class="truncate">${item.team}</span></div>
               </td>
               ${regionTd}
-              <td class="px-2.5 py-2 text-right font-bold text-yellow-400 text-sm">${item.titles}</td>
-              <td class="px-2.5 py-2 text-right font-bold text-purple-400 text-sm">${item.mvps}</td>
+              <td class="px-3 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
+              <td class="px-3 py-3 text-right font-extrabold text-purple-400 text-base">${item.mvps}</td>
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-2.5 py-2">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3 py-3">Região</th>` : '';
         const colCount = group.isGeral ? 6 : 5;
 
         card.innerHTML = `
-          <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
+          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-sm text-white truncate flex items-center gap-2">
               ${group.isGeral ? '📌 ' : ''}${group.title}
             </h3>
-            <span class="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${group.players.length} jogadores</span>
+            <span class="text-xs bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.players.length} jogadores</span>
           </div>
-          <div class="overflow-y-auto max-h-[600px] custom-scroll">
+          <div class="overflow-y-auto max-h-[650px] custom-scroll">
             <table class="w-full text-left">
-              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
                 <tr>
-                  <th class="px-2.5 py-2 w-8 text-center">Pos</th>
-                  <th class="px-2.5 py-2">Jogador</th>
-                  <th class="px-2.5 py-2">Time</th>
+                  <th class="px-3 py-3 w-10 text-center">Pos</th>
+                  <th class="px-3 py-3">Jogador</th>
+                  <th class="px-3 py-3">Time</th>
                   ${regionTh}
-                  <th class="px-2.5 py-2 text-right">Títulos</th>
-                  <th class="px-2.5 py-2 text-right">MVPs</th>
+                  <th class="px-3 py-3 text-right">Títulos</th>
+                  <th class="px-3 py-3 text-right">MVPs</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
             </table>
           </div>
         `;
@@ -593,54 +604,55 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
+        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
         const stickyClasses = group.isGeral 
-          ? "sticky left-0 z-20 w-[420px] shrink-0 bg-dark-card border-2 border-blue-500/50 rounded-xl overflow-hidden shadow-2xl flex flex-col" 
-          : "w-[360px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+          ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
+          : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
         
         card.className = stickyClasses;
 
         let rowsHtml = group.players.map((item, idx) => {
           const pos = getPosBadge(idx);
-          const logo = item.logo ? `<img src="${item.logo}" class="w-5 h-5 object-contain rounded shrink-0" onerror="this.style.display='none'">` : '';
-          const regionTd = group.isGeral ? `<td class="px-2.5 py-2 text-xs font-medium text-blue-400">${item.region || '-'}</td>` : '';
+          const logo = item.logo ? `<img src="${item.logo}" class="w-7 h-7 object-contain rounded shrink-0 bg-black/20 p-0.5" onerror="this.style.display='none'">` : '';
+          const regionTd = group.isGeral ? `<td class="px-3 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-2.5 py-2 text-center align-middle">${pos}</td>
-              <td class="px-2.5 py-2 font-bold text-white text-xs truncate">${item.name}</td>
-              <td class="px-2.5 py-2 font-semibold text-xs text-gray-300 truncate">
-                <div class="flex items-center gap-1.5 truncate">${logo}<span class="truncate">${item.team}</span></div>
+              <td class="px-3 py-3 text-center align-middle">${pos}</td>
+              <td class="px-3 py-3 font-bold text-white text-sm truncate">${item.name}</td>
+              <td class="px-3 py-3 font-semibold text-xs text-gray-300 truncate">
+                <div class="flex items-center gap-2 truncate">${logo}<span class="truncate">${item.team}</span></div>
               </td>
               ${regionTd}
-              <td class="px-2.5 py-2 text-right font-bold text-purple-400 text-sm">${item.mvps}</td>
-              <td class="px-2.5 py-2 text-right font-bold text-yellow-400 text-sm">${item.titles}</td>
+              <td class="px-3 py-3 text-right font-extrabold text-purple-400 text-base">${item.mvps}</td>
+              <td class="px-3 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-2.5 py-2">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3 py-3">Região</th>` : '';
         const colCount = group.isGeral ? 6 : 5;
 
         card.innerHTML = `
-          <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
+          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-sm text-white truncate flex items-center gap-2">
               ${group.isGeral ? '📌 ' : ''}${group.title}
             </h3>
-            <span class="text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0 ml-1">${group.players.length} jogadores</span>
+            <span class="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.players.length} jogadores</span>
           </div>
-          <div class="overflow-y-auto max-h-[600px] custom-scroll">
+          <div class="overflow-y-auto max-h-[650px] custom-scroll">
             <table class="w-full text-left">
-              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
                 <tr>
-                  <th class="px-2.5 py-2 w-8 text-center">Pos</th>
-                  <th class="px-2.5 py-2">Jogador</th>
-                  <th class="px-2.5 py-2">Time</th>
+                  <th class="px-3 py-3 w-10 text-center">Pos</th>
+                  <th class="px-3 py-3">Jogador</th>
+                  <th class="px-3 py-3">Time</th>
                   ${regionTh}
-                  <th class="px-2.5 py-2 text-right">MVPs</th>
-                  <th class="px-2.5 py-2 text-right">Títulos</th>
+                  <th class="px-3 py-3 text-right">MVPs</th>
+                  <th class="px-3 py-3 text-right">Títulos</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
             </table>
           </div>
         `;
