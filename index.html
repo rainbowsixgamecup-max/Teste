@@ -133,7 +133,7 @@
       </div>
     </div>
 
-    <!-- PAINEL 6: CONFRONTO DIRETO + RETROSPECTIVA H2H FIXA À DIREITA -->
+    <!-- PAINEL 6: CONFRONTO DIRETO + RETROSPECTIVA H2H FIXA À DIREITA + JOGADOR DE OURO -->
     <div id="section-confronto" class="space-y-6 w-full hidden">
       <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-lg">
         <h2 class="text-xl font-extrabold text-white flex items-center justify-center gap-2 mb-4">
@@ -168,36 +168,50 @@
       </div>
 
       <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <div class="xl:col-span-8 grid grid-cols-1 lg:grid-cols-11 gap-4 items-center" id="container-confronto"></div>
-        <div class="xl:col-span-4 w-full bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-4" id="container-h2h-stats"></div>
+        <div class="xl:col-span-7 grid grid-cols-1 lg:grid-cols-11 gap-4 items-center" id="container-confronto"></div>
+        <div class="xl:col-span-5 w-full bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-4" id="container-h2h-stats"></div>
       </div>
     </div>
 
-    <!-- PAINEL 7: HISTÓRICO DE CONFRONTOS (REGISTRO POR DADOS E MAPAS) -->
+    <!-- PAINEL 7: HISTÓRICO DE CONFRONTOS (REGISTRO/EDIÇÃO + JOGADOR DESTAQUE) -->
     <div id="section-hist-confrontos" class="space-y-6 w-full hidden">
       
-      <!-- Painel de Cadastro por Texto + Locais/Mapas -->
-      <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-5">
-        <div class="border-b border-dark pb-3">
-          <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
-            <span>📝</span> Registrar Confronto (Texto + Locais/Mapas)
-          </h2>
-          <p class="text-xs text-gray-400 mt-1">Escreva a frase da partida (ex: <i>"Loud venceu Rex Regum Qeon por 2x0"</i> ou <i>"Cloud9 1x1 FlyQuest"</i>) e adicione os mapas ou estúdios se desejar.</p>
+      <!-- Painel de Cadastro e Edição de Confronto -->
+      <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-5" id="form-match-container">
+        <div class="border-b border-dark pb-3 flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2" id="form-match-title">
+              <span>📝</span> Registrar Confronto (Texto + Locais + MVP)
+            </h2>
+            <p class="text-xs text-gray-400 mt-1">Escreva o resumo da partida (ex: <i>"Loud venceu Rex Regum Qeon por 2x0"</i>), adicione locais/mapas e selecione o Jogador Destaque.</p>
+          </div>
+          <button id="btn-cancel-edit" onclick="cancelMatchEdit()" class="hidden px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold rounded-lg transition">
+            Cancelar Edição
+          </button>
         </div>
 
         <div class="space-y-4 bg-[#1f242d]/60 border border-dark p-4 rounded-xl">
           
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
             <!-- Nome da Competição -->
-            <div>
+            <div class="md:col-span-3">
               <label class="block text-xs font-bold text-gray-300 mb-1.5">Competição / Torneio</label>
               <input type="text" id="text-match-comp" placeholder="Ex: Six Major Montreal 2026 / Fase 1" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
             </div>
 
             <!-- Entrada em Texto Livre do Confronto -->
-            <div class="md:col-span-2">
+            <div class="md:col-span-5">
               <label class="block text-xs font-bold text-blue-400 mb-1.5">Resumo do Confronto (Texto)</label>
-              <input type="text" id="text-match-desc" placeholder="Ex: Loud venceu Rex Regum Qeon por 2x0" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              <input type="text" id="text-match-desc" oninput="updateMvpPlayerDropdown()" placeholder="Ex: Loud venceu Rex Regum Qeon por 2x0" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <!-- Seleção do Jogador Destaque (MVP) do Confronto -->
+            <div class="md:col-span-4">
+              <label class="block text-xs font-bold text-yellow-400 mb-1.5 flex items-center gap-1">
+                <span>⭐</span> Jogador Destaque (MVP)
+              </label>
+              <input type="text" id="text-match-mvp" list="mvp-players-list" placeholder="Digite ou escolha o MVP..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-yellow-300 focus:outline-none focus:border-yellow-500">
+              <datalist id="mvp-players-list"></datalist>
             </div>
           </div>
 
@@ -212,15 +226,13 @@
               </button>
             </div>
 
-            <div id="map-rows-container" class="space-y-2">
-              <!-- Linhas de mapas adicionadas dinamicamente -->
-            </div>
+            <div id="map-rows-container" class="space-y-2"></div>
           </div>
 
           <!-- Botão de Ação -->
           <div class="flex justify-end pt-2">
-            <button onclick="submitTextMatch()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-lg shadow-lg transition flex items-center gap-2">
-              <span>💾</span> Registrar no Histórico de Confrontos
+            <button id="btn-submit-match" onclick="submitTextMatch()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-lg shadow-lg transition flex items-center gap-2">
+              <span>💾</span> Salvar Confronto
             </button>
           </div>
 
@@ -248,7 +260,8 @@
                 <th class="px-3.5 py-3">Time 2</th>
                 <th class="px-3.5 py-3 text-center">Resultado Geral</th>
                 <th class="px-3.5 py-3">Locais / Mapas</th>
-                <th class="px-3.5 py-3 text-center w-12">Excluir</th>
+                <th class="px-3.5 py-3 text-center">MVP Destaque</th>
+                <th class="px-3.5 py-3 text-center w-20">Ações</th>
               </tr>
             </thead>
             <tbody id="registered-matches-body" class="divide-y divide-dark text-xs text-gray-200">
@@ -280,7 +293,9 @@
 
     let selectedTeam1 = localStorage.getItem('gcr6_selected_team1') || '';
     let selectedTeam2 = localStorage.getItem('gcr6_selected_team2') || '';
+    let selectedH2HComp = 'ALL';
     let registeredConfrontos = JSON.parse(localStorage.getItem('gcr6_match_history') || '[]');
+    let editingMatchId = null;
 
     function autoRemoveBackground(img) {
       if (!img || img.dataset.processed === "true") return;
@@ -819,7 +834,7 @@
     }
 
     /* =========================================================================
-       CONFRONTO DIRETO (SIMULAÇÃO)
+       CONFRONTO DIRETO (SIMULAÇÃO + RETROSPECTIVA H2H + JOGADOR DE OURO)
     ========================================================================= */
     function setupConfrontoOptions() {
       const teamNames = Array.from(new Set(dataListaTimes.map(t => t.name))).sort();
@@ -892,6 +907,11 @@
       }
       const listEl = document.getElementById(`list-team-${teamNum}`);
       if (listEl) listEl.classList.add('hidden');
+      renderConfronto();
+    }
+
+    function changeH2HCompetitionFilter(val) {
+      selectedH2HComp = val;
       renderConfronto();
     }
 
@@ -973,11 +993,11 @@
       const vsElementHtml = `
         <div class="flex flex-col items-center justify-center py-4 lg:py-12 gap-2">
           <div class="relative flex items-center justify-center">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-red-600 via-orange-500 to-yellow-400 flex items-center justify-center shadow-[0_0_30px_rgba(234,179,8,0.5)] border-2 border-yellow-300 transform scale-110">
-              <span class="text-2xl font-black italic text-white tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">VS</span>
+            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-red-600 via-orange-500 to-yellow-400 flex items-center justify-center shadow-[0_0_25px_rgba(234,179,8,0.5)] border-2 border-yellow-300 transform scale-105">
+              <span class="text-xl font-black italic text-white tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">VS</span>
             </div>
           </div>
-          <span class="text-[11px] font-extrabold uppercase tracking-widest text-gray-400 mt-2">Confronto</span>
+          <span class="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mt-1">Confronto</span>
         </div>
       `;
 
@@ -987,7 +1007,8 @@
         <div class="lg:col-span-5">${card2Html}</div>
       `;
 
-      const directMatches = registeredConfrontos.filter(m => {
+      // 1. Filtrar confrontos diretos
+      const allDirectMatches = registeredConfrontos.filter(m => {
         const t1 = (m.team1 || '').toLowerCase().trim();
         const t2 = (m.team2 || '').toLowerCase().trim();
         const sel1 = name1.toLowerCase().trim();
@@ -995,9 +1016,21 @@
         return (t1 === sel1 && t2 === sel2) || (t1 === sel2 && t2 === sel1);
       });
 
-      let wins1 = 0, wins2 = 0, draws = 0;
+      const compOptions = Array.from(new Set(allDirectMatches.map(m => m.competition).filter(Boolean))).sort();
+      let compSelectHtml = `
+        <option value="ALL" ${selectedH2HComp === 'ALL' ? 'selected' : ''}>Todas as Competições (${allDirectMatches.length})</option>
+        ${compOptions.map(c => `<option value="${c}" ${selectedH2HComp === c ? 'selected' : ''}>${c}</option>`).join('')}
+      `;
 
-      directMatches.forEach(m => {
+      const filteredMatches = selectedH2HComp === 'ALL' 
+        ? allDirectMatches 
+        : allDirectMatches.filter(m => m.competition === selectedH2HComp);
+
+      let wins1 = 0, wins2 = 0, draws = 0;
+      const locationStats = {};
+      const mvpCounts = {};
+
+      filteredMatches.forEach(m => {
         const s1 = parseInt(m.score1, 10);
         const s2 = parseInt(m.score2, 10);
         const isT1First = (m.team1 || '').toLowerCase().trim() === name1.toLowerCase().trim();
@@ -1009,35 +1042,106 @@
         } else {
           wins2++;
         }
+
+        // Processar estatísticas por local / mapa
+        if (m.maps && Array.isArray(m.maps)) {
+          m.maps.forEach(mp => {
+            const locName = (mp.location || 'Local Não Especificado').trim();
+            if (!locationStats[locName]) {
+              locationStats[locName] = { location: locName, total: 0, wins1: 0, wins2: 0, draws: 0 };
+            }
+            locationStats[locName].total += 1;
+
+            const winDesc = (mp.winner || '').toLowerCase();
+            const t1Norm = name1.toLowerCase();
+            const t2Norm = name2.toLowerCase();
+            const tag1Norm = (team1.tag || '').toLowerCase();
+            const tag2Norm = (team2.tag || '').toLowerCase();
+
+            if (winDesc.includes(t1Norm) || (tag1Norm && tag1Norm.length >= 2 && winDesc.includes(tag1Norm))) {
+              locationStats[locName].wins1 += 1;
+            } else if (winDesc.includes(t2Norm) || (tag2Norm && tag2Norm.length >= 2 && winDesc.includes(tag2Norm))) {
+              locationStats[locName].wins2 += 1;
+            } else {
+              locationStats[locName].draws += 1;
+            }
+          });
+        }
+
+        // Contabilizar MVPs para determinar o Jogador de Ouro
+        if (m.mvp && m.mvp.trim()) {
+          const playerName = m.mvp.trim();
+          if (!mvpCounts[playerName]) {
+            // Tentar descobrir o time do jogador
+            const pObj = dataJogadores.find(j => j.name.toLowerCase() === playerName.toLowerCase());
+            mvpCounts[playerName] = {
+              name: playerName,
+              count: 0,
+              team: pObj ? pObj.team : '',
+              logo: pObj ? pObj.logo : ''
+            };
+          }
+          mvpCounts[playerName].count += 1;
+        }
       });
 
-      let historyRowsHtml = directMatches.map(m => `
-        <div class="bg-[#1f242d] p-3 rounded-lg border border-dark flex items-center justify-between gap-2 text-xs">
-          <div class="flex-1 truncate">
-            <span class="text-[10px] text-gray-400 font-semibold block truncate">${m.competition || 'Confronto'}</span>
-            <div class="flex items-center gap-1.5 font-bold text-white mt-1 truncate">
-              ${createLogoHtml(m.logo1, "w-4 h-4")}
-              <span class="${m.score1 > m.score2 ? 'text-emerald-400' : 'text-gray-300'} truncate">${m.team1}</span>
-              <span class="text-yellow-400 font-black px-1.5 py-0.5 bg-black/40 rounded">${m.score1} x ${m.score2}</span>
-              <span class="${m.score2 > m.score1 ? 'text-emerald-400' : 'text-gray-300'} truncate">${m.team2}</span>
-              ${createLogoHtml(m.logo2, "w-4 h-4")}
+      // Calcular o Jogador de Ouro (Quem mais foi MVP no H2H)
+      const sortedMvps = Object.values(mvpCounts).sort((a, b) => b.count - a.count);
+      const goldenPlayer = sortedMvps.length > 0 && sortedMvps[0].count > 0 ? sortedMvps[0] : null;
+
+      let goldenPlayerHtml = `
+        <div class="bg-gradient-to-r from-yellow-500/10 via-amber-500/20 to-yellow-500/10 border border-yellow-500/40 p-3 rounded-xl flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl drop-shadow-[0_0_10px_rgba(234,179,8,0.8)]">🏅</span>
+            <div>
+              <span class="text-[10px] uppercase font-black tracking-widest text-yellow-400 block">Jogador de Ouro do Duelo</span>
+              <span class="text-sm font-extrabold text-white">${goldenPlayer ? goldenPlayer.name : 'Nenhum destaque registrado'}</span>
+              ${goldenPlayer && goldenPlayer.team ? `<span class="text-[10px] font-semibold text-gray-400 block">${goldenPlayer.team}</span>` : ''}
             </div>
+          </div>
+          <div class="text-right">
+            <span class="text-lg font-black text-yellow-400">${goldenPlayer ? goldenPlayer.count : 0}x</span>
+            <span class="block text-[9px] font-bold text-yellow-500/80 uppercase">MVP</span>
+          </div>
+        </div>
+      `;
+
+      const locationList = Object.values(locationStats).sort((a, b) => b.total - a.total);
+      
+      let locationRowsHtml = locationList.map(loc => `
+        <div class="bg-[#1f242d] border border-dark rounded-lg p-2.5 flex items-center justify-between text-xs">
+          <div class="font-bold text-white flex items-center gap-1.5 truncate">
+            <span>🗺️</span>
+            <span class="truncate">${loc.location}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 font-mono font-bold">
+            <span class="text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${loc.total} ${loc.total === 1 ? 'jogo' : 'jogos'}</span>
+            <span class="text-blue-400 bg-blue-500/10 border border-blue-500/30 px-2 py-0.5 rounded">${team1.tag || 'T1'}: ${loc.wins1}v</span>
+            <span class="text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded">${team2.tag || 'T2'}: ${loc.wins2}v</span>
           </div>
         </div>
       `).join('');
 
-      if (directMatches.length === 0) {
-        historyRowsHtml = `<div class="p-4 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum confronto direto registrado entre essas equipes.</div>`;
+      if (locationList.length === 0) {
+        locationRowsHtml = `<div class="p-3 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum mapa ou local específico detalhado para estes confrontos.</div>`;
       }
 
       h2hContainer.innerHTML = `
-        <div class="border-b border-dark pb-3">
-          <h3 class="text-base font-extrabold text-white flex items-center gap-2">
-            <span>📊</span> Retrospectiva Direta
-          </h3>
-          <p class="text-xs text-gray-400 mt-0.5">${team1.name} vs ${team2.name}</p>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark pb-3">
+          <div>
+            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+              <span>📊</span> Retrospectiva Direta
+            </h3>
+            <p class="text-xs text-gray-400 mt-0.5">${team1.name} vs ${team2.name}</p>
+          </div>
+          <div>
+            <select id="select-h2h-comp" onchange="changeH2HCompetitionFilter(this.value)" class="bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              ${compSelectHtml}
+            </select>
+          </div>
         </div>
 
+        <!-- Placar de Vitórias Globais -->
         <div class="grid grid-cols-3 gap-2 text-center">
           <div class="bg-blue-500/10 border border-blue-500/30 p-2.5 rounded-lg">
             <span class="block text-[10px] font-bold text-blue-400 uppercase truncate">Vitórias (${team1.name})</span>
@@ -1053,24 +1157,71 @@
           </div>
         </div>
 
-        <div class="bg-[#1f242d]/60 border border-dark p-3 rounded-lg flex items-center justify-between">
-          <span class="text-xs font-bold text-gray-300">Total de Enfrentamentos:</span>
-          <span class="text-sm font-black text-yellow-400">${directMatches.length} partidas</span>
+        <!-- Card do Jogador de Ouro -->
+        ${goldenPlayerHtml}
+
+        <div class="bg-[#1f242d]/60 border border-dark p-2 rounded-lg flex items-center justify-between text-xs">
+          <span class="font-bold text-gray-300">Total de Partidas no Filtro:</span>
+          <span class="font-black text-yellow-400">${filteredMatches.length} partidas</span>
         </div>
 
-        <div class="space-y-2">
-          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Histórico Recente de Duelos</h4>
-          <div class="space-y-2 max-h-[320px] overflow-y-auto custom-scroll pr-1">
-            ${historyRowsHtml}
+        <!-- Estatísticas por Local / Mapa (Sem Scroll Interno) -->
+        <div class="space-y-2 pt-1">
+          <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
+            <span>📍 Desempenho por Local / Mapa</span>
+            <span class="text-[10px] font-mono text-gray-400">${locationList.length} locais</span>
+          </h4>
+          <div class="space-y-2">
+            ${locationRowsHtml}
           </div>
         </div>
       `;
     }
 
     /* =========================================================================
-       SISTEMA DE PREENCHIMENTO POR TEXTO + MAPAS / LOCAIS / ESTÚDIOS
+       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS + MVP
     ========================================================================= */
-    function addMapRow() {
+    function updateMvpPlayerDropdown() {
+      const descText = (document.getElementById('text-match-desc').value || '').trim();
+      const datalist = document.getElementById('mvp-players-list');
+      if (!datalist) return;
+
+      datalist.innerHTML = '';
+
+      if (!descText) {
+        // Se vazio, insere todos os jogadores
+        dataJogadores.forEach(j => {
+          const opt = document.createElement('option');
+          opt.value = j.name;
+          opt.label = `${j.name} (${j.team})`;
+          datalist.appendChild(opt);
+        });
+        return;
+      }
+
+      const parsed = parseMatchText(descText);
+      let playersFiltered = [];
+
+      if (parsed && (parsed.team1 || parsed.team2)) {
+        playersFiltered = dataJogadores.filter(j => {
+          const tNorm = j.team.toLowerCase().trim();
+          const t1Norm = parsed.team1.toLowerCase().trim();
+          const t2Norm = parsed.team2.toLowerCase().trim();
+          return tNorm === t1Norm || tNorm === t2Norm;
+        });
+      }
+
+      if (playersFiltered.length === 0) playersFiltered = dataJogadores;
+
+      playersFiltered.forEach(j => {
+        const opt = document.createElement('option');
+        opt.value = j.name;
+        opt.label = `${j.name} (${j.team})`;
+        datalist.appendChild(opt);
+      });
+    }
+
+    function addMapRow(locationVal = '', winnerVal = '') {
       const container = document.getElementById('map-rows-container');
       const rowId = 'map-row-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
 
@@ -1080,10 +1231,10 @@
 
       div.innerHTML = `
         <div class="flex-1 w-full">
-          <input type="text" class="map-location-name w-full bg-[#161b22] border border-dark rounded px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500" placeholder="Nome do Mapa, Estúdio ou Local (ex: Clubhouse / Estúdio A)">
+          <input type="text" class="map-location-name w-full bg-[#161b22] border border-dark rounded px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500" value="${locationVal}" placeholder="Nome do Mapa, Estúdio ou Local (ex: Clubhouse / Estúdio A)">
         </div>
         <div class="flex-1 w-full">
-          <input type="text" class="map-winner-desc w-full bg-[#161b22] border border-dark rounded px-3 py-1.5 text-xs font-bold text-yellow-400 focus:outline-none focus:border-blue-500" placeholder="Vencedor / Placar do Mapa (ex: Loud 7x5 ou Empate)">
+          <input type="text" class="map-winner-desc w-full bg-[#161b22] border border-dark rounded px-3 py-1.5 text-xs font-bold text-yellow-400 focus:outline-none focus:border-blue-500" value="${winnerVal}" placeholder="Vencedor / Placar do Mapa (ex: Loud 7x5 ou Empate)">
         </div>
         <button onclick="document.getElementById('${rowId}').remove()" class="text-red-400 hover:text-red-300 font-bold p-1">❌</button>
       `;
@@ -1095,13 +1246,11 @@
       if (!descText) return null;
       const text = descText.trim();
 
-      // Organizar lista de times por tamanho decrescente de nome para evitar ambiguidades
       const recognized = [...dataListaTimes].sort((a, b) => b.name.length - a.name.length);
 
       let team1Obj = null;
       let team2Obj = null;
 
-      // Buscar se 2 times da lista aparecem no texto por nome ou TAG
       for (let t of recognized) {
         const nameNorm = t.name.toLowerCase();
         const tagNorm = t.tag ? t.tag.toLowerCase() : '';
@@ -1117,7 +1266,6 @@
         }
       }
 
-      // Extrair placares em formato 2x0, 2-0, 2 x 0, etc.
       let s1 = 0, s2 = 0;
       const scoreMatch = text.match(/([0-9]+)\s*[:x-]\s*([0-9]+)/i);
 
@@ -1144,6 +1292,7 @@
     function submitTextMatch() {
       const comp = (document.getElementById('text-match-comp').value || 'Campeonato').trim();
       const descText = (document.getElementById('text-match-desc').value || '').trim();
+      const mvpVal = (document.getElementById('text-match-mvp').value || '').trim();
 
       if (!descText) {
         alert('⚠️ Digite o resumo do confronto no campo de texto (ex: "Loud venceu Rex Regum Qeon por 2x0").');
@@ -1156,7 +1305,6 @@
         return;
       }
 
-      // Coletar informações dos mapas/locais adicionados
       const mapRows = document.querySelectorAll('#map-rows-container > div');
       const mapsData = [];
 
@@ -1177,32 +1325,92 @@
         resultText = `Empate ${parsed.score1}x${parsed.score2}`;
       }
 
-      const matchObj = {
-        id: Date.now() + Math.random(),
-        competition: comp,
-        team1: parsed.team1,
-        logo1: parsed.logo1,
-        score1: parsed.score1,
-        score2: parsed.score2,
-        team2: parsed.team2,
-        logo2: parsed.logo2,
-        resultText: resultText,
-        originalText: descText,
-        maps: mapsData,
-        date: new Date().toLocaleDateString('pt-BR')
-      };
+      if (editingMatchId) {
+        // Modo Edição
+        const index = registeredConfrontos.findIndex(m => m.id === editingMatchId);
+        if (index !== -1) {
+          registeredConfrontos[index] = {
+            ...registeredConfrontos[index],
+            competition: comp,
+            team1: parsed.team1,
+            logo1: parsed.logo1,
+            score1: parsed.score1,
+            score2: parsed.score2,
+            team2: parsed.team2,
+            logo2: parsed.logo2,
+            resultText: resultText,
+            originalText: descText,
+            mvp: mvpVal,
+            maps: mapsData
+          };
+        }
+        alert(`✅ Confronto atualizado com sucesso!`);
+      } else {
+        // Novo Cadastro
+        const matchObj = {
+          id: Date.now() + Math.random(),
+          competition: comp,
+          team1: parsed.team1,
+          logo1: parsed.logo1,
+          score1: parsed.score1,
+          score2: parsed.score2,
+          team2: parsed.team2,
+          logo2: parsed.logo2,
+          resultText: resultText,
+          originalText: descText,
+          mvp: mvpVal,
+          maps: mapsData,
+          date: new Date().toLocaleDateString('pt-BR')
+        };
+        registeredConfrontos.unshift(matchObj);
+        alert(`✅ Confronto registrado com sucesso!`);
+      }
 
-      registeredConfrontos.unshift(matchObj);
       localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
 
-      // Limpar campos
-      document.getElementById('text-match-desc').value = '';
-      document.getElementById('map-rows-container').innerHTML = '';
-
+      cancelMatchEdit();
       renderRegisteredMatchesTable();
       renderConfronto();
+    }
 
-      alert(`✅ Confronto registrado com sucesso!`);
+    function editMatchFromHistory(id) {
+      const match = registeredConfrontos.find(m => m.id === id);
+      if (!match) return;
+
+      editingMatchId = id;
+
+      document.getElementById('text-match-comp').value = match.competition || '';
+      document.getElementById('text-match-desc').value = match.originalText || match.resultText || '';
+      document.getElementById('text-match-mvp').value = match.mvp || '';
+
+      updateMvpPlayerDropdown();
+
+      // Recarregar mapas
+      const container = document.getElementById('map-rows-container');
+      container.innerHTML = '';
+      if (match.maps && match.maps.length > 0) {
+        match.maps.forEach(mp => addMapRow(mp.location, mp.winner));
+      }
+
+      // Atualizar interface de edição
+      document.getElementById('form-match-title').innerHTML = `<span>✏️</span> Editar Confronto Registrado`;
+      document.getElementById('btn-submit-match').innerHTML = `<span>💾</span> Salvar Alterações`;
+      document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+      document.getElementById('form-match-container').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelMatchEdit() {
+      editingMatchId = null;
+
+      document.getElementById('text-match-comp').value = '';
+      document.getElementById('text-match-desc').value = '';
+      document.getElementById('text-match-mvp').value = '';
+      document.getElementById('map-rows-container').innerHTML = '';
+
+      document.getElementById('form-match-title').innerHTML = `<span>📝</span> Registrar Confronto (Texto + Locais + MVP)`;
+      document.getElementById('btn-submit-match').innerHTML = `<span>💾</span> Salvar Confronto`;
+      document.getElementById('btn-cancel-edit').classList.add('hidden');
     }
 
     function renderRegisteredMatchesTable() {
@@ -1210,7 +1418,7 @@
       if (!body) return;
 
       if (registeredConfrontos.length === 0) {
-        body.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-xs text-gray-500">Nenhum confronto registrado no histórico ainda. Use o painel acima para registrar.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-xs text-gray-500">Nenhum confronto registrado no histórico ainda. Use o painel acima para registrar.</td></tr>`;
         return;
       }
 
@@ -1223,12 +1431,16 @@
         let mapsHtml = '-';
         if (m.maps && m.maps.length > 0) {
           mapsHtml = m.maps.map(mp => `
-            <div class="text-[11px] bg-[#161b22] border border-dark px-2 py-1 rounded my-0.5 flex items-center justify-between gap-2">
+            <div class="text-[11px] bg-[#161b22] border border-dark px-2 py-0.5 rounded my-0.5 flex items-center justify-between gap-2">
               <span class="text-gray-300 font-bold">${mp.location}:</span>
               <span class="text-yellow-400 font-extrabold">${mp.winner}</span>
             </div>
           `).join('');
         }
+
+        const mvpBadge = m.mvp 
+          ? `<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-bold text-xs inline-flex items-center gap-1"><span>⭐</span> ${m.mvp}</span>`
+          : '<span class="text-gray-500">-</span>';
 
         return `
           <tr class="hover:bg-dark-hover/50">
@@ -1248,8 +1460,10 @@
             </td>
             <td class="px-3.5 py-3 text-center font-extrabold ${isEmpate ? 'text-amber-400' : 'text-emerald-400'}">${m.resultText || m.originalText}</td>
             <td class="px-3.5 py-3">${mapsHtml}</td>
-            <td class="px-3.5 py-3 text-center">
-              <button onclick="deleteMatchFromHistory(${m.id})" class="text-xs text-red-400 hover:text-red-300 font-bold p-1">🗑️</button>
+            <td class="px-3.5 py-3 text-center">${mvpBadge}</td>
+            <td class="px-3.5 py-3 text-center whitespace-nowrap">
+              <button onclick="editMatchFromHistory(${m.id})" class="text-xs text-blue-400 hover:text-blue-300 font-bold p-1 mr-1" title="Editar Confronto">✏️</button>
+              <button onclick="deleteMatchFromHistory(${m.id})" class="text-xs text-red-400 hover:text-red-300 font-bold p-1" title="Excluir Confronto">🗑️</button>
             </td>
           </tr>
         `;
@@ -1257,10 +1471,12 @@
     }
 
     function deleteMatchFromHistory(id) {
-      registeredConfrontos = registeredConfrontos.filter(m => m.id !== id);
-      localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
-      renderRegisteredMatchesTable();
-      renderConfronto();
+      if (confirm('Deseja realmente remover este confronto do histórico?')) {
+        registeredConfrontos = registeredConfrontos.filter(m => m.id !== id);
+        localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
+        renderRegisteredMatchesTable();
+        renderConfronto();
+      }
     }
 
     function clearMatchHistory() {
@@ -1383,6 +1599,7 @@
       renderAllSections();
       setupCompetitionOptions();
       setupConfrontoOptions();
+      updateMvpPlayerDropdown();
     }
 
     init();
