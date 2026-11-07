@@ -33,10 +33,15 @@
         <h1 class="text-3xl font-extrabold text-white flex items-center gap-2">
           <span>🏆</span> Game Cup Rainbow Six Siege
         </h1>
-        <p class="text-sm text-gray-400 mt-1" id="last-updated">Sincronizado em tempo real com o Google Sheets</p>
+        <div class="flex items-center gap-3 mt-1.5">
+          <p class="text-sm text-gray-400" id="last-updated">A carregar dados...</p>
+          <button onclick="init(true)" id="btn-refresh" class="px-2.5 py-1 text-xs font-bold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg transition flex items-center gap-1">
+            <span>🔄</span> Atualizar Dados
+          </button>
+        </div>
       </div>
       
-      <!-- Navegação das 5 Abas Principais -->
+      <!-- Navegação das 6 Abas Principais -->
       <div class="flex items-center bg-dark-card border border-dark rounded-xl p-1.5 gap-1.5 overflow-x-auto custom-scroll">
         <button id="nav-times" onclick="switchMainTab('times')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow-md">
           Ranking Times
@@ -52,6 +57,9 @@
         </button>
         <button id="nav-jogadores-mvps" onclick="switchMainTab('jogadores-mvps')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Jogadores (MVPs)
+        </button>
+        <button id="nav-confronto" onclick="switchMainTab('confronto')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+          ⚔️ Confronto
         </button>
       </div>
     </div>
@@ -127,6 +135,41 @@
       </div>
     </div>
 
+    <!-- PAINEL 6: CONFRONTO (VS) -->
+    <div id="section-confronto" class="space-y-6 w-full hidden">
+      <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-lg">
+        <h2 class="text-xl font-extrabold text-white flex items-center justify-center gap-2 mb-4">
+          <span>⚔️</span> Simulação de Confronto Direto
+        </h2>
+        
+        <!-- Seletores dos Times -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+          <div class="md:col-span-2">
+            <label for="select-team-1" class="block text-xs font-bold text-blue-400 uppercase mb-1.5">Time 1 (Esquerda)</label>
+            <select id="select-team-1" onchange="renderConfronto()" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-blue-500">
+            </select>
+          </div>
+
+          <div class="flex justify-center items-center py-2 md:py-0">
+            <span class="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 text-white font-black text-xl px-4 py-2 rounded-xl shadow-lg border border-yellow-400/30 tracking-wider">
+              VS
+            </span>
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="select-team-2" class="block text-xs font-bold text-red-400 uppercase mb-1.5">Time 2 (Direita)</label>
+            <select id="select-team-2" onchange="renderConfronto()" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-red-500">
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Container do Confronto -->
+      <div class="grid grid-cols-1 lg:grid-cols-11 gap-6 items-center" id="container-confronto">
+        <!-- Conteúdo dinâmico renderizado via JS -->
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -136,12 +179,13 @@
     const CSV_URL_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=0&single=true&output=csv';
     const CSV_URL_HISTORICO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=195413319&single=true&output=csv';
     const CSV_URL_JOGADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1601155160&single=true&output=csv';
+    const CSV_URL_LISTA_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=913455731&single=true&output=csv';
 
     let dataTimes = [];
     let dataHistorico = [];
     let dataJogadores = [];
+    let dataListaTimes = [];
 
-    // Estado das regiões selecionadas
     let availableRegions = [];
     let activeRegions = new Set();
 
@@ -165,18 +209,16 @@
         const imgData = ctx.getImageData(0, 0, w, h);
         const data = imgData.data;
 
-        // Limiar para identificar pixels de fundo branco/cinza claro
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i], g = data[i+1], b = data[i+2];
           if (r > 210 && g > 210 && b > 210) {
-            data[i+3] = 0; // Torna transparente
+            data[i+3] = 0;
           }
         }
 
         ctx.putImageData(imgData, 0, 0);
         img.src = canvas.toDataURL('image/png');
       } catch (e) {
-        // Fallback visual se a imagem for protegida por CORS no servidor de origem
         img.style.mixBlendMode = 'screen';
       }
     }
@@ -209,7 +251,7 @@
     }
 
     function switchMainTab(tabId) {
-      const allTabs = ['times', 'hist-regioes', 'hist-competicoes', 'jogadores-titulos', 'jogadores-mvps'];
+      const allTabs = ['times', 'hist-regioes', 'hist-competicoes', 'jogadores-titulos', 'jogadores-mvps', 'confronto'];
       allTabs.forEach(t => {
         const btn = document.getElementById(`nav-${t}`);
         const section = document.getElementById(`section-${t}`);
@@ -221,7 +263,7 @@
           section.classList.add('hidden');
         }
       });
-      document.getElementById('region-filter-bar').style.display = (tabId === 'hist-competicoes') ? 'none' : 'flex';
+      document.getElementById('region-filter-bar').style.display = (tabId === 'hist-competicoes' || tabId === 'confronto') ? 'none' : 'flex';
     }
 
     function getPosBadge(idx) {
@@ -703,6 +745,118 @@
     }
 
     // -------------------------------------------------------------------------
+    // RENDERIZAR: CONFRONTO DIRETO (VS)
+    // -------------------------------------------------------------------------
+    function setupConfrontoOptions() {
+      const sel1 = document.getElementById('select-team-1');
+      const sel2 = document.getElementById('select-team-2');
+      if (!sel1 || !sel2) return;
+
+      const teamNames = Array.from(new Set(dataListaTimes.map(t => t.name))).sort();
+
+      sel1.innerHTML = teamNames.map(name => `<option value="${name}">${name}</option>`).join('');
+      sel2.innerHTML = teamNames.map(name => `<option value="${name}">${name}</option>`).join('');
+
+      if (teamNames.length > 0) sel1.value = teamNames[0];
+      if (teamNames.length > 1) sel2.value = teamNames[1];
+
+      renderConfronto();
+    }
+
+    function renderConfronto() {
+      const name1 = document.getElementById('select-team-1').value;
+      const name2 = document.getElementById('select-team-2').value;
+      const container = document.getElementById('container-confronto');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      const team1 = dataListaTimes.find(t => t.name === name1) || { name: name1, logo: '', tag: '-', region: '-', titles: 0 };
+      const team2 = dataListaTimes.find(t => t.name === name2) || { name: name2, logo: '', tag: '-', region: '-', titles: 0 };
+
+      const players1 = dataJogadores.filter(j => j.team.toLowerCase().trim() === name1.toLowerCase().trim());
+      const players2 = dataJogadores.filter(j => j.team.toLowerCase().trim() === name2.toLowerCase().trim());
+
+      function buildTeamCardHtml(team, players, accentColor, borderAccent) {
+        const logo = createLogoHtml(team.logo, "w-14 h-14");
+        
+        let playerRows = players.map(p => `
+          <tr class="hover:bg-dark-hover/50">
+            <td class="px-3.5 py-2.5 font-bold text-white text-sm">${p.name}</td>
+            <td class="px-3.5 py-2.5 text-right font-extrabold text-yellow-400 text-base">${p.titles}</td>
+            <td class="px-3.5 py-2.5 text-right font-extrabold text-purple-400 text-base">${p.mvps}</td>
+          </tr>
+        `).join('');
+
+        if (players.length === 0) {
+          playerRows = `<tr><td colspan="3" class="p-5 text-center text-xs text-gray-500">Nenhum jogador cadastrado nesta equipe</td></tr>`;
+        }
+
+        return `
+          <div class="bg-dark-card border-2 ${borderAccent} rounded-xl overflow-hidden shadow-2xl flex flex-col w-full">
+            <!-- Cabeçalho do Time -->
+            <div class="bg-[#1f242d] p-5 border-b border-dark flex items-center justify-between">
+              <div class="flex items-center gap-3.5">
+                ${logo}
+                <div>
+                  <h3 class="text-xl font-extrabold text-white">${team.name}</h3>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag || '-'}</span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${team.region || '-'}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="block text-[10px] uppercase font-bold text-gray-400">Títulos do Time</span>
+                <span class="text-2xl font-black text-yellow-400">${team.titles}</span>
+              </div>
+            </div>
+
+            <!-- Tabela de Jogadores do Time -->
+            <div class="p-5 space-y-3">
+              <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                <span>👥 Jogadores da Equipe</span>
+                <span class="${accentColor}">${players.length} inscritos</span>
+              </h4>
+              <div class="overflow-hidden border border-dark rounded-lg">
+                <table class="w-full text-left">
+                  <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
+                    <tr>
+                      <th class="px-3.5 py-2.5">Jogador</th>
+                      <th class="px-3.5 py-2.5 text-right">Títulos</th>
+                      <th class="px-3.5 py-2.5 text-right">MVPs</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-dark text-gray-200">${playerRows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const card1Html = buildTeamCardHtml(team1, players1, "text-blue-400", "border-blue-500/60");
+      const card2Html = buildTeamCardHtml(team2, players2, "text-red-400", "border-red-500/60");
+
+      const vsElementHtml = `
+        <div class="flex flex-col items-center justify-center py-4 lg:py-12 gap-2">
+          <div class="relative flex items-center justify-center">
+            <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-red-600 via-orange-500 to-yellow-400 flex items-center justify-center shadow-[0_0_30px_rgba(234,179,8,0.5)] border-2 border-yellow-300 transform scale-110">
+              <span class="text-2xl font-black italic text-white tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">VS</span>
+            </div>
+          </div>
+          <span class="text-[11px] font-extrabold uppercase tracking-widest text-gray-400 mt-2">Confronto</span>
+        </div>
+      `;
+
+      container.innerHTML = `
+        <div class="lg:col-span-5">${card1Html}</div>
+        <div class="lg:col-span-1">${vsElementHtml}</div>
+        <div class="lg:col-span-5">${card2Html}</div>
+      `;
+    }
+
+    // -------------------------------------------------------------------------
     // FETCH ANTI-CACHE E PARSERS
     // -------------------------------------------------------------------------
     async function fetchCsvData(url, parseFn) {
@@ -711,10 +865,16 @@
       if (cleanUrl.includes('/pubhtml')) cleanUrl = cleanUrl.replace('/pubhtml', '/pub?output=csv');
       if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv');
       
-      cleanUrl += (cleanUrl.includes('?') ? '&' : '?') + 'cache=' + new Date().getTime();
+      cleanUrl += (cleanUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
 
       try {
-        const res = await fetch(cleanUrl);
+        const res = await fetch(cleanUrl, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
         const text = await res.text();
         if (text.includes('<!DOCTYPE') || text.includes('<html')) return [];
         return parseFn(text);
@@ -733,6 +893,23 @@
         logo: r[1] || '',
         region: (r[2] || '').toUpperCase(),
         tag: (r[3] || '').toUpperCase(),
+        titles: parseInt(r[4] || '0', 10) || 0
+      })).filter(t => {
+        if (!t.name) return false;
+        const norm = t.name.toLowerCase().trim();
+        return !invalidNames.includes(norm);
+      });
+    }
+
+    function parseListaTimesCsv(csvText) {
+      const rows = parseCsvRows(csvText);
+      const invalidNames = ['time', 'equipe', 'clube', 'nome', 'team'];
+
+      return rows.map(r => ({
+        name: r[0] || '',
+        logo: r[1] || '',
+        tag: (r[2] || '').toUpperCase(),
+        region: (r[3] || '').toUpperCase(),
         titles: parseInt(r[4] || '0', 10) || 0
       })).filter(t => {
         if (!t.name) return false;
@@ -778,16 +955,21 @@
       });
     }
 
-    async function init() {
+    async function init(isManual = false) {
+      const label = document.getElementById('last-updated');
+      label.textContent = isManual ? "A atualizar..." : "Sincronizado em tempo real";
+
       dataTimes = await fetchCsvData(CSV_URL_TIMES, parseTimesCsv);
       dataHistorico = await fetchCsvData(CSV_URL_HISTORICO, parseHistoricoCsv);
       dataJogadores = await fetchCsvData(CSV_URL_JOGADORES, parseJogadoresCsv);
+      dataListaTimes = await fetchCsvData(CSV_URL_LISTA_TIMES, parseListaTimesCsv);
 
-      document.getElementById('last-updated').textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
+      label.textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
 
       updateAvailableRegions();
       renderAllSections();
       setupCompetitionOptions();
+      setupConfrontoOptions();
     }
 
     init();
