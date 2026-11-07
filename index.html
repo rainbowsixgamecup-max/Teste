@@ -135,38 +135,53 @@
       </div>
     </div>
 
-    <!-- PAINEL 6: CONFRONTO (VS) -->
+    <!-- PAINEL 6: CONFRONTO (VS) COM CAMPO DE PESQUISA -->
     <div id="section-confronto" class="space-y-6 w-full hidden">
       <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-lg">
         <h2 class="text-xl font-extrabold text-white flex items-center justify-center gap-2 mb-4">
           <span>⚔️</span> Simulação de Confronto Direto
         </h2>
         
-        <!-- Seletores dos Times -->
+        <!-- Seletores Pesquisáveis dos Times -->
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-          <div class="md:col-span-2">
-            <label for="select-team-1" class="block text-xs font-bold text-blue-400 uppercase mb-1.5">Time 1 (Esquerda)</label>
-            <select id="select-team-1" onchange="renderConfronto()" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-blue-500">
-            </select>
+          
+          <!-- TIME 1 (PESQUISÁVEL) -->
+          <div class="md:col-span-2 relative" id="dropdown-container-1">
+            <label class="block text-xs font-bold text-blue-400 uppercase mb-1.5">Time 1 (Esquerda)</label>
+            <div class="relative">
+              <input type="text" id="input-team-1" oninput="onTeamSearchInput(1)" onfocus="openTeamDropdown(1)" placeholder="Pesquisar por nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2.5 text-sm font-bold text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 pr-9">
+              <span class="absolute right-3 top-3 text-xs text-gray-400 pointer-events-none">🔍</span>
+            </div>
+            <!-- Dropdown Pesquisável -->
+            <div id="list-team-1" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scroll z-50 divide-y divide-dark">
+            </div>
           </div>
 
+          <!-- INSÍGNIA VS -->
           <div class="flex justify-center items-center py-2 md:py-0">
             <span class="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 text-white font-black text-xl px-4 py-2 rounded-xl shadow-lg border border-yellow-400/30 tracking-wider">
               VS
             </span>
           </div>
 
-          <div class="md:col-span-2">
-            <label for="select-team-2" class="block text-xs font-bold text-red-400 uppercase mb-1.5">Time 2 (Direita)</label>
-            <select id="select-team-2" onchange="renderConfronto()" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-red-500">
-            </select>
+          <!-- TIME 2 (PESQUISÁVEL) -->
+          <div class="md:col-span-2 relative" id="dropdown-container-2">
+            <label class="block text-xs font-bold text-red-400 uppercase mb-1.5">Time 2 (Direita)</label>
+            <div class="relative">
+              <input type="text" id="input-team-2" oninput="onTeamSearchInput(2)" onfocus="openTeamDropdown(2)" placeholder="Pesquisar por nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2.5 text-sm font-bold text-white placeholder-gray-500 focus:outline-none focus:border-red-500 pr-9">
+              <span class="absolute right-3 top-3 text-xs text-gray-400 pointer-events-none">🔍</span>
+            </div>
+            <!-- Dropdown Pesquisável -->
+            <div id="list-team-2" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scroll z-50 divide-y divide-dark">
+            </div>
           </div>
+
         </div>
       </div>
 
-      <!-- Container do Confronto -->
+      <!-- Container do Confronto Direto -->
       <div class="grid grid-cols-1 lg:grid-cols-11 gap-6 items-center" id="container-confronto">
-        <!-- Conteúdo dinâmico renderizado via JS -->
+        <!-- Conteúdo renderizado via JS -->
       </div>
     </div>
 
@@ -188,6 +203,9 @@
 
     let availableRegions = [];
     let activeRegions = new Set();
+
+    let selectedTeam1 = '';
+    let selectedTeam2 = '';
 
     /* =========================================================================
        REMOÇÃO AUTOMÁTICA DE FUNDO DE IMAGENS (CANVAS)
@@ -745,37 +763,108 @@
     }
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR: CONFRONTO DIRETO (VS)
+    // SISTEMA DE SELEÇÃO E PESQUISA DE TIMES (CONFRONTO)
     // -------------------------------------------------------------------------
     function setupConfrontoOptions() {
-      const sel1 = document.getElementById('select-team-1');
-      const sel2 = document.getElementById('select-team-2');
-      if (!sel1 || !sel2) return;
-
       const teamNames = Array.from(new Set(dataListaTimes.map(t => t.name))).sort();
+      if (teamNames.length > 0 && !selectedTeam1) selectedTeam1 = teamNames[0];
+      if (teamNames.length > 1 && !selectedTeam2) selectedTeam2 = teamNames[1];
 
-      sel1.innerHTML = teamNames.map(name => `<option value="${name}">${name}</option>`).join('');
-      sel2.innerHTML = teamNames.map(name => `<option value="${name}">${name}</option>`).join('');
-
-      if (teamNames.length > 0) sel1.value = teamNames[0];
-      if (teamNames.length > 1) sel2.value = teamNames[1];
+      const input1 = document.getElementById('input-team-1');
+      const input2 = document.getElementById('input-team-2');
+      if (input1 && selectedTeam1) input1.value = selectedTeam1;
+      if (input2 && selectedTeam2) input2.value = selectedTeam2;
 
       renderConfronto();
     }
 
+    function openTeamDropdown(teamNum) {
+      const listEl = document.getElementById(`list-team-${teamNum}`);
+      if (listEl) {
+        listEl.classList.remove('hidden');
+        renderTeamDropdownOptions(teamNum);
+      }
+    }
+
+    function onTeamSearchInput(teamNum) {
+      openTeamDropdown(teamNum);
+    }
+
+    function renderTeamDropdownOptions(teamNum) {
+      const inputVal = (document.getElementById(`input-team-${teamNum}`).value || '').toLowerCase().trim();
+      const listEl = document.getElementById(`list-team-${teamNum}`);
+      if (!listEl) return;
+
+      const filtered = dataListaTimes.filter(t => {
+        const nameMatch = (t.name || '').toLowerCase().includes(inputVal);
+        const tagMatch = (t.tag || '').toLowerCase().includes(inputVal);
+        return nameMatch || tagMatch;
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="p-4 text-xs text-gray-500 text-center font-bold">Nenhum time encontrado para "${inputVal}"</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(t => {
+        const logo = createLogoHtml(t.logo, "w-6 h-6");
+        const safeName = t.name.replace(/'/g, "\\'");
+        return `
+          <div onclick="selectTeamForConfronto(${teamNum}, '${safeName}')" class="px-3.5 py-2.5 hover:bg-dark-hover flex items-center justify-between cursor-pointer transition">
+            <div class="flex items-center gap-2.5">
+              ${logo}
+              <span class="text-sm font-bold text-white">${t.name}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${t.tag || '-'}</span>
+              <span class="text-xs font-bold text-blue-400">${t.region || '-'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectTeamForConfronto(teamNum, teamName) {
+      if (teamNum === 1) {
+        selectedTeam1 = teamName;
+        document.getElementById('input-team-1').value = teamName;
+      } else {
+        selectedTeam2 = teamName;
+        document.getElementById('input-team-2').value = teamName;
+      }
+      const listEl = document.getElementById(`list-team-${teamNum}`);
+      if (listEl) listEl.classList.add('hidden');
+      renderConfronto();
+    }
+
+    // Fechar os dropdowns ao clicar fora
+    document.addEventListener('click', (e) => {
+      [1, 2].forEach(num => {
+        const container = document.getElementById(`dropdown-container-${num}`);
+        const listEl = document.getElementById(`list-team-${num}`);
+        if (container && !container.contains(e.target) && listEl) {
+          listEl.classList.add('hidden');
+        }
+      });
+    });
+
+    // -------------------------------------------------------------------------
+    // RENDERIZAR: CONFRONTO DIRETO (VS)
+    // -------------------------------------------------------------------------
     function renderConfronto() {
-      const name1 = document.getElementById('select-team-1').value;
-      const name2 = document.getElementById('select-team-2').value;
       const container = document.getElementById('container-confronto');
       if (!container) return;
 
       container.innerHTML = '';
 
-      const team1 = dataListaTimes.find(t => t.name === name1) || { name: name1, logo: '', tag: '-', region: '-', titles: 0 };
-      const team2 = dataListaTimes.find(t => t.name === name2) || { name: name2, logo: '', tag: '-', region: '-', titles: 0 };
+      const name1 = selectedTeam1 || (dataListaTimes[0] ? dataListaTimes[0].name : '');
+      const name2 = selectedTeam2 || (dataListaTimes[1] ? dataListaTimes[1].name : '');
 
-      const players1 = dataJogadores.filter(j => j.team.toLowerCase().trim() === name1.toLowerCase().trim());
-      const players2 = dataJogadores.filter(j => j.team.toLowerCase().trim() === name2.toLowerCase().trim());
+      const team1 = dataListaTimes.find(t => t.name.toLowerCase().trim() === (name1||'').toLowerCase().trim()) || { name: name1, logo: '', tag: '-', region: '-', titles: 0 };
+      const team2 = dataListaTimes.find(t => t.name.toLowerCase().trim() === (name2||'').toLowerCase().trim()) || { name: name2, logo: '', tag: '-', region: '-', titles: 0 };
+
+      const players1 = dataJogadores.filter(j => j.team.toLowerCase().trim() === (name1||'').toLowerCase().trim());
+      const players2 = dataJogadores.filter(j => j.team.toLowerCase().trim() === (name2||'').toLowerCase().trim());
 
       function buildTeamCardHtml(team, players, accentColor, borderAccent) {
         const logo = createLogoHtml(team.logo, "w-14 h-14");
