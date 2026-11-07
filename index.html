@@ -1072,7 +1072,6 @@
         if (m.mvp && m.mvp.trim()) {
           const playerName = m.mvp.trim();
           if (!mvpCounts[playerName]) {
-            // Tentar descobrir o time do jogador
             const pObj = dataJogadores.find(j => j.name.toLowerCase() === playerName.toLowerCase());
             mvpCounts[playerName] = {
               name: playerName,
@@ -1179,7 +1178,7 @@
     }
 
     /* =========================================================================
-       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS + MVP
+       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS + MVP (COM CORREÇÃO DE POSIÇÃO)
     ========================================================================= */
     function updateMvpPlayerDropdown() {
       const descText = (document.getElementById('text-match-desc').value || '').trim();
@@ -1189,7 +1188,6 @@
       datalist.innerHTML = '';
 
       if (!descText) {
-        // Se vazio, insere todos os jogadores
         dataJogadores.forEach(j => {
           const opt = document.createElement('option');
           opt.value = j.name;
@@ -1242,29 +1240,45 @@
       container.appendChild(div);
     }
 
+    /* CORREÇÃO DO PARSER: Identifica a ordem de aparição na frase (indexOf) */
     function parseMatchText(descText) {
       if (!descText) return null;
       const text = descText.trim();
+      const textNorm = text.toLowerCase();
 
-      const recognized = [...dataListaTimes].sort((a, b) => b.name.length - a.name.length);
+      let matchesFound = [];
 
-      let team1Obj = null;
-      let team2Obj = null;
-
-      for (let t of recognized) {
+      dataListaTimes.forEach(t => {
         const nameNorm = t.name.toLowerCase();
         const tagNorm = t.tag ? t.tag.toLowerCase() : '';
-        const textNorm = text.toLowerCase();
+        
+        let pos = textNorm.indexOf(nameNorm);
+        let matchLength = nameNorm.length;
 
-        if (textNorm.includes(nameNorm) || (tagNorm && tagNorm.length >= 2 && textNorm.includes(tagNorm))) {
-          if (!team1Obj) {
-            team1Obj = t;
-          } else if (team1Obj.name !== t.name) {
-            team2Obj = t;
-            break;
-          }
+        if (pos === -1 && tagNorm && tagNorm.length >= 2) {
+          pos = textNorm.indexOf(tagNorm);
+          matchLength = tagNorm.length;
         }
-      }
+        
+        if (pos !== -1) {
+          matchesFound.push({ team: t, pos: pos, length: matchLength });
+        }
+      });
+
+      // Ordenar primariamente pela posição onde a equipe aparece no texto
+      matchesFound.sort((a, b) => a.pos - b.pos || b.length - a.length);
+
+      const uniqueMatches = [];
+      matchesFound.forEach(m => {
+        if (!uniqueMatches.some(u => u.team.name === m.team.name)) {
+          uniqueMatches.push(m);
+        }
+      });
+
+      if (uniqueMatches.length < 2) return null;
+
+      const team1Obj = uniqueMatches[0].team;
+      const team2Obj = uniqueMatches[1].team;
 
       let s1 = 0, s2 = 0;
       const scoreMatch = text.match(/([0-9]+)\s*[:x-]\s*([0-9]+)/i);
@@ -1274,16 +1288,11 @@
         s2 = parseInt(scoreMatch[2], 10);
       }
 
-      const t1Name = team1Obj ? team1Obj.name : 'Time 1';
-      const t2Name = team2Obj ? team2Obj.name : 'Time 2';
-      const logo1 = team1Obj ? team1Obj.logo : '';
-      const logo2 = team2Obj ? team2Obj.logo : '';
-
       return {
-        team1: t1Name,
-        logo1: logo1,
-        team2: t2Name,
-        logo2: logo2,
+        team1: team1Obj.name,
+        logo1: team1Obj.logo,
+        team2: team2Obj.name,
+        logo2: team2Obj.logo,
         score1: s1,
         score2: s2
       };
@@ -1385,14 +1394,12 @@
 
       updateMvpPlayerDropdown();
 
-      // Recarregar mapas
       const container = document.getElementById('map-rows-container');
       container.innerHTML = '';
       if (match.maps && match.maps.length > 0) {
         match.maps.forEach(mp => addMapRow(mp.location, mp.winner));
       }
 
-      // Atualizar interface de edição
       document.getElementById('form-match-title').innerHTML = `<span>✏️</span> Editar Confronto Registrado`;
       document.getElementById('btn-submit-match').innerHTML = `<span>💾</span> Salvar Alterações`;
       document.getElementById('btn-cancel-edit').classList.remove('hidden');
