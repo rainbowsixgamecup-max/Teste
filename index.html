@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Game Cup Rainbow Six Siege</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Biblioteca Tesseract.js para leitura inteligente OCR de prints de confrontos -->
+  <!-- Biblioteca Tesseract.js para leitura OCR de confrontos -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     body { background-color: #0d1117; color: #c9d1d9; font-family: system-ui, -apple-system, sans-serif; }
@@ -171,22 +171,15 @@
         </div>
       </div>
 
-      <!-- Layout do Confronto + Painel Lateral Direito Head-to-Head -->
       <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <!-- Lado Esquerdo: Comparativo das 2 Equipes -->
         <div class="xl:col-span-8 grid grid-cols-1 lg:grid-cols-11 gap-4 items-center" id="container-confronto"></div>
-
-        <!-- Lado Direito: Histórico e Estatísticas Diretas dos 2 Times (SEM SCROLL HORIZONTAL) -->
-        <div class="xl:col-span-4 w-full bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-4" id="container-h2h-stats">
-          <!-- Renderizado via JS -->
-        </div>
+        <div class="xl:col-span-4 w-full bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-4" id="container-h2h-stats"></div>
       </div>
     </div>
 
     <!-- PAINEL 7: HISTÓRICO DE CONFRONTOS (REGISTRO COM UPLOAD/PASTE DE PRINT) -->
     <div id="section-hist-confrontos" class="space-y-6 w-full hidden">
       
-      <!-- Card de Upload / Paste de Print + Form de Revisão -->
       <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-5">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-dark pb-4">
           <div>
@@ -215,7 +208,7 @@
           <span id="ocr-status" class="text-xs font-bold text-amber-400 hidden"></span>
         </div>
 
-        <!-- Formulário de Revisão Editável antes da Validação -->
+        <!-- Formulário de Revisão Editável -->
         <div id="review-container" class="space-y-4 hidden bg-[#161b22] border border-blue-500/40 p-4 rounded-xl">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-dark pb-3">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
@@ -223,11 +216,10 @@
             </h3>
             <div class="flex items-center gap-2">
               <label for="input-competition-name" class="text-xs font-bold text-gray-300">Competição:</label>
-              <input type="text" id="input-competition-name" placeholder="Ex: Six EMEA Cup 2026.1" class="bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              <input type="text" id="input-competition-name" placeholder="Ex: Fase 1" class="bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
             </div>
           </div>
 
-          <!-- Tabela Editável de Confrontos Lido -->
           <div class="overflow-x-auto custom-scroll">
             <table class="w-full text-left">
               <thead class="bg-[#1f242d] text-gray-400 text-xs font-bold uppercase">
@@ -255,7 +247,6 @@
         </div>
       </div>
 
-      <!-- Tabela Geral do Histórico de Confrontos Registrados -->
       <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-4">
         <div class="flex items-center justify-between border-b border-dark pb-3">
           <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -309,9 +300,6 @@
     let selectedTeam2 = localStorage.getItem('gcr6_selected_team2') || '';
     let registeredConfrontos = JSON.parse(localStorage.getItem('gcr6_match_history') || '[]');
 
-    /* =========================================================================
-       REMOÇÃO AUTOMÁTICA DE FUNDO DE IMAGENS (CANVAS)
-    ========================================================================= */
     function autoRemoveBackground(img) {
       if (!img || img.dataset.processed === "true") return;
       img.dataset.processed = "true";
@@ -464,9 +452,6 @@
       renderRegisteredMatchesTable();
     }
 
-    // -------------------------------------------------------------------------
-    // RENDERIZAR: RANKING TIMES
-    // -------------------------------------------------------------------------
     function renderSectionTimes() {
       const container = document.getElementById('container-times');
       container.innerHTML = '';
@@ -535,9 +520,6 @@
       });
     }
 
-    // -------------------------------------------------------------------------
-    // RENDERIZAR: HISTÓRICO POR REGIÕES
-    // -------------------------------------------------------------------------
     function renderSectionHistRegioes() {
       const container = document.getElementById('container-hist-regioes');
       container.innerHTML = '';
@@ -604,9 +586,6 @@
       });
     }
 
-    // -------------------------------------------------------------------------
-    // RENDERIZAR: HISTÓRICO POR COMPETIÇÃO
-    // -------------------------------------------------------------------------
     function setupCompetitionOptions() {
       const select = document.getElementById('select-competition');
       const comps = Array.from(new Set(dataHistorico.map(h => h.comp).filter(Boolean))).sort();
@@ -717,9 +696,6 @@
       container.appendChild(cardRank);
     }
 
-    // -------------------------------------------------------------------------
-    // RENDERIZAR: JOGADORES POR TÍTULOS
-    // -------------------------------------------------------------------------
     function renderSectionJogadoresTitulos() {
       const container = document.getElementById('container-jogadores-titulos');
       container.innerHTML = '';
@@ -790,9 +766,6 @@
       });
     }
 
-    // -------------------------------------------------------------------------
-    // RENDERIZAR: JOGADORES POR MVPS
-    // -------------------------------------------------------------------------
     function renderSectionJogadoresMVPs() {
       const container = document.getElementById('container-jogadores-mvps');
       container.innerHTML = '';
@@ -863,9 +836,6 @@
       });
     }
 
-    // -------------------------------------------------------------------------
-    // SELEÇÃO E PERSISTÊNCIA DE TIMES (CONFRONTO)
-    // -------------------------------------------------------------------------
     function setupConfrontoOptions() {
       const teamNames = Array.from(new Set(dataListaTimes.map(t => t.name))).sort();
       if (teamNames.length > 0 && !selectedTeam1) selectedTeam1 = teamNames[0];
@@ -950,9 +920,6 @@
       });
     });
 
-    // -------------------------------------------------------------------------
-    // RENDERIZAR: CONFRONTO DIRETO (VS) + RETROSPECTIVA DIRETA (H2H)
-    // -------------------------------------------------------------------------
     function renderConfronto() {
       const container = document.getElementById('container-confronto');
       const h2hContainer = document.getElementById('container-h2h-stats');
@@ -1045,7 +1012,6 @@
         <div class="lg:col-span-5">${card2Html}</div>
       `;
 
-      // CÁLCULO DAS ESTATÍSTICAS HEAD-TO-HEAD (DIRETAS ENTRE AS DUAS EQUIPES SELECIONADAS)
       const directMatches = registeredConfrontos.filter(m => {
         const t1 = (m.team1 || '').toLowerCase().trim();
         const t2 = (m.team2 || '').toLowerCase().trim();
@@ -1125,7 +1091,7 @@
     }
 
     /* =========================================================================
-       SISTEMA DA ABA HISTÓRICO DE CONFRONTOS (OCR / PASTE / FILE / REVISÃO)
+       SISTEMA DE LEITURA OCR DE GRELHAS DE PRINTS (SEM DADOS FALSOS)
     ========================================================================= */
     const pasteZone = document.getElementById('paste-zone');
     if (pasteZone) {
@@ -1158,74 +1124,180 @@
       }
     }
 
+    function loadImageFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function preprocessCellCanvas(srcImg, sx, sy, sw, sh) {
+      const canvas = document.createElement('canvas');
+      const scale = 2;
+      canvas.width = Math.max(1, sw * scale);
+      canvas.height = Math.max(1, sh * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+
+      ctx.drawImage(srcImg, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        let avg = (data[i] + data[i+1] + data[i+2]) / 3;
+        avg = 255 - avg;
+        let val = avg > 130 ? 255 : (avg < 75 ? 0 : avg);
+        data[i] = val;
+        data[i+1] = val;
+        data[i+2] = val;
+      }
+      ctx.putImageData(imgData, 0, 0);
+      return canvas;
+    }
+
     async function processPrintImage(file) {
       const statusEl = document.getElementById('ocr-status');
       statusEl.classList.remove('hidden');
-      statusEl.textContent = '⏳ A ler print e a extrair confrontos via OCR... Por favor aguarde.';
+      statusEl.textContent = '⏳ A processar print e a analisar a grelha de confrontos... Por favor aguarde.';
 
       try {
-        const worker = await Tesseract.createWorker('por');
-        const ret = await worker.recognize(file);
-        await worker.terminate();
+        const img = await loadImageFromFile(file);
+        const matches = await extractMatchesFromGridImage(img);
+        
+        if (matches.length > 0) {
+          statusEl.textContent = `✅ ${matches.length} confrontos reconhecidos com sucesso! Valide e edite as informações abaixo.`;
+        } else {
+          statusEl.textContent = '⚠️ Nenhum confronto foi detectado automaticamente. Clique em "+ Adicionar Confronto Manualmente".';
+        }
+        setTimeout(() => statusEl.classList.add('hidden'), 5000);
 
-        statusEl.textContent = '✅ Leitura concluída! Valide as informações abaixo.';
-        setTimeout(() => statusEl.classList.add('hidden'), 4000);
-
-        parseOcrTextToForm(ret.data.text);
+        renderExtractedMatchesToForm(matches);
       } catch (e) {
         console.error('Erro na leitura OCR:', e);
-        statusEl.textContent = '⚠️ Leitura automática limitada. Formulário editável aberto para ajuste manual.';
-        parseOcrTextToForm("");
+        statusEl.textContent = '⚠️ Erro ao ler a imagem. Adicione os dados manualmente abaixo.';
+        renderExtractedMatchesToForm([]);
       }
     }
 
-    function parseOcrTextToForm(ocrText) {
+    async function extractMatchesFromGridImage(img) {
+      const w = img.width;
+      const h = img.height;
+      const ratio = w / h;
+
+      let cols = 1, rows = 1;
+      if (ratio > 2.5) {
+        cols = 4; rows = 3;
+      } else if (ratio > 1.4) {
+        cols = 2; rows = 3;
+      } else {
+        cols = 1; rows = Math.min(12, Math.max(1, Math.round(h / 65)));
+      }
+
+      const cellW = w / cols;
+      const cellH = h / rows;
+
+      const worker = await Tesseract.createWorker('por');
+      const matches = [];
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const sx = c * cellW;
+          const sy = r * cellH;
+
+          const cellCanvas = preprocessCellCanvas(img, sx, sy, cellW, cellH);
+          const res = await worker.recognize(cellCanvas);
+          const text = res.data.text || '';
+
+          const parsedMatch = parseSingleCellText(text);
+          if (parsedMatch) {
+            matches.push(parsedMatch);
+          }
+        }
+      }
+
+      await worker.terminate();
+      return matches;
+    }
+
+    function parseSingleCellText(text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length === 0) return null;
+
+      const recognizedTeams = [...dataListaTimes].sort((a, b) => b.name.length - a.name.length);
+
+      function findTeamAndScore(line) {
+        if (!line) return null;
+        let cleanLine = line.replace(/\b(BR|NA|LATAM|EMEA|JP|KR|CN|APAC|OCE)\b/gi, '').trim();
+
+        let matchedTeam = null;
+        for (let t of recognizedTeams) {
+          const nameNorm = t.name.toLowerCase();
+          const tagNorm = t.tag ? t.tag.toLowerCase() : '';
+          const lineNorm = cleanLine.toLowerCase();
+
+          if (lineNorm.includes(nameNorm) || (tagNorm && tagNorm.length >= 2 && lineNorm.includes(tagNorm))) {
+            matchedTeam = t.name;
+            break;
+          }
+        }
+
+        if (!matchedTeam) return null;
+
+        const digits = line.match(/\b[0-9]+\b/g) || [];
+        let score = '0';
+        if (digits.length > 0) {
+          score = digits[digits.length - 1];
+        }
+
+        return { team: matchedTeam, score: score };
+      }
+
+      let t1Info = null;
+      let t2Info = null;
+
+      for (let line of lines) {
+        const info = findTeamAndScore(line);
+        if (info) {
+          if (!t1Info) {
+            t1Info = info;
+          } else if (info.team !== t1Info.team) {
+            t2Info = info;
+            break;
+          }
+        }
+      }
+
+      if (t1Info && t2Info) {
+        return {
+          team1: t1Info.team,
+          score1: t1Info.score,
+          score2: t2Info.score,
+          team2: t2Info.team
+        };
+      }
+
+      return null;
+    }
+
+    function renderExtractedMatchesToForm(matches) {
       const reviewContainer = document.getElementById('review-container');
       const body = document.getElementById('editable-matches-body');
       reviewContainer.classList.remove('hidden');
       body.innerHTML = '';
 
-      const lines = ocrText.split('\n').map(l => l.trim()).filter(Boolean);
-      const recognizedTeams = Array.from(new Set(dataListaTimes.map(t => t.name)));
-
-      let matches = [];
-
-      // Tentar associar linhas aos times existentes no banco
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        let foundTeam1 = recognizedTeams.find(t => line.toLowerCase().includes(t.toLowerCase()));
-        
-        if (foundTeam1) {
-          const scoresInLine = line.match(/\b[0-9]+\b/g) || [];
-          let s1 = scoresInLine[0] || '0';
-          let s2 = scoresInLine[1] || '0';
-          let foundTeam2 = '';
-
-          if (i + 1 < lines.length) {
-            const nextLine = lines[i + 1];
-            foundTeam2 = recognizedTeams.find(t => nextLine.toLowerCase().includes(t.toLowerCase())) || '';
-            const nextScores = nextLine.match(/\b[0-9]+\b/g) || [];
-            if (nextScores.length > 0 && scoresInLine.length < 2) {
-              s2 = nextScores[0];
-            }
-          }
-
-          if (foundTeam2 && foundTeam1 !== foundTeam2) {
-            matches.push({ team1: foundTeam1, score1: s1, score2: s2, team2: foundTeam2 });
-            i++; // pular próxima linha processada
-          }
-        }
-      }
-
-      // Se o OCR não detectar partidas estruturadas suficientes, insere linhas padrão para edição rápida
       if (matches.length === 0) {
-        matches = [
-          { team1: recognizedTeams[0] || 'Loud', score1: '2', score2: '0', team2: recognizedTeams[1] || 'Rex Regum Qeon' },
-          { team1: recognizedTeams[2] || 'Cloud9', score1: '2', score2: '0', team2: recognizedTeams[3] || 'V3 Esports' }
-        ];
+        addManualMatchRow();
+        return;
       }
 
-      matches.forEach((m, idx) => {
+      matches.forEach(m => {
         addMatchRowToReviewTable(m.team1, m.score1, m.score2, m.team2);
       });
     }
@@ -1260,7 +1332,6 @@
       `;
       body.appendChild(tr);
 
-      // Adicionar Datalist global se não existir
       if (!document.getElementById('teams-datalist')) {
         const dl = document.createElement('datalist');
         dl.id = 'teams-datalist';
@@ -1275,7 +1346,7 @@
     }
 
     function saveMatchesToHistory() {
-      const compName = (document.getElementById('input-competition-name').value || 'Competição Especial').trim();
+      const compName = (document.getElementById('input-competition-name').value || 'Fase 1').trim();
       const body = document.getElementById('editable-matches-body');
       const rows = body.querySelectorAll('tr');
 
@@ -1361,9 +1432,6 @@
       }
     }
 
-    // -------------------------------------------------------------------------
-    // FETCH ANTI-CACHE E PARSERS
-    // -------------------------------------------------------------------------
     async function fetchCsvData(url, parseFn) {
       if (!url) return [];
       let cleanUrl = url.trim();
