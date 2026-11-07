@@ -5,19 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Game Cup Rainbow Six Siege</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Biblioteca Tesseract.js para leitura inteligente OCR de prints de confrontos -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     body { background-color: #0d1117; color: #c9d1d9; font-family: system-ui, -apple-system, sans-serif; }
     .bg-dark-card { background-color: #161b22; }
     .border-dark { border-color: #30363d; }
     .bg-dark-hover:hover { background-color: #21262d; }
     
-    /* Scrollbar estilizada para rolagem horizontal e vertical */
+    /* Scrollbar estilizada */
     .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
     .custom-scroll::-webkit-scrollbar-track { background: #161b22; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #484f58; }
 
-    /* Efeito de contraste e contorno para logos transparentes escuras */
+    /* Efeito de contraste e contorno para logos transparentes */
     .logo-transparent {
       filter: drop-shadow(0px 0px 2px rgba(255, 255, 255, 0.8));
     }
@@ -41,7 +43,7 @@
         </div>
       </div>
       
-      <!-- Navegação das 6 Abas Principais -->
+      <!-- Navegação das 7 Abas Principais -->
       <div class="flex items-center bg-dark-card border border-dark rounded-xl p-1.5 gap-1.5 overflow-x-auto custom-scroll">
         <button id="nav-times" onclick="switchMainTab('times')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow-md">
           Ranking Times
@@ -61,6 +63,9 @@
         <button id="nav-confronto" onclick="switchMainTab('confronto')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           ⚔️ Confronto
         </button>
+        <button id="nav-hist-confrontos" onclick="switchMainTab('hist-confrontos')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+          📜 Histórico de Confrontos
+        </button>
       </div>
     </div>
 
@@ -69,9 +74,7 @@
       <span class="text-sm font-bold text-gray-200 mr-2 flex items-center gap-1.5">
         <span>📍</span> Selecionar Regiões Exibidas:
       </span>
-      <div id="region-checkboxes" class="flex flex-wrap items-center gap-2">
-        <!-- Botões de filtro gerados via JS -->
-      </div>
+      <div id="region-checkboxes" class="flex flex-wrap items-center gap-2"></div>
     </div>
 
     <!-- PAINEL 1: RANKING TIMES -->
@@ -105,8 +108,7 @@
         </div>
         <div class="flex items-center gap-2.5">
           <label for="select-competition" class="text-sm font-semibold text-gray-300">Competição:</label>
-          <select id="select-competition" onchange="renderSectionHistCompeticoes()" class="bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-sm font-bold text-white focus:outline-none focus:border-blue-500">
-          </select>
+          <select id="select-competition" onchange="renderSectionHistCompeticoes()" class="bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-sm font-bold text-white focus:outline-none focus:border-blue-500"></select>
         </div>
       </div>
       
@@ -135,54 +137,153 @@
       </div>
     </div>
 
-    <!-- PAINEL 6: CONFRONTO (VS) COM CAMPO DE PESQUISA -->
+    <!-- PAINEL 6: CONFRONTO DIRETO + RETROSPECTIVA H2H FIXA À DIREITA -->
     <div id="section-confronto" class="space-y-6 w-full hidden">
       <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-lg">
         <h2 class="text-xl font-extrabold text-white flex items-center justify-center gap-2 mb-4">
           <span>⚔️</span> Simulação de Confronto Direto
         </h2>
         
-        <!-- Seletores Pesquisáveis dos Times -->
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-          
-          <!-- TIME 1 (PESQUISÁVEL) -->
           <div class="md:col-span-2 relative" id="dropdown-container-1">
             <label class="block text-xs font-bold text-blue-400 uppercase mb-1.5">Time 1 (Esquerda)</label>
             <div class="relative">
               <input type="text" id="input-team-1" oninput="onTeamSearchInput(1)" onfocus="openTeamDropdown(1)" placeholder="Pesquisar por nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2.5 text-sm font-bold text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 pr-9">
               <span class="absolute right-3 top-3 text-xs text-gray-400 pointer-events-none">🔍</span>
             </div>
-            <!-- Dropdown Pesquisável -->
-            <div id="list-team-1" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scroll z-50 divide-y divide-dark">
-            </div>
+            <div id="list-team-1" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
           </div>
 
-          <!-- INSÍGNIA VS -->
           <div class="flex justify-center items-center py-2 md:py-0">
             <span class="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 text-white font-black text-xl px-4 py-2 rounded-xl shadow-lg border border-yellow-400/30 tracking-wider">
               VS
             </span>
           </div>
 
-          <!-- TIME 2 (PESQUISÁVEL) -->
           <div class="md:col-span-2 relative" id="dropdown-container-2">
             <label class="block text-xs font-bold text-red-400 uppercase mb-1.5">Time 2 (Direita)</label>
             <div class="relative">
               <input type="text" id="input-team-2" oninput="onTeamSearchInput(2)" onfocus="openTeamDropdown(2)" placeholder="Pesquisar por nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2.5 text-sm font-bold text-white placeholder-gray-500 focus:outline-none focus:border-red-500 pr-9">
               <span class="absolute right-3 top-3 text-xs text-gray-400 pointer-events-none">🔍</span>
             </div>
-            <!-- Dropdown Pesquisável -->
-            <div id="list-team-2" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scroll z-50 divide-y divide-dark">
-            </div>
+            <div id="list-team-2" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
           </div>
-
         </div>
       </div>
 
-      <!-- Container do Confronto Direto -->
-      <div class="grid grid-cols-1 lg:grid-cols-11 gap-6 items-center" id="container-confronto">
-        <!-- Conteúdo renderizado via JS -->
+      <!-- Layout do Confronto + Painel Lateral Direito Head-to-Head -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        <!-- Lado Esquerdo: Comparativo das 2 Equipes -->
+        <div class="xl:col-span-8 grid grid-cols-1 lg:grid-cols-11 gap-4 items-center" id="container-confronto"></div>
+
+        <!-- Lado Direito: Histórico e Estatísticas Diretas dos 2 Times (SEM SCROLL HORIZONTAL) -->
+        <div class="xl:col-span-4 w-full bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-4" id="container-h2h-stats">
+          <!-- Renderizado via JS -->
+        </div>
       </div>
+    </div>
+
+    <!-- PAINEL 7: HISTÓRICO DE CONFRONTOS (REGISTRO COM UPLOAD/PASTE DE PRINT) -->
+    <div id="section-hist-confrontos" class="space-y-6 w-full hidden">
+      
+      <!-- Card de Upload / Paste de Print + Form de Revisão -->
+      <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-dark pb-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+              <span>📸</span> Registro de Resultados por Print de Confronto
+            </h2>
+            <p class="text-xs text-gray-400 mt-1">Cole um print (Ctrl+V) ou selecione a imagem da chave/partidas para extrair automaticamente os placares.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="file" id="input-print-file" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+            <button onclick="document.getElementById('input-print-file').click()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg transition shadow flex items-center gap-1.5">
+              <span>📁</span> Selecionar Print
+            </button>
+          </div>
+        </div>
+
+        <!-- Zona de Drop e Colagem (Ctrl+V) -->
+        <div id="paste-zone" tabindex="0" class="border-2 border-dashed border-dark hover:border-blue-500/60 bg-[#1f242d]/50 rounded-xl p-6 text-center transition cursor-pointer flex flex-col items-center justify-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-xl font-bold">
+            📋
+          </div>
+          <div>
+            <p class="text-sm font-bold text-gray-200">Clique aqui e pressione <kbd class="px-2 py-1 bg-dark-card border border-dark rounded text-xs font-mono text-blue-400">Ctrl + V</kbd> para colar a imagem</p>
+            <p class="text-xs text-gray-400 mt-1">Ou arraste a imagem do print diretamente para esta caixa</p>
+          </div>
+          <span id="ocr-status" class="text-xs font-bold text-amber-400 hidden"></span>
+        </div>
+
+        <!-- Formulário de Revisão Editável antes da Validação -->
+        <div id="review-container" class="space-y-4 hidden bg-[#161b22] border border-blue-500/40 p-4 rounded-xl">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-dark pb-3">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>✏️</span> Validar e Editar Resultados Extraídos
+            </h3>
+            <div class="flex items-center gap-2">
+              <label for="input-competition-name" class="text-xs font-bold text-gray-300">Competição:</label>
+              <input type="text" id="input-competition-name" placeholder="Ex: Six EMEA Cup 2026.1" class="bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+
+          <!-- Tabela Editável de Confrontos Lido -->
+          <div class="overflow-x-auto custom-scroll">
+            <table class="w-full text-left">
+              <thead class="bg-[#1f242d] text-gray-400 text-xs font-bold uppercase">
+                <tr>
+                  <th class="p-2">Time 1</th>
+                  <th class="p-2 w-20 text-center">Placar 1</th>
+                  <th class="p-2 w-20 text-center">Placar 2</th>
+                  <th class="p-2">Time 2</th>
+                  <th class="p-2 w-12 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="editable-matches-body" class="divide-y divide-dark text-xs font-bold text-white">
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <button onclick="addManualMatchRow()" class="px-3 py-1.5 bg-[#21262d] hover:bg-dark-hover border border-dark text-xs font-bold text-gray-300 rounded-lg transition flex items-center gap-1">
+              <span>➕</span> Adicionar Confronto Manualmente
+            </button>
+            <button onclick="saveMatchesToHistory()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-lg shadow-lg transition flex items-center gap-1.5">
+              <span>💾</span> Salvar no Histórico de Confrontos
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela Geral do Histórico de Confrontos Registrados -->
+      <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-dark pb-3">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <span>📜</span> Registros do Histórico de Confrontos
+          </h3>
+          <button onclick="clearMatchHistory()" class="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold rounded-lg transition">
+            Limpar Todo Histórico
+          </button>
+        </div>
+
+        <div class="overflow-x-auto custom-scroll">
+          <table class="w-full text-left">
+            <thead class="bg-[#1f242d] text-gray-400 text-xs font-bold uppercase">
+              <tr>
+                <th class="px-3.5 py-3">Competição</th>
+                <th class="px-3.5 py-3 text-right">Time 1</th>
+                <th class="px-3.5 py-3 text-center">Placar</th>
+                <th class="px-3.5 py-3">Time 2</th>
+                <th class="px-3.5 py-3 text-center">Vencedor</th>
+                <th class="px-3.5 py-3 text-center w-12">Excluir</th>
+              </tr>
+            </thead>
+            <tbody id="registered-matches-body" class="divide-y divide-dark text-xs text-gray-200">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -204,8 +305,9 @@
     let availableRegions = [];
     let activeRegions = new Set();
 
-    let selectedTeam1 = '';
-    let selectedTeam2 = '';
+    let selectedTeam1 = localStorage.getItem('gcr6_selected_team1') || '';
+    let selectedTeam2 = localStorage.getItem('gcr6_selected_team2') || '';
+    let registeredConfrontos = JSON.parse(localStorage.getItem('gcr6_match_history') || '[]');
 
     /* =========================================================================
        REMOÇÃO AUTOMÁTICA DE FUNDO DE IMAGENS (CANVAS)
@@ -269,7 +371,7 @@
     }
 
     function switchMainTab(tabId) {
-      const allTabs = ['times', 'hist-regioes', 'hist-competicoes', 'jogadores-titulos', 'jogadores-mvps', 'confronto'];
+      const allTabs = ['times', 'hist-regioes', 'hist-competicoes', 'jogadores-titulos', 'jogadores-mvps', 'confronto', 'hist-confrontos'];
       allTabs.forEach(t => {
         const btn = document.getElementById(`nav-${t}`);
         const section = document.getElementById(`section-${t}`);
@@ -281,7 +383,7 @@
           section.classList.add('hidden');
         }
       });
-      document.getElementById('region-filter-bar').style.display = (tabId === 'hist-competicoes' || tabId === 'confronto') ? 'none' : 'flex';
+      document.getElementById('region-filter-bar').style.display = (tabId === 'hist-competicoes' || tabId === 'confronto' || tabId === 'hist-confrontos') ? 'none' : 'flex';
     }
 
     function getPosBadge(idx) {
@@ -359,6 +461,7 @@
       renderSectionHistRegioes();
       renderSectionJogadoresTitulos();
       renderSectionJogadoresMVPs();
+      renderRegisteredMatchesTable();
     }
 
     // -------------------------------------------------------------------------
@@ -533,7 +636,6 @@
       });
       const topChampions = Object.values(teamStats).sort((a, b) => b.wins - a.wins);
 
-      // CARTÃO 1: Histórico das Edições
       const cardHistory = document.createElement('div');
       cardHistory.className = "sticky left-0 z-20 w-[540px] md:w-[600px] shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col";
       
@@ -571,7 +673,6 @@
         </div>
       `;
 
-      // CARTÃO 2: Maiores Campeões da Competição
       const cardRank = document.createElement('div');
       cardRank.className = "w-[500px] md:w-[560px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
@@ -763,7 +864,7 @@
     }
 
     // -------------------------------------------------------------------------
-    // SISTEMA DE SELEÇÃO E PESQUISA DE TIMES (CONFRONTO)
+    // SELEÇÃO E PERSISTÊNCIA DE TIMES (CONFRONTO)
     // -------------------------------------------------------------------------
     function setupConfrontoOptions() {
       const teamNames = Array.from(new Set(dataListaTimes.map(t => t.name))).sort();
@@ -827,9 +928,11 @@
     function selectTeamForConfronto(teamNum, teamName) {
       if (teamNum === 1) {
         selectedTeam1 = teamName;
+        localStorage.setItem('gcr6_selected_team1', teamName);
         document.getElementById('input-team-1').value = teamName;
       } else {
         selectedTeam2 = teamName;
+        localStorage.setItem('gcr6_selected_team2', teamName);
         document.getElementById('input-team-2').value = teamName;
       }
       const listEl = document.getElementById(`list-team-${teamNum}`);
@@ -837,7 +940,6 @@
       renderConfronto();
     }
 
-    // Fechar os dropdowns ao clicar fora
     document.addEventListener('click', (e) => {
       [1, 2].forEach(num => {
         const container = document.getElementById(`dropdown-container-${num}`);
@@ -849,11 +951,12 @@
     });
 
     // -------------------------------------------------------------------------
-    // RENDERIZAR: CONFRONTO DIRETO (VS)
+    // RENDERIZAR: CONFRONTO DIRETO (VS) + RETROSPECTIVA DIRETA (H2H)
     // -------------------------------------------------------------------------
     function renderConfronto() {
       const container = document.getElementById('container-confronto');
-      if (!container) return;
+      const h2hContainer = document.getElementById('container-h2h-stats');
+      if (!container || !h2hContainer) return;
 
       container.innerHTML = '';
 
@@ -883,7 +986,6 @@
 
         return `
           <div class="bg-dark-card border-2 ${borderAccent} rounded-xl overflow-hidden shadow-2xl flex flex-col w-full">
-            <!-- Cabeçalho do Time -->
             <div class="bg-[#1f242d] p-5 border-b border-dark flex items-center justify-between">
               <div class="flex items-center gap-3.5">
                 ${logo}
@@ -901,7 +1003,6 @@
               </div>
             </div>
 
-            <!-- Tabela de Jogadores do Time -->
             <div class="p-5 space-y-3">
               <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
                 <span>👥 Jogadores da Equipe</span>
@@ -943,6 +1044,321 @@
         <div class="lg:col-span-1">${vsElementHtml}</div>
         <div class="lg:col-span-5">${card2Html}</div>
       `;
+
+      // CÁLCULO DAS ESTATÍSTICAS HEAD-TO-HEAD (DIRETAS ENTRE AS DUAS EQUIPES SELECIONADAS)
+      const directMatches = registeredConfrontos.filter(m => {
+        const t1 = (m.team1 || '').toLowerCase().trim();
+        const t2 = (m.team2 || '').toLowerCase().trim();
+        const sel1 = name1.toLowerCase().trim();
+        const sel2 = name2.toLowerCase().trim();
+        return (t1 === sel1 && t2 === sel2) || (t1 === sel2 && t2 === sel1);
+      });
+
+      let wins1 = 0, wins2 = 0, draws = 0;
+
+      directMatches.forEach(m => {
+        const s1 = parseInt(m.score1, 10);
+        const s2 = parseInt(m.score2, 10);
+        const isT1First = (m.team1 || '').toLowerCase().trim() === name1.toLowerCase().trim();
+
+        if (s1 === s2) {
+          draws++;
+        } else if ((s1 > s2 && isT1First) || (s2 > s1 && !isT1First)) {
+          wins1++;
+        } else {
+          wins2++;
+        }
+      });
+
+      let historyRowsHtml = directMatches.map(m => `
+        <div class="bg-[#1f242d] p-3 rounded-lg border border-dark flex items-center justify-between gap-2 text-xs">
+          <div class="flex-1 truncate">
+            <span class="text-[10px] text-gray-400 font-semibold block truncate">${m.competition || 'Confronto'}</span>
+            <div class="flex items-center gap-1 font-bold text-white mt-0.5 truncate">
+              <span class="${m.winner === m.team1 ? 'text-emerald-400' : 'text-gray-300'} truncate">${m.team1}</span>
+              <span class="text-yellow-400 font-black px-1.5 py-0.5 bg-black/40 rounded">${m.score1} x ${m.score2}</span>
+              <span class="${m.winner === m.team2 ? 'text-emerald-400' : 'text-gray-300'} truncate">${m.team2}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      if (directMatches.length === 0) {
+        historyRowsHtml = `<div class="p-4 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum confronto direto registrado entre essas equipes.</div>`;
+      }
+
+      h2hContainer.innerHTML = `
+        <div class="border-b border-dark pb-3">
+          <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+            <span>📊</span> Retrospectiva Direta
+          </h3>
+          <p class="text-xs text-gray-400 mt-0.5">${team1.name} vs ${team2.name}</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-blue-500/10 border border-blue-500/30 p-2.5 rounded-lg">
+            <span class="block text-[10px] font-bold text-blue-400 uppercase truncate">Vitórias (${team1.name})</span>
+            <span class="text-xl font-black text-white">${wins1}</span>
+          </div>
+          <div class="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-lg">
+            <span class="block text-[10px] font-bold text-amber-400 uppercase">Empates</span>
+            <span class="text-xl font-black text-white">${draws}</span>
+          </div>
+          <div class="bg-red-500/10 border border-red-500/30 p-2.5 rounded-lg">
+            <span class="block text-[10px] font-bold text-red-400 uppercase truncate">Vitórias (${team2.name})</span>
+            <span class="text-xl font-black text-white">${wins2}</span>
+          </div>
+        </div>
+
+        <div class="bg-[#1f242d]/60 border border-dark p-3 rounded-lg flex items-center justify-between">
+          <span class="text-xs font-bold text-gray-300">Total de Enfrentamentos:</span>
+          <span class="text-sm font-black text-yellow-400">${directMatches.length} partidas</span>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Histórico Recente de Duelos</h4>
+          <div class="space-y-2 max-h-[320px] overflow-y-auto custom-scroll pr-1">
+            ${historyRowsHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    /* =========================================================================
+       SISTEMA DA ABA HISTÓRICO DE CONFRONTOS (OCR / PASTE / FILE / REVISÃO)
+    ========================================================================= */
+    const pasteZone = document.getElementById('paste-zone');
+    if (pasteZone) {
+      pasteZone.addEventListener('paste', handlePasteEvent);
+      pasteZone.addEventListener('dragover', (e) => { e.preventDefault(); pasteZone.classList.add('border-blue-500'); });
+      pasteZone.addEventListener('dragleave', () => pasteZone.classList.remove('border-blue-500'));
+      pasteZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        pasteZone.classList.remove('border-blue-500');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          processPrintImage(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    function handlePasteEvent(e) {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+          const file = item.getAsFile();
+          processPrintImage(file);
+          break;
+        }
+      }
+    }
+
+    function handleFileSelect(e) {
+      if (e.target.files && e.target.files[0]) {
+        processPrintImage(e.target.files[0]);
+      }
+    }
+
+    async function processPrintImage(file) {
+      const statusEl = document.getElementById('ocr-status');
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = '⏳ A ler print e a extrair confrontos via OCR... Por favor aguarde.';
+
+      try {
+        const worker = await Tesseract.createWorker('por');
+        const ret = await worker.recognize(file);
+        await worker.terminate();
+
+        statusEl.textContent = '✅ Leitura concluída! Valide as informações abaixo.';
+        setTimeout(() => statusEl.classList.add('hidden'), 4000);
+
+        parseOcrTextToForm(ret.data.text);
+      } catch (e) {
+        console.error('Erro na leitura OCR:', e);
+        statusEl.textContent = '⚠️ Leitura automática limitada. Formulário editável aberto para ajuste manual.';
+        parseOcrTextToForm("");
+      }
+    }
+
+    function parseOcrTextToForm(ocrText) {
+      const reviewContainer = document.getElementById('review-container');
+      const body = document.getElementById('editable-matches-body');
+      reviewContainer.classList.remove('hidden');
+      body.innerHTML = '';
+
+      const lines = ocrText.split('\n').map(l => l.trim()).filter(Boolean);
+      const recognizedTeams = Array.from(new Set(dataListaTimes.map(t => t.name)));
+
+      let matches = [];
+
+      // Tentar associar linhas aos times existentes no banco
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        let foundTeam1 = recognizedTeams.find(t => line.toLowerCase().includes(t.toLowerCase()));
+        
+        if (foundTeam1) {
+          const scoresInLine = line.match(/\b[0-9]+\b/g) || [];
+          let s1 = scoresInLine[0] || '0';
+          let s2 = scoresInLine[1] || '0';
+          let foundTeam2 = '';
+
+          if (i + 1 < lines.length) {
+            const nextLine = lines[i + 1];
+            foundTeam2 = recognizedTeams.find(t => nextLine.toLowerCase().includes(t.toLowerCase())) || '';
+            const nextScores = nextLine.match(/\b[0-9]+\b/g) || [];
+            if (nextScores.length > 0 && scoresInLine.length < 2) {
+              s2 = nextScores[0];
+            }
+          }
+
+          if (foundTeam2 && foundTeam1 !== foundTeam2) {
+            matches.push({ team1: foundTeam1, score1: s1, score2: s2, team2: foundTeam2 });
+            i++; // pular próxima linha processada
+          }
+        }
+      }
+
+      // Se o OCR não detectar partidas estruturadas suficientes, insere linhas padrão para edição rápida
+      if (matches.length === 0) {
+        matches = [
+          { team1: recognizedTeams[0] || 'Loud', score1: '2', score2: '0', team2: recognizedTeams[1] || 'Rex Regum Qeon' },
+          { team1: recognizedTeams[2] || 'Cloud9', score1: '2', score2: '0', team2: recognizedTeams[3] || 'V3 Esports' }
+        ];
+      }
+
+      matches.forEach((m, idx) => {
+        addMatchRowToReviewTable(m.team1, m.score1, m.score2, m.team2);
+      });
+    }
+
+    function addMatchRowToReviewTable(t1 = '', s1 = '0', s2 = '0', t2 = '') {
+      const body = document.getElementById('editable-matches-body');
+      const rowId = 'row-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+
+      const teamOptionsHtml = Array.from(new Set(dataListaTimes.map(t => t.name))).sort().map(name => `
+        <option value="${name}">${name}</option>
+      `).join('');
+
+      const tr = document.createElement('tr');
+      tr.id = rowId;
+      tr.className = "hover:bg-dark-hover/50";
+      tr.innerHTML = `
+        <td class="p-2">
+          <input type="text" list="teams-datalist" value="${t1}" class="w-full bg-[#21262d] border border-dark rounded px-2.5 py-1 text-xs text-white font-bold focus:outline-none focus:border-blue-500">
+        </td>
+        <td class="p-2 text-center">
+          <input type="number" min="0" value="${s1}" class="w-16 bg-[#21262d] border border-dark rounded px-2 py-1 text-xs text-center font-bold text-yellow-400 focus:outline-none focus:border-blue-500">
+        </td>
+        <td class="p-2 text-center">
+          <input type="number" min="0" value="${s2}" class="w-16 bg-[#21262d] border border-dark rounded px-2 py-1 text-xs text-center font-bold text-yellow-400 focus:outline-none focus:border-blue-500">
+        </td>
+        <td class="p-2">
+          <input type="text" list="teams-datalist" value="${t2}" class="w-full bg-[#21262d] border border-dark rounded px-2.5 py-1 text-xs text-white font-bold focus:outline-none focus:border-blue-500">
+        </td>
+        <td class="p-2 text-center">
+          <button onclick="document.getElementById('${rowId}').remove()" class="text-red-400 hover:text-red-300 font-bold p-1">❌</button>
+        </td>
+      `;
+      body.appendChild(tr);
+
+      // Adicionar Datalist global se não existir
+      if (!document.getElementById('teams-datalist')) {
+        const dl = document.createElement('datalist');
+        dl.id = 'teams-datalist';
+        dl.innerHTML = teamOptionsHtml;
+        document.body.appendChild(dl);
+      }
+    }
+
+    function addManualMatchRow() {
+      const recognizedTeams = Array.from(new Set(dataListaTimes.map(t => t.name)));
+      addMatchRowToReviewTable(recognizedTeams[0] || '', '0', '0', recognizedTeams[1] || '');
+    }
+
+    function saveMatchesToHistory() {
+      const compName = (document.getElementById('input-competition-name').value || 'Competição Especial').trim();
+      const body = document.getElementById('editable-matches-body');
+      const rows = body.querySelectorAll('tr');
+
+      const newConfrontos = [];
+
+      rows.forEach(tr => {
+        const inputs = tr.querySelectorAll('input');
+        if (inputs.length >= 4) {
+          const t1 = inputs[0].value.trim();
+          const s1 = parseInt(inputs[1].value, 10) || 0;
+          const s2 = parseInt(inputs[2].value, 10) || 0;
+          const t2 = inputs[3].value.trim();
+
+          if (t1 && t2) {
+            let winner = 'Empate';
+            if (s1 > s2) winner = t1;
+            else if (s2 > s1) winner = t2;
+
+            newConfrontos.push({
+              id: Date.now() + Math.random(),
+              competition: compName,
+              team1: t1,
+              score1: s1,
+              score2: s2,
+              team2: t2,
+              winner: winner,
+              date: new Date().toLocaleDateString('pt-BR')
+            });
+          }
+        }
+      });
+
+      if (newConfrontos.length > 0) {
+        registeredConfrontos = [...newConfrontos, ...registeredConfrontos];
+        localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
+        
+        renderRegisteredMatchesTable();
+        renderConfronto();
+
+        document.getElementById('review-container').classList.add('hidden');
+        alert(`✅ ${newConfrontos.length} confrontos salvos no histórico com sucesso!`);
+      } else {
+        alert('⚠️ Preencha ao menos 1 confronto válido para salvar.');
+      }
+    }
+
+    function renderRegisteredMatchesTable() {
+      const body = document.getElementById('registered-matches-body');
+      if (!body) return;
+
+      if (registeredConfrontos.length === 0) {
+        body.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-xs text-gray-500">Nenhum confronto registrado no histórico ainda. Use a área acima para adicionar via print ou manualmente.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = registeredConfrontos.map(m => `
+        <tr class="hover:bg-dark-hover/50">
+          <td class="px-3.5 py-3 font-semibold text-blue-400">${m.competition}</td>
+          <td class="px-3.5 py-3 text-right font-bold text-white">${m.team1}</td>
+          <td class="px-3.5 py-3 text-center font-black text-yellow-400 bg-black/20 font-mono">${m.score1} x ${m.score2}</td>
+          <td class="px-3.5 py-3 font-bold text-white">${m.team2}</td>
+          <td class="px-3.5 py-3 text-center font-extrabold ${m.winner === 'Empate' ? 'text-amber-400' : 'text-emerald-400'}">${m.winner}</td>
+          <td class="px-3.5 py-3 text-center">
+            <button onclick="deleteMatchFromHistory(${m.id})" class="text-xs text-red-400 hover:text-red-300 font-bold p-1">🗑️</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function deleteMatchFromHistory(id) {
+      registeredConfrontos = registeredConfrontos.filter(m => m.id !== id);
+      localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
+      renderRegisteredMatchesTable();
+      renderConfronto();
+    }
+
+    function clearMatchHistory() {
+      if (confirm('Tem certeza que deseja apagar todo o histórico de confrontos registrados?')) {
+        registeredConfrontos = [];
+        localStorage.removeItem('gcr6_match_history');
+        renderRegisteredMatchesTable();
+        renderConfronto();
+      }
     }
 
     // -------------------------------------------------------------------------
