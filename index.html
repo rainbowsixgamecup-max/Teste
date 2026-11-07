@@ -173,63 +173,54 @@
       </div>
     </div>
 
-    <!-- PAINEL 7: HISTÓRICO DE CONFRONTOS (PREENCHIMENTO 100% MANUAL) -->
+    <!-- PAINEL 7: HISTÓRICO DE CONFRONTOS (REGISTRO POR DADOS E MAPAS) -->
     <div id="section-hist-confrontos" class="space-y-6 w-full hidden">
       
-      <!-- Formulário de Preenchimento Manual -->
+      <!-- Painel de Cadastro por Texto + Locais/Mapas -->
       <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-5">
         <div class="border-b border-dark pb-3">
           <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
-            <span>✏️</span> Cadastrar Novo Confronto
+            <span>📝</span> Registrar Confronto (Texto + Locais/Mapas)
           </h2>
-          <p class="text-xs text-gray-400 mt-1">Preencha a competição, selecione os times (buscando por Nome ou TAG) e informe o placar.</p>
+          <p class="text-xs text-gray-400 mt-1">Escreva a frase da partida (ex: <i>"Loud venceu Rex Regum Qeon por 2x0"</i> ou <i>"Cloud9 1x1 FlyQuest"</i>) e adicione os mapas ou estúdios se desejar.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-[#1f242d]/60 border border-dark p-4 rounded-xl">
+        <div class="space-y-4 bg-[#1f242d]/60 border border-dark p-4 rounded-xl">
           
-          <!-- Competição -->
-          <div class="md:col-span-3">
-            <label class="block text-xs font-bold text-gray-300 mb-1.5">Competição / Fase</label>
-            <input type="text" id="manual-input-comp" placeholder="Ex: Six Major / Fase 1" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
-          </div>
-
-          <!-- Time 1 com Busca -->
-          <div class="md:col-span-3 relative" id="manual-dropdown-container-1">
-            <label class="block text-xs font-bold text-blue-400 mb-1.5">Time 1 (Esquerda)</label>
-            <div class="relative">
-              <input type="text" id="manual-input-team-1" oninput="onManualTeamSearchInput(1)" onfocus="openManualTeamDropdown(1)" placeholder="Buscar Nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500 pr-7">
-              <span class="absolute right-2.5 top-2.5 text-xs text-gray-400 pointer-events-none">🔍</span>
-            </div>
-            <div id="manual-list-team-1" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
-          </div>
-
-          <!-- Placares -->
-          <div class="md:col-span-2 flex items-center justify-center gap-2">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Nome da Competição -->
             <div>
-              <label class="block text-[10px] font-bold text-center text-gray-400 mb-1">Placar 1</label>
-              <input type="number" min="0" id="manual-score-1" value="0" class="w-14 bg-[#21262d] border border-dark rounded-lg py-2 text-center text-sm font-black text-yellow-400 focus:outline-none focus:border-blue-500">
+              <label class="block text-xs font-bold text-gray-300 mb-1.5">Competição / Torneio</label>
+              <input type="text" id="text-match-comp" placeholder="Ex: Six Major Montreal 2026 / Fase 1" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
             </div>
-            <span class="text-gray-400 font-bold mt-4">x</span>
-            <div>
-              <label class="block text-[10px] font-bold text-center text-gray-400 mb-1">Placar 2</label>
-              <input type="number" min="0" id="manual-score-2" value="0" class="w-14 bg-[#21262d] border border-dark rounded-lg py-2 text-center text-sm font-black text-yellow-400 focus:outline-none focus:border-blue-500">
+
+            <!-- Entrada em Texto Livre do Confronto -->
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-blue-400 mb-1.5">Resumo do Confronto (Texto)</label>
+              <input type="text" id="text-match-desc" placeholder="Ex: Loud venceu Rex Regum Qeon por 2x0" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
             </div>
           </div>
 
-          <!-- Time 2 com Busca -->
-          <div class="md:col-span-3 relative" id="manual-dropdown-container-2">
-            <label class="block text-xs font-bold text-red-400 mb-1.5">Time 2 (Direita)</label>
-            <div class="relative">
-              <input type="text" id="manual-input-team-2" oninput="onManualTeamSearchInput(2)" onfocus="openManualTeamDropdown(2)" placeholder="Buscar Nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-red-500 pr-7">
-              <span class="absolute right-2.5 top-2.5 text-xs text-gray-400 pointer-events-none">🔍</span>
+          <!-- Seção Dinâmica de Mapas / Locais / Estúdios -->
+          <div class="border-t border-dark/60 pt-3 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-gray-300 flex items-center gap-1.5">
+                <span>🗺️</span> Detalhamento por Mapa, Estúdio ou Local (Opcional):
+              </span>
+              <button onclick="addMapRow()" class="px-3 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold rounded-lg transition flex items-center gap-1">
+                <span>➕</span> Adicionar Mapa/Local
+              </button>
             </div>
-            <div id="manual-list-team-2" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
+
+            <div id="map-rows-container" class="space-y-2">
+              <!-- Linhas de mapas adicionadas dinamicamente -->
+            </div>
           </div>
 
-          <!-- Botão Cadastrar -->
-          <div class="md:col-span-1">
-            <button onclick="submitManualMatch()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 rounded-lg transition shadow flex items-center justify-center gap-1">
-              <span>💾</span> Salvar
+          <!-- Botão de Ação -->
+          <div class="flex justify-end pt-2">
+            <button onclick="submitTextMatch()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-lg shadow-lg transition flex items-center gap-2">
+              <span>💾</span> Registrar no Histórico de Confrontos
             </button>
           </div>
 
@@ -255,7 +246,8 @@
                 <th class="px-3.5 py-3 text-right">Time 1</th>
                 <th class="px-3.5 py-3 text-center">Placar</th>
                 <th class="px-3.5 py-3">Time 2</th>
-                <th class="px-3.5 py-3 text-center">Resultado</th>
+                <th class="px-3.5 py-3 text-center">Resultado Geral</th>
+                <th class="px-3.5 py-3">Locais / Mapas</th>
                 <th class="px-3.5 py-3 text-center w-12">Excluir</th>
               </tr>
             </thead>
@@ -827,7 +819,7 @@
     }
 
     /* =========================================================================
-       SISTEMA DE BUSCA DE TIMES (SIMULAÇÃO VS)
+       CONFRONTO DIRETO (SIMULAÇÃO)
     ========================================================================= */
     function setupConfrontoOptions() {
       const teamNames = Array.from(new Set(dataListaTimes.map(t => t.name))).sort();
@@ -1023,10 +1015,12 @@
         <div class="bg-[#1f242d] p-3 rounded-lg border border-dark flex items-center justify-between gap-2 text-xs">
           <div class="flex-1 truncate">
             <span class="text-[10px] text-gray-400 font-semibold block truncate">${m.competition || 'Confronto'}</span>
-            <div class="flex items-center gap-1 font-bold text-white mt-0.5 truncate">
+            <div class="flex items-center gap-1.5 font-bold text-white mt-1 truncate">
+              ${createLogoHtml(m.logo1, "w-4 h-4")}
               <span class="${m.score1 > m.score2 ? 'text-emerald-400' : 'text-gray-300'} truncate">${m.team1}</span>
               <span class="text-yellow-400 font-black px-1.5 py-0.5 bg-black/40 rounded">${m.score1} x ${m.score2}</span>
               <span class="${m.score2 > m.score1 ? 'text-emerald-400' : 'text-gray-300'} truncate">${m.team2}</span>
+              ${createLogoHtml(m.logo2, "w-4 h-4")}
             </div>
           </div>
         </div>
@@ -1074,132 +1068,141 @@
     }
 
     /* =========================================================================
-       SISTEMA DE PREENCHIMENTO MANUAL DE CONFRONTOS (BUSCA POR NOME / TAG)
+       SISTEMA DE PREENCHIMENTO POR TEXTO + MAPAS / LOCAIS / ESTÚDIOS
     ========================================================================= */
-    let selectedManualTeam1 = '';
-    let selectedManualTeam2 = '';
+    function addMapRow() {
+      const container = document.getElementById('map-rows-container');
+      const rowId = 'map-row-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
 
-    function openManualTeamDropdown(num) {
-      const listEl = document.getElementById(`manual-list-team-${num}`);
-      if (listEl) {
-        listEl.classList.remove('hidden');
-        renderManualTeamDropdownOptions(num);
+      const div = document.createElement('div');
+      div.id = rowId;
+      div.className = "flex flex-col md:flex-row items-center gap-2 bg-[#21262d] border border-dark p-2 rounded-lg";
+
+      div.innerHTML = `
+        <div class="flex-1 w-full">
+          <input type="text" class="map-location-name w-full bg-[#161b22] border border-dark rounded px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500" placeholder="Nome do Mapa, Estúdio ou Local (ex: Clubhouse / Estúdio A)">
+        </div>
+        <div class="flex-1 w-full">
+          <input type="text" class="map-winner-desc w-full bg-[#161b22] border border-dark rounded px-3 py-1.5 text-xs font-bold text-yellow-400 focus:outline-none focus:border-blue-500" placeholder="Vencedor / Placar do Mapa (ex: Loud 7x5 ou Empate)">
+        </div>
+        <button onclick="document.getElementById('${rowId}').remove()" class="text-red-400 hover:text-red-300 font-bold p-1">❌</button>
+      `;
+
+      container.appendChild(div);
+    }
+
+    function parseMatchText(descText) {
+      if (!descText) return null;
+      const text = descText.trim();
+
+      // Organizar lista de times por tamanho decrescente de nome para evitar ambiguidades
+      const recognized = [...dataListaTimes].sort((a, b) => b.name.length - a.name.length);
+
+      let team1Obj = null;
+      let team2Obj = null;
+
+      // Buscar se 2 times da lista aparecem no texto por nome ou TAG
+      for (let t of recognized) {
+        const nameNorm = t.name.toLowerCase();
+        const tagNorm = t.tag ? t.tag.toLowerCase() : '';
+        const textNorm = text.toLowerCase();
+
+        if (textNorm.includes(nameNorm) || (tagNorm && tagNorm.length >= 2 && textNorm.includes(tagNorm))) {
+          if (!team1Obj) {
+            team1Obj = t;
+          } else if (team1Obj.name !== t.name) {
+            team2Obj = t;
+            break;
+          }
+        }
       }
+
+      // Extrair placares em formato 2x0, 2-0, 2 x 0, etc.
+      let s1 = 0, s2 = 0;
+      const scoreMatch = text.match(/([0-9]+)\s*[:x-]\s*([0-9]+)/i);
+
+      if (scoreMatch) {
+        s1 = parseInt(scoreMatch[1], 10);
+        s2 = parseInt(scoreMatch[2], 10);
+      }
+
+      const t1Name = team1Obj ? team1Obj.name : 'Time 1';
+      const t2Name = team2Obj ? team2Obj.name : 'Time 2';
+      const logo1 = team1Obj ? team1Obj.logo : '';
+      const logo2 = team2Obj ? team2Obj.logo : '';
+
+      return {
+        team1: t1Name,
+        logo1: logo1,
+        team2: t2Name,
+        logo2: logo2,
+        score1: s1,
+        score2: s2
+      };
     }
 
-    function onManualTeamSearchInput(num) {
-      openManualTeamDropdown(num);
-    }
+    function submitTextMatch() {
+      const comp = (document.getElementById('text-match-comp').value || 'Campeonato').trim();
+      const descText = (document.getElementById('text-match-desc').value || '').trim();
 
-    function renderManualTeamDropdownOptions(num) {
-      const inputVal = (document.getElementById(`manual-input-team-${num}`).value || '').toLowerCase().trim();
-      const listEl = document.getElementById(`manual-list-team-${num}`);
-      if (!listEl) return;
+      if (!descText) {
+        alert('⚠️ Digite o resumo do confronto no campo de texto (ex: "Loud venceu Rex Regum Qeon por 2x0").');
+        return;
+      }
 
-      const filtered = dataListaTimes.filter(t => {
-        const nameMatch = (t.name || '').toLowerCase().includes(inputVal);
-        const tagMatch = (t.tag || '').toLowerCase().includes(inputVal);
-        return nameMatch || tagMatch;
+      const parsed = parseMatchText(descText);
+      if (!parsed) {
+        alert('⚠️ Não foi possível identificar as equipes no texto. Certifique-se de usar os nomes ou TAGs dos times cadastrados.');
+        return;
+      }
+
+      // Coletar informações dos mapas/locais adicionados
+      const mapRows = document.querySelectorAll('#map-rows-container > div');
+      const mapsData = [];
+
+      mapRows.forEach(row => {
+        const loc = (row.querySelector('.map-location-name').value || '').trim();
+        const win = (row.querySelector('.map-winner-desc').value || '').trim();
+        if (loc || win) {
+          mapsData.push({ location: loc || 'Local/Mapa', winner: win || '-' });
+        }
       });
 
-      if (filtered.length === 0) {
-        listEl.innerHTML = `<div class="p-3 text-xs text-gray-500 text-center font-bold">Nenhum time encontrado para "${inputVal}"</div>`;
-        return;
-      }
-
-      listEl.innerHTML = filtered.map(t => {
-        const logo = createLogoHtml(t.logo, "w-5 h-5");
-        const safeName = t.name.replace(/'/g, "\\'");
-        return `
-          <div onclick="selectManualTeam(${num}, '${safeName}')" class="px-3 py-2 hover:bg-dark-hover flex items-center justify-between cursor-pointer transition">
-            <div class="flex items-center gap-2">
-              ${logo}
-              <span class="text-xs font-bold text-white">${t.name}</span>
-            </div>
-            <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${t.tag || '-'}</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function selectManualTeam(num, teamName) {
-      if (num === 1) {
-        selectedManualTeam1 = teamName;
-        document.getElementById('manual-input-team-1').value = teamName;
-      } else {
-        selectedManualTeam2 = teamName;
-        document.getElementById('manual-input-team-2').value = teamName;
-      }
-      const listEl = document.getElementById(`manual-list-team-${num}`);
-      if (listEl) listEl.classList.add('hidden');
-    }
-
-    document.addEventListener('click', (e) => {
-      [1, 2].forEach(num => {
-        const containerSimulacao = document.getElementById(`dropdown-container-${num}`);
-        const listSimulacao = document.getElementById(`list-team-${num}`);
-        if (containerSimulacao && !containerSimulacao.contains(e.target) && listSimulacao) {
-          listSimulacao.classList.add('hidden');
-        }
-
-        const containerManual = document.getElementById(`manual-dropdown-container-${num}`);
-        const listManual = document.getElementById(`manual-list-team-${num}`);
-        if (containerManual && !containerManual.contains(e.target) && listManual) {
-          listManual.classList.add('hidden');
-        }
-      });
-    });
-
-    function submitManualMatch() {
-      const comp = (document.getElementById('manual-input-comp').value || 'Campeonato').trim();
-      const t1Input = (document.getElementById('manual-input-team-1').value || '').trim();
-      const t2Input = (document.getElementById('manual-input-team-2').value || '').trim();
-      const s1 = parseInt(document.getElementById('manual-score-1').value, 10) || 0;
-      const s2 = parseInt(document.getElementById('manual-score-2').value, 10) || 0;
-
-      if (!t1Input || !t2Input) {
-        alert('⚠️ Por favor, selecione ou digite o nome/TAG dos dois times.');
-        return;
-      }
-
-      if (t1Input.toLowerCase() === t2Input.toLowerCase()) {
-        alert('⚠️ Selecione dois times diferentes para registrar o confronto.');
-        return;
-      }
-
-      let resultText = 'Empate';
-      if (s1 > s2) {
-        resultText = `Vitória da ${t1Input} ${s1}x${s2}`;
-      } else if (s2 > s1) {
-        resultText = `Vitória da ${t2Input} ${s2}x${s1}`;
+      let resultText = descText;
+      if (parsed.score1 > parsed.score2) {
+        resultText = `Vitória da ${parsed.team1} ${parsed.score1}x${parsed.score2}`;
+      } else if (parsed.score2 > parsed.score1) {
+        resultText = `Vitória da ${parsed.team2} ${parsed.score2}x${parsed.score1}`;
+      } else if (parsed.score1 === parsed.score2 && parsed.score1 > 0) {
+        resultText = `Empate ${parsed.score1}x${parsed.score2}`;
       }
 
       const matchObj = {
         id: Date.now() + Math.random(),
         competition: comp,
-        team1: t1Input,
-        score1: s1,
-        score2: s2,
-        team2: t2Input,
+        team1: parsed.team1,
+        logo1: parsed.logo1,
+        score1: parsed.score1,
+        score2: parsed.score2,
+        team2: parsed.team2,
+        logo2: parsed.logo2,
         resultText: resultText,
+        originalText: descText,
+        maps: mapsData,
         date: new Date().toLocaleDateString('pt-BR')
       };
 
       registeredConfrontos.unshift(matchObj);
       localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
 
-      // Limpar formulário para próximo cadastro
-      document.getElementById('manual-input-team-1').value = '';
-      document.getElementById('manual-input-team-2').value = '';
-      document.getElementById('manual-score-1').value = '0';
-      document.getElementById('manual-score-2').value = '0';
-      selectedManualTeam1 = '';
-      selectedManualTeam2 = '';
+      // Limpar campos
+      document.getElementById('text-match-desc').value = '';
+      document.getElementById('map-rows-container').innerHTML = '';
 
       renderRegisteredMatchesTable();
       renderConfronto();
 
-      alert(`✅ Confronto registrado: ${resultText}`);
+      alert(`✅ Confronto registrado com sucesso!`);
     }
 
     function renderRegisteredMatchesTable() {
@@ -1207,27 +1210,44 @@
       if (!body) return;
 
       if (registeredConfrontos.length === 0) {
-        body.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-xs text-gray-500">Nenhum confronto registrado no histórico ainda. Use o formulário acima para cadastrar.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-xs text-gray-500">Nenhum confronto registrado no histórico ainda. Use o painel acima para registrar.</td></tr>`;
         return;
       }
 
       body.innerHTML = registeredConfrontos.map(m => {
-        let resultLabel = m.resultText;
-        if (!resultLabel) {
-          if (m.score1 > m.score2) resultLabel = `Vitória da ${m.team1} ${m.score1}x${m.score2}`;
-          else if (m.score2 > m.score1) resultLabel = `Vitória da ${m.team2} ${m.score2}x${m.score1}`;
-          else resultLabel = 'Empate';
-        }
+        const logo1Html = createLogoHtml(m.logo1, "w-6 h-6");
+        const logo2Html = createLogoHtml(m.logo2, "w-6 h-6");
 
         const isEmpate = m.score1 === m.score2;
+
+        let mapsHtml = '-';
+        if (m.maps && m.maps.length > 0) {
+          mapsHtml = m.maps.map(mp => `
+            <div class="text-[11px] bg-[#161b22] border border-dark px-2 py-1 rounded my-0.5 flex items-center justify-between gap-2">
+              <span class="text-gray-300 font-bold">${mp.location}:</span>
+              <span class="text-yellow-400 font-extrabold">${mp.winner}</span>
+            </div>
+          `).join('');
+        }
 
         return `
           <tr class="hover:bg-dark-hover/50">
             <td class="px-3.5 py-3 font-semibold text-blue-400">${m.competition}</td>
-            <td class="px-3.5 py-3 text-right font-bold text-white">${m.team1}</td>
+            <td class="px-3.5 py-3 text-right font-bold text-white">
+              <div class="flex items-center justify-end gap-2">
+                <span>${m.team1}</span>
+                ${logo1Html}
+              </div>
+            </td>
             <td class="px-3.5 py-3 text-center font-black text-yellow-400 bg-black/20 font-mono">${m.score1} x ${m.score2}</td>
-            <td class="px-3.5 py-3 font-bold text-white">${m.team2}</td>
-            <td class="px-3.5 py-3 text-center font-extrabold ${isEmpate ? 'text-amber-400' : 'text-emerald-400'}">${resultLabel}</td>
+            <td class="px-3.5 py-3 font-bold text-white">
+              <div class="flex items-center gap-2">
+                ${logo2Html}
+                <span>${m.team2}</span>
+              </div>
+            </td>
+            <td class="px-3.5 py-3 text-center font-extrabold ${isEmpate ? 'text-amber-400' : 'text-emerald-400'}">${m.resultText || m.originalText}</td>
+            <td class="px-3.5 py-3">${mapsHtml}</td>
             <td class="px-3.5 py-3 text-center">
               <button onclick="deleteMatchFromHistory(${m.id})" class="text-xs text-red-400 hover:text-red-300 font-bold p-1">🗑️</button>
             </td>
