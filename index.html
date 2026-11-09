@@ -319,12 +319,14 @@
 
   <script>
     /* =========================================================================
-       LINKS DAS ABAS DO GOOGLE SHEETS (CSV)
-    ========================================================================= */
-    const CSV_URL_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=0&single=true&output=csv';
-    const CSV_URL_HISTORICO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=195413319&single=true&output=csv';
-    const CSV_URL_JOGADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1601155160&single=true&output=csv';
-    const CSV_URL_LISTA_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=913455731&single=true&output=csv';
+   LINKS COM ATUALIZAÇÃO EM TEMPO REAL (GVIZ API)
+========================================================================= */
+const SPREADSHEET_ID = '1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L';
+
+const CSV_URL_TIMES = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=0`;
+const CSV_URL_HISTORICO = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=195413319`;
+const CSV_URL_JOGADORES = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=1601155160`;
+const CSV_URL_LISTA_TIMES = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=913455731`;
 
     const DEFAULT_R6_MAPS = [
       'Banco', 'Fronteira', 'Chalé', 'Consulado', 'Café Dostoyevsky', 
