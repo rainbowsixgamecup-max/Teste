@@ -303,6 +303,8 @@
 
   </div>
 
+  <datalist id="registered-maps-list"></datalist>
+
   <script>
     /* =========================================================================
        LINKS DAS ABAS DO GOOGLE SHEETS (CSV)
@@ -311,6 +313,14 @@
     const CSV_URL_HISTORICO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=195413319&single=true&output=csv';
     const CSV_URL_JOGADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1601155160&single=true&output=csv';
     const CSV_URL_LISTA_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=913455731&single=true&output=csv';
+
+    // Lista Padrão de Mapas de Rainbow Six Siege
+    const DEFAULT_R6_MAPS = [
+      'Banco', 'Fronteira', 'Chalé', 'Consulado', 'Café Dostoyevsky', 
+      'Oregon', 'Arranha-Céu', 'Parque Temático', 'Outback', 'Mansão', 
+      'Laboratórios Nighthaven', 'Lair', 'Planícies de Esmeralda', 'Canal',
+      'Estúdio A', 'Estúdio B'
+    ];
 
     let dataTimes = [];
     let dataHistorico = [];
@@ -1323,6 +1333,65 @@
     }
 
     /* =========================================================================
+       SISTEMA DE GERENCIAMENTO E CONSULTA DE MAPAS E TAGS
+    ========================================================================= */
+    function getRegisteredMapsList() {
+      const set = new Set(DEFAULT_R6_MAPS);
+      registeredConfrontos.forEach(m => {
+        if (m.maps && Array.isArray(m.maps)) {
+          m.maps.forEach(mp => {
+            if (mp.location && mp.location.trim()) {
+              set.add(mp.location.trim());
+            }
+          });
+        }
+      });
+      return Array.from(set).sort();
+    }
+
+    function updateRegisteredMapsDatalist() {
+      const datalist = document.getElementById('registered-maps-list');
+      if (!datalist) return;
+      const maps = getRegisteredMapsList();
+      datalist.innerHTML = maps.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+
+    function pickRandomMapForRow(rowId) {
+      const row = document.getElementById(rowId);
+      if (!row) return;
+      const input = row.querySelector('.map-location-name');
+      if (!input) return;
+
+      const mapsList = getRegisteredMapsList();
+      if (mapsList.length === 0) return;
+
+      const randomMap = mapsList[Math.floor(Math.random() * mapsList.length)];
+      input.value = randomMap;
+    }
+
+    function expandTeamTagsInText(text) {
+      if (!text) return text;
+      let result = text;
+      
+      const allTeams = [...dataListaTimes, ...dataTimes].filter(t => t.tag && t.tag.trim().length >= 2);
+      allTeams.sort((a, b) => b.tag.length - a.tag.length);
+
+      const uniqueTagTeams = [];
+      allTeams.forEach(t => {
+        if (!uniqueTagTeams.some(u => u.tag.toUpperCase() === t.tag.toUpperCase())) {
+          uniqueTagTeams.push(t);
+        }
+      });
+
+      uniqueTagTeams.forEach(t => {
+        const tagRegex = new RegExp(`\\b${t.tag}\\b`, 'gi');
+        result = result.replace(tagRegex, t.name);
+      });
+
+      return result;
+    }
+
+    /* =========================================================================
        SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS
     ========================================================================= */
     function updateMvpPlayerDropdown() {
@@ -1415,16 +1484,20 @@
       div.className = "flex flex-col md:flex-row items-center gap-2 bg-[#21262d] border border-dark p-1.5 rounded-lg";
 
       div.innerHTML = `
-        <div class="flex-1 w-full">
-          <input type="text" class="map-location-name w-full bg-[#161b22] border border-dark rounded px-2.5 py-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500" value="${locationVal}" placeholder="Nome do Mapa, Estúdio ou Local (ex: Clubhouse / Estúdio A)">
+        <div class="flex-1 w-full flex items-center gap-1">
+          <input type="text" list="registered-maps-list" class="map-location-name w-full bg-[#161b22] border border-dark rounded px-2.5 py-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500" value="${locationVal}" placeholder="Nome do Mapa / Local (escreva ou escolha)">
+          <button type="button" onclick="pickRandomMapForRow('${rowId}')" title="Escolher Mapa Aleatório" class="px-2 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/40 text-[10px] font-bold rounded shrink-0 flex items-center gap-1">
+            🎲 <span class="hidden sm:inline">Aleatório</span>
+          </button>
         </div>
         <div class="flex-1 w-full">
-          <input type="text" class="map-winner-desc w-full bg-[#161b22] border border-dark rounded px-2.5 py-1 text-xs font-bold text-yellow-400 focus:outline-none focus:border-blue-500" value="${winnerVal}" placeholder="Vencedor / Placar do Mapa (ex: Loud 7x5 ou Empate)">
+          <input type="text" class="map-winner-desc w-full bg-[#161b22] border border-dark rounded px-2.5 py-1 text-xs font-bold text-yellow-400 focus:outline-none focus:border-blue-500" value="${winnerVal}" placeholder="Vencedor / Placar do Mapa (ex: LLL 7x5 ou Loud)">
         </div>
-        <button onclick="document.getElementById('${rowId}').remove()" class="text-red-400 hover:text-red-300 font-bold p-1">❌</button>
+        <button type="button" onclick="document.getElementById('${rowId}').remove()" class="text-red-400 hover:text-red-300 font-bold p-1">❌</button>
       `;
 
       container.appendChild(div);
+      updateRegisteredMapsDatalist();
     }
 
     function parseMatchText(descText) {
@@ -1500,7 +1573,6 @@
         return;
       }
 
-      // Salvar a última competição e última fase usadas no localStorage
       localStorage.setItem('gcr6_last_comp', comp);
       localStorage.setItem('gcr6_last_phase', phase);
 
@@ -1509,7 +1581,9 @@
 
       mapRows.forEach(row => {
         const loc = (row.querySelector('.map-location-name').value || '').trim();
-        const win = (row.querySelector('.map-winner-desc').value || '').trim();
+        let win = (row.querySelector('.map-winner-desc').value || '').trim();
+        win = expandTeamTagsInText(win);
+
         if (loc || win) {
           mapsData.push({ location: loc || 'Local/Mapa', winner: win || '-' });
         }
@@ -1574,6 +1648,7 @@
       cancelMatchEdit();
       renderRegisteredMatchesTable();
       renderConfronto();
+      updateRegisteredMapsDatalist();
     }
 
     function editMatchFromHistory(id) {
@@ -1738,6 +1813,7 @@
         localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
         renderRegisteredMatchesTable();
         renderConfronto();
+        updateRegisteredMapsDatalist();
       }
     }
 
@@ -1747,6 +1823,7 @@
         localStorage.removeItem('gcr6_match_history');
         renderRegisteredMatchesTable();
         renderConfronto();
+        updateRegisteredMapsDatalist();
       }
     }
 
@@ -1858,7 +1935,6 @@
 
       label.textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
 
-      // Carregar última competição e fase digitadas
       const lastComp = localStorage.getItem('gcr6_last_comp') || '';
       const lastPhase = localStorage.getItem('gcr6_last_phase') || '';
       if (lastComp && document.getElementById('text-match-comp')) {
@@ -1873,6 +1949,7 @@
       setupCompetitionOptions();
       setupConfrontoOptions();
       updateMvpPlayerDropdown();
+      updateRegisteredMapsDatalist();
     }
 
     init();
