@@ -259,6 +259,19 @@
           </h3>
 
           <div class="flex flex-wrap items-center gap-2">
+            <!-- Menu Suspenso de Competições / Fases da Tabela -->
+            <div class="relative">
+              <button type="button" onclick="toggleTableCompDropdown()" class="bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-sm">
+                <span>🎯</span>
+                <span id="label-table-comp-filter">Competições / Fases (Todas)</span>
+                <span class="text-xs text-gray-400">▼</span>
+              </button>
+              
+              <div id="dropdown-table-comp-filter" class="hidden absolute right-0 top-full mt-1.5 bg-[#161b22] border border-dark rounded-xl shadow-2xl p-3 z-50 space-y-2 w-64 max-h-72 overflow-y-auto custom-scroll">
+                <div id="container-table-comp-options" class="space-y-1.5"></div>
+              </div>
+            </div>
+
             <input type="text" id="search-history-query" oninput="renderRegisteredMatchesTable()" placeholder="Pesquisar por Equipe, Região, Torneio, Mapa ou MVP..." class="w-64 bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
             
             <button onclick="toggleMvpStatsModal()" class="px-3 py-1.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 text-xs font-bold rounded-lg transition flex items-center gap-1">
@@ -333,6 +346,8 @@
     
     let selectedH2HKeys = new Set(['ALL']);
     let compSearchQuery = '';
+
+    let selectedTableCompKeys = new Set(['ALL']);
 
     let registeredConfrontos = JSON.parse(localStorage.getItem('gcr6_match_history') || '[]');
     let editingMatchId = null;
@@ -1332,6 +1347,97 @@
     }
 
     /* =========================================================================
+       FILTRO DE COMPETIÇÕES DA TABELA DE CONFRONTOS REGISTRADOS
+    ========================================================================= */
+    function getAvailableTableComps() {
+      const set = new Set();
+      registeredConfrontos.forEach(m => {
+        if (m.competition && m.competition.trim()) {
+          set.add(m.competition.trim());
+        }
+      });
+      return Array.from(set).sort();
+    }
+
+    function renderTableCompFilterDropdown() {
+      const container = document.getElementById('container-table-comp-options');
+      const label = document.getElementById('label-table-comp-filter');
+      if (!container || !label) return;
+
+      const availableComps = getAvailableTableComps();
+      const isAllSelected = selectedTableCompKeys.has('ALL') || selectedTableCompKeys.size === 0;
+
+      if (isAllSelected) {
+        label.textContent = 'Competições / Fases (Todas)';
+      } else {
+        label.textContent = `Competições (${selectedTableCompKeys.size}/${availableComps.length})`;
+      }
+
+      let html = `
+        <label class="flex items-center gap-2 text-xs font-extrabold text-blue-400 bg-[#1f242d] p-1.5 rounded-lg cursor-pointer border border-blue-500/30">
+          <input type="checkbox" ${isAllSelected ? 'checked' : ''} onchange="toggleTableCompSelection('ALL')" class="rounded accent-blue-600">
+          <span>Selecionar Todas</span>
+        </label>
+      `;
+
+      availableComps.forEach(comp => {
+        const isChecked = isAllSelected || selectedTableCompKeys.has(comp);
+        const safeComp = comp.replace(/'/g, "\\'");
+        html += `
+          <label class="flex items-center gap-2 text-[11px] font-semibold text-gray-300 hover:text-white cursor-pointer px-1 py-0.5">
+            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTableCompSelection('${safeComp}')" class="rounded accent-blue-600">
+            <span class="truncate">${comp}</span>
+          </label>
+        `;
+      });
+
+      if (availableComps.length === 0) {
+        html += `<div class="text-[11px] text-gray-500 p-1">Nenhum confronto registrado.</div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function toggleTableCompDropdown() {
+      const dropdown = document.getElementById('dropdown-table-comp-filter');
+      if (dropdown) {
+        dropdown.classList.toggle('hidden');
+        if (!dropdown.classList.contains('hidden')) {
+          renderTableCompFilterDropdown();
+        }
+      }
+    }
+
+    function toggleTableCompSelection(key) {
+      const available = getAvailableTableComps();
+      if (key === 'ALL') {
+        if (selectedTableCompKeys.has('ALL')) {
+          selectedTableCompKeys.clear();
+        } else {
+          selectedTableCompKeys = new Set(['ALL']);
+        }
+      } else {
+        if (selectedTableCompKeys.has('ALL')) {
+          selectedTableCompKeys.clear();
+          available.forEach(c => selectedTableCompKeys.add(c));
+        }
+
+        if (selectedTableCompKeys.has(key)) {
+          selectedTableCompKeys.delete(key);
+        } else {
+          selectedTableCompKeys.add(key);
+        }
+
+        if (selectedTableCompKeys.size === available.length) {
+          selectedTableCompKeys = new Set(['ALL']);
+        }
+      }
+
+      renderTableCompFilterDropdown();
+      renderRegisteredMatchesTable();
+    }
+
+    /* =========================================================================
        SISTEMA DE GERENCIAMENTO E CONSULTA DE MAPAS E TAGS
     ========================================================================= */
     function getRegisteredMapsList() {
@@ -1391,7 +1497,7 @@
     }
 
     /* =========================================================================
-       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS (COM LIMITE DE PALAVRAS E NO-OVERLAP)
+       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS
     ========================================================================= */
     function updateMvpPlayerDropdown() {
       const descText = (document.getElementById('text-match-desc').value || '').trim();
@@ -1545,10 +1651,8 @@
         }
       });
 
-      // Dar prioridade aos nomes maiores (ex: Cloud9 sobre Loud)
       candidateMatches.sort((a, b) => b.length - a.length);
 
-      // Eliminar correspondências que sobrepõem a mesma posição no texto
       const nonOverlapping = [];
       candidateMatches.forEach(cand => {
         const hasOverlap = nonOverlapping.some(existing => {
@@ -1559,7 +1663,6 @@
         }
       });
 
-      // Ordenar os times encontrados pela ordem que aparecem na frase
       nonOverlapping.sort((a, b) => a.start - b.start);
 
       const uniqueMatches = [];
@@ -1756,11 +1859,24 @@
         return;
       }
 
-      listContainer.innerHTML = sorted.map(([player, count]) => `
-        <span class="px-2.5 py-1 rounded bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 font-bold flex items-center gap-1">
-          <span>⭐</span> ${player}: <span class="text-white font-mono font-black">${count}x</span>
-        </span>
-      `).join('');
+      listContainer.innerHTML = sorted.map(([player, count]) => {
+        const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === player.toLowerCase().trim());
+        let logoUrl = pObj ? pObj.logo : '';
+        if (!logoUrl && pObj && pObj.team) {
+          const tObj = dataListaTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim()) 
+                    || dataTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim());
+          if (tObj) logoUrl = tObj.logo;
+        }
+        const logoHtml = logoUrl ? createLogoHtml(logoUrl, "w-4 h-4") : '';
+
+        return `
+          <span class="px-2.5 py-1 rounded bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 font-bold flex items-center gap-1.5">
+            ${logoHtml}
+            <span>⭐ ${player}:</span>
+            <span class="text-white font-mono font-black">${count}x</span>
+          </span>
+        `;
+      }).join('');
     }
 
     function renderRegisteredMatchesTable() {
@@ -1768,8 +1884,14 @@
       if (!body) return;
 
       const query = (document.getElementById('search-history-query')?.value || '').toLowerCase().trim();
+      const isAllSelected = selectedTableCompKeys.has('ALL') || selectedTableCompKeys.size === 0;
 
       const filtered = registeredConfrontos.filter(m => {
+        const matchComp = (m.competition || '').trim();
+        if (!isAllSelected && !selectedTableCompKeys.has(matchComp)) {
+          return false;
+        }
+
         if (!query) return true;
         
         const compMatch = (m.competition || '').toLowerCase().includes(query);
@@ -1788,8 +1910,10 @@
         return compMatch || t1Match || t2Match || mvpMatch || resMatch || reg1Match || reg2Match || mapMatch;
       });
 
+      renderTableCompFilterDropdown();
+
       if (filtered.length === 0) {
-        body.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-xs text-gray-500">Nenhum confronto encontrado com os termos de busca digitados.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-xs text-gray-500">Nenhum confronto encontrado com os filtros selecionados.</td></tr>`;
         return;
       }
 
