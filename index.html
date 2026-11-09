@@ -323,7 +323,6 @@
     let selectedTeam1 = localStorage.getItem('gcr6_selected_team1') || '';
     let selectedTeam2 = localStorage.getItem('gcr6_selected_team2') || '';
     
-    // Conjunto de chaves de seleção H2H ("COMP::FASE" ou "ALL")
     let selectedH2HKeys = new Set(['ALL']);
     let compSearchQuery = '';
 
@@ -982,7 +981,6 @@
       const players1 = dataJogadores.filter(j => j.team.toLowerCase().trim() === (name1||'').toLowerCase().trim());
       const players2 = dataJogadores.filter(j => j.team.toLowerCase().trim() === (name2||'').toLowerCase().trim());
 
-      // Quadro dos Times com Layout Ampliado e Elegante
       function buildTeamCardHtml(team, players, accentColor, borderAccent) {
         const logo = createLogoHtml(team.logo, "w-9 h-9");
         
@@ -1164,10 +1162,8 @@
       }
       const playerTeamLogoHtml = playerTeamLogoUrl ? createLogoHtml(playerTeamLogoUrl, "w-5 h-5") : '<span class="text-base">⭐</span>';
 
-      // Painel Estrelas + Jogador de Ouro (image_7f27ee.png)
       const goldenAndStarStripHtml = `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2 bg-gradient-to-r from-yellow-500/10 via-amber-500/20 to-yellow-500/10 border border-yellow-500/40 p-2 rounded-xl items-center">
-          <!-- Jogador Estrela Time 1 -->
           <div class="flex items-center gap-2 bg-[#1f242d]/80 border border-dark p-2 rounded-lg">
             ${createLogoHtml(team1.logo, "w-6 h-6")}
             <div class="truncate">
@@ -1176,7 +1172,6 @@
             </div>
           </div>
 
-          <!-- Jogador de Ouro do Duelo -->
           <div class="flex items-center justify-between bg-yellow-500/20 border border-yellow-500/50 p-2 rounded-lg">
             <div class="flex items-center gap-2 truncate">
               ${playerTeamLogoHtml}
@@ -1188,7 +1183,6 @@
             <span class="text-xs font-black text-yellow-400 font-mono shrink-0">${goldenPlayer ? goldenPlayer.count + 'x' : '0x'}</span>
           </div>
 
-          <!-- Jogador Estrela Time 2 -->
           <div class="flex items-center gap-2 bg-[#1f242d]/80 border border-dark p-2 rounded-lg">
             ${createLogoHtml(team2.logo, "w-6 h-6")}
             <div class="truncate">
@@ -1199,7 +1193,6 @@
         </div>
       `;
 
-      // Renderizar Grade de 25 Mapas
       const locationList = Object.values(locationStats).sort((a, b) => b.total - a.total);
       
       let locationGridHtml = locationList.map(loc => `
@@ -1219,7 +1212,6 @@
         locationGridHtml = `<div class="col-span-full p-2.5 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum mapa ou local específico detalhado para estes confrontos.</div>`;
       }
 
-      // Renderizar Menu Suspenso de Competições e Fases (image_89a036.png)
       let compSearchFilterHtml = `
         <div class="relative w-full">
           <button onclick="document.getElementById('comp-dropdown-menu').classList.toggle('hidden')" class="w-full bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center justify-between shadow-sm">
@@ -1275,7 +1267,6 @@
       compSearchFilterHtml += `</div></div></div></div>`;
 
       h2hContainer.innerHTML = `
-        <!-- Cabeçalho da Retrospectiva Direta com Logos e TAGs -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark pb-2.5">
           <div class="flex items-center gap-2">
             ${createLogoHtml(team1.logo, "w-6 h-6")}
@@ -1294,10 +1285,8 @@
           </div>
         </div>
 
-        <!-- Menu Suspenso de Competições e Fases -->
         ${compSearchFilterHtml}
 
-        <!-- Placar de Vitórias da Retrospectiva -->
         <div class="grid grid-cols-3 gap-2 text-center">
           <div class="bg-blue-500/10 border border-blue-500/30 p-2 rounded-lg">
             <div class="flex items-center justify-center gap-1">
@@ -1319,10 +1308,8 @@
           </div>
         </div>
 
-        <!-- Painel Unificado: Jogador Estrela 1 | Jogador de Ouro | Jogador Estrela 2 -->
         ${goldenAndStarStripHtml}
 
-        <!-- Desempenho por Local / Mapa -->
         <div class="space-y-1.5 pt-1">
           <div class="flex items-center justify-between">
             <h4 class="text-[11px] font-bold text-gray-300 uppercase tracking-wider">📍 Desempenho por Local / Mapa</h4>
@@ -1513,7 +1500,9 @@
         return;
       }
 
+      // Salvar a última competição e última fase usadas no localStorage
       localStorage.setItem('gcr6_last_comp', comp);
+      localStorage.setItem('gcr6_last_phase', phase);
 
       const mapRows = document.querySelectorAll('#map-rows-container > div');
       const mapsData = [];
@@ -1617,8 +1606,9 @@
       editingMatchId = null;
 
       const lastComp = localStorage.getItem('gcr6_last_comp') || '';
+      const lastPhase = localStorage.getItem('gcr6_last_phase') || '';
       document.getElementById('text-match-comp').value = lastComp;
-      document.getElementById('text-match-phase').value = '';
+      document.getElementById('text-match-phase').value = lastPhase;
       document.getElementById('text-match-desc').value = '';
       document.getElementById('text-match-mvp').value = '';
       document.getElementById('map-rows-container').innerHTML = '';
@@ -1868,9 +1858,14 @@
 
       label.textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
 
+      // Carregar última competição e fase digitadas
       const lastComp = localStorage.getItem('gcr6_last_comp') || '';
+      const lastPhase = localStorage.getItem('gcr6_last_phase') || '';
       if (lastComp && document.getElementById('text-match-comp')) {
         document.getElementById('text-match-comp').value = lastComp;
+      }
+      if (lastPhase && document.getElementById('text-match-phase')) {
+        document.getElementById('text-match-phase').value = lastPhase;
       }
 
       updateAvailableRegions();
