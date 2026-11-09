@@ -11,7 +11,7 @@
     .border-dark { border-color: #30363d; }
     .bg-dark-hover:hover { background-color: #21262d; }
     
-    .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #161b22; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #484f58; }
@@ -21,217 +21,230 @@
     }
   </style>
 </head>
-<body class="p-4 md:p-8 w-full min-h-screen">
+<body class="p-3 md:p-6 w-full min-h-screen">
 
-  <div class="w-full space-y-6">
+  <div class="w-full space-y-5">
     
-    <!-- Topo / Cabeçalho -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-dark">
+    <!-- Topo / Cabeçalho Principal -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-dark">
       <div>
-        <h1 class="text-3xl font-extrabold text-white flex items-center gap-2">
+        <h1 class="text-2xl font-extrabold text-white flex items-center gap-2">
           <span>🏆</span> Game Cup Rainbow Six Siege
         </h1>
-        <div class="flex items-center gap-3 mt-1.5">
-          <p class="text-sm text-gray-400" id="last-updated">A carregar dados...</p>
-          <button onclick="init(true)" id="btn-refresh" class="px-2.5 py-1 text-xs font-bold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg transition flex items-center gap-1">
+        <div class="flex items-center gap-3 mt-1">
+          <p class="text-xs text-gray-400" id="last-updated">A carregar dados...</p>
+          <button onclick="init(true)" id="btn-refresh" class="px-2 py-0.5 text-[11px] font-bold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded transition flex items-center gap-1">
             <span>🔄</span> Atualizar Dados
           </button>
         </div>
       </div>
       
       <!-- Navegação das Abas -->
-      <div class="flex items-center bg-dark-card border border-dark rounded-xl p-1.5 gap-1.5 overflow-x-auto custom-scroll">
-        <button id="nav-times" onclick="switchMainTab('times')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow-md">
+      <div class="flex items-center bg-dark-card border border-dark rounded-xl p-1 gap-1 overflow-x-auto custom-scroll">
+        <button id="nav-times" onclick="switchMainTab('times')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow">
           Ranking Times
         </button>
-        <button id="nav-hist-regioes" onclick="switchMainTab('hist-regioes')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+        <button id="nav-hist-regioes" onclick="switchMainTab('hist-regioes')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Histórico (Regiões)
         </button>
-        <button id="nav-hist-competicoes" onclick="switchMainTab('hist-competicoes')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+        <button id="nav-hist-competicoes" onclick="switchMainTab('hist-competicoes')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Histórico (Por Competição)
         </button>
-        <button id="nav-jogadores-titulos" onclick="switchMainTab('jogadores-titulos')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+        <button id="nav-jogadores-titulos" onclick="switchMainTab('jogadores-titulos')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Jogadores (Títulos)
         </button>
-        <button id="nav-jogadores-mvps" onclick="switchMainTab('jogadores-mvps')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+        <button id="nav-jogadores-mvps" onclick="switchMainTab('jogadores-mvps')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Jogadores (MVPs)
         </button>
-        <button id="nav-confronto" onclick="switchMainTab('confronto')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+        <button id="nav-confronto" onclick="switchMainTab('confronto')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           ⚔️ Confronto
         </button>
-        <button id="nav-hist-confrontos" onclick="switchMainTab('hist-confrontos')" class="px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+        <button id="nav-hist-confrontos" onclick="switchMainTab('hist-confrontos')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           📜 Histórico de Confrontos
         </button>
       </div>
     </div>
 
-    <!-- Filtro de Seleção de Regiões Exibidas -->
-    <div id="region-filter-bar" class="flex flex-wrap items-center gap-3 bg-dark-card border border-dark rounded-xl p-4">
-      <span class="text-sm font-bold text-gray-200 mr-2 flex items-center gap-1.5">
-        <span>📍</span> Selecionar Regiões Exibidas:
+    <!-- Filtro de Seleção de Regiões Exibidas nas Abas Principais -->
+    <div id="region-filter-bar" class="flex flex-wrap items-center gap-2 bg-dark-card border border-dark rounded-xl p-3">
+      <span class="text-xs font-bold text-gray-200 mr-2 flex items-center gap-1">
+        <span>📍</span> Regiões Exibidas:
       </span>
-      <div id="region-checkboxes" class="flex flex-wrap items-center gap-2"></div>
+      <div id="region-checkboxes" class="flex flex-wrap items-center gap-1.5"></div>
     </div>
 
     <!-- PAINEL 1: RANKING TIMES -->
     <div id="section-times" class="space-y-4 w-full">
-      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+      <h2 class="text-base font-bold text-white flex items-center gap-2">
         <span>🛡️</span> Ranking de Equipes (Geral + Regiões Selecionadas)
       </h2>
       <div class="relative overflow-x-auto custom-scroll pb-3">
-        <div class="flex flex-row gap-5 items-start flex-nowrap min-w-max" id="container-times"></div>
+        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-times"></div>
       </div>
     </div>
 
     <!-- PAINEL 2: HISTÓRICO POR REGIÕES -->
     <div id="section-hist-regioes" class="space-y-4 w-full hidden">
-      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+      <h2 class="text-base font-bold text-white flex items-center gap-2">
         <span>📜</span> Histórico de Campeonatos (Geral + Regiões Selecionadas)
       </h2>
       <div class="relative overflow-x-auto custom-scroll pb-3">
-        <div class="flex flex-row gap-5 items-start flex-nowrap min-w-max" id="container-hist-regioes"></div>
+        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-hist-regioes"></div>
       </div>
     </div>
 
     <!-- PAINEL 3: HISTÓRICO POR COMPETIÇÃO -->
     <div id="section-hist-competicoes" class="space-y-4 w-full hidden">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dark-card border border-dark rounded-xl p-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-dark-card border border-dark rounded-xl p-3.5">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
             <span>🎯</span> Consulta por Competição
           </h2>
-          <p class="text-sm text-gray-400">Selecione um torneio para visualizar o histórico de edições e os maiores campeões.</p>
+          <p class="text-xs text-gray-400">Selecione um torneio para visualizar o histórico de edições e os maiores campeões.</p>
         </div>
-        <div class="flex items-center gap-2.5">
-          <label for="select-competition" class="text-sm font-semibold text-gray-300">Competição:</label>
-          <select id="select-competition" onchange="renderSectionHistCompeticoes()" class="bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-sm font-bold text-white focus:outline-none focus:border-blue-500"></select>
+        <div class="flex items-center gap-2">
+          <label for="select-competition" class="text-xs font-semibold text-gray-300">Competição:</label>
+          <select id="select-competition" onchange="renderSectionHistCompeticoes()" class="bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500"></select>
         </div>
       </div>
       
       <div class="relative overflow-x-auto custom-scroll pb-3">
-        <div class="flex flex-row gap-5 items-start flex-nowrap min-w-max" id="container-hist-competicoes"></div>
+        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-hist-competicoes"></div>
       </div>
     </div>
 
     <!-- PAINEL 4: JOGADORES POR TÍTULOS -->
     <div id="section-jogadores-titulos" class="space-y-4 w-full hidden">
-      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+      <h2 class="text-base font-bold text-white flex items-center gap-2">
         <span>👑</span> Ranking de Jogadores por Títulos (Geral + Regiões Selecionadas)
       </h2>
       <div class="relative overflow-x-auto custom-scroll pb-3">
-        <div class="flex flex-row gap-5 items-start flex-nowrap min-w-max" id="container-jogadores-titulos"></div>
+        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-jogadores-titulos"></div>
       </div>
     </div>
 
     <!-- PAINEL 5: JOGADORES POR MVPS -->
     <div id="section-jogadores-mvps" class="space-y-4 w-full hidden">
-      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+      <h2 class="text-base font-bold text-white flex items-center gap-2">
         <span>⭐</span> Ranking de Jogadores por MVPs (Geral + Regiões Selecionadas)
       </h2>
       <div class="relative overflow-x-auto custom-scroll pb-3">
-        <div class="flex flex-row gap-5 items-start flex-nowrap min-w-max" id="container-jogadores-mvps"></div>
+        <div class="flex flex-row gap-4 items-start flex-nowrap min-w-max" id="container-jogadores-mvps"></div>
       </div>
     </div>
 
-    <!-- PAINEL 6: CONFRONTO DIRETO + RETROSPECTIVA H2H FIXA À DIREITA + JOGADOR DE OURO -->
-    <div id="section-confronto" class="space-y-6 w-full hidden">
-      <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-lg">
-        <h2 class="text-xl font-extrabold text-white flex items-center justify-center gap-2 mb-4">
-          <span>⚔️</span> Simulação de Confronto Direto
-        </h2>
+    <!-- PAINEL 6: CONFRONTO DIRETO + RETROSPECTIVA H2H COMPACTA -->
+    <div id="section-confronto" class="space-y-4 w-full hidden">
+      
+      <!-- Barra de Seleção de Times (image_8c6137.png) - Compacta -->
+      <div class="bg-dark-card border border-dark rounded-xl px-4 py-2.5 shadow-md">
+        <div class="flex items-center justify-center gap-2 mb-2">
+          <span class="text-sm">⚔️</span>
+          <span class="text-sm font-extrabold text-white">Simulação de Confronto Direto</span>
+        </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-          <div class="md:col-span-2 relative" id="dropdown-container-1">
-            <label class="block text-xs font-bold text-blue-400 uppercase mb-1.5">Time 1 (Esquerda)</label>
+        <div class="grid grid-cols-1 md:grid-cols-11 gap-3 items-center">
+          <div class="md:col-span-5 relative" id="dropdown-container-1">
             <div class="relative">
-              <input type="text" id="input-team-1" oninput="onTeamSearchInput(1)" onfocus="openTeamDropdown(1)" placeholder="Pesquisar por nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2.5 text-sm font-bold text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 pr-9">
-              <span class="absolute right-3 top-3 text-xs text-gray-400 pointer-events-none">🔍</span>
+              <span class="absolute left-3 top-2 text-[10px] font-bold text-blue-400 uppercase pointer-events-none">Time 1 (Esquerda)</span>
+              <input type="text" id="input-team-1" oninput="onTeamSearchInput(1)" onfocus="openTeamDropdown(1)" placeholder="Buscar Nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg pl-3 pr-8 pt-5 pb-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              <span class="absolute right-2.5 top-3 text-xs text-gray-400 pointer-events-none">🔍</span>
             </div>
-            <div id="list-team-1" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
+            <div id="list-team-1" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
           </div>
 
-          <div class="flex justify-center items-center py-2 md:py-0">
-            <span class="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 text-white font-black text-xl px-4 py-2 rounded-xl shadow-lg border border-yellow-400/30 tracking-wider">
+          <div class="md:col-span-1 flex justify-center items-center">
+            <span class="bg-gradient-to-r from-red-600 to-yellow-500 text-white font-black text-xs px-3 py-1 rounded-lg shadow border border-yellow-400/30">
               VS
             </span>
           </div>
 
-          <div class="md:col-span-2 relative" id="dropdown-container-2">
-            <label class="block text-xs font-bold text-red-400 uppercase mb-1.5">Time 2 (Direita)</label>
+          <div class="md:col-span-5 relative" id="dropdown-container-2">
             <div class="relative">
-              <input type="text" id="input-team-2" oninput="onTeamSearchInput(2)" onfocus="openTeamDropdown(2)" placeholder="Pesquisar por nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2.5 text-sm font-bold text-white placeholder-gray-500 focus:outline-none focus:border-red-500 pr-9">
-              <span class="absolute right-3 top-3 text-xs text-gray-400 pointer-events-none">🔍</span>
+              <span class="absolute left-3 top-2 text-[10px] font-bold text-red-400 uppercase pointer-events-none">Time 2 (Direita)</span>
+              <input type="text" id="input-team-2" oninput="onTeamSearchInput(2)" onfocus="openTeamDropdown(2)" placeholder="Buscar Nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg pl-3 pr-8 pt-5 pb-1 text-xs font-bold text-white focus:outline-none focus:border-red-500">
+              <span class="absolute right-2.5 top-3 text-xs text-gray-400 pointer-events-none">🔍</span>
             </div>
-            <div id="list-team-2" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
+            <div id="list-team-2" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
           </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <div class="xl:col-span-7 grid grid-cols-1 lg:grid-cols-11 gap-4 items-center" id="container-confronto"></div>
-        <div class="xl:col-span-5 w-full bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-4" id="container-h2h-stats"></div>
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+        <div class="xl:col-span-6 grid grid-cols-1 lg:grid-cols-11 gap-3 items-center" id="container-confronto"></div>
+        <div class="xl:col-span-6 w-full bg-dark-card border border-dark rounded-xl p-4 shadow-xl space-y-3" id="container-h2h-stats"></div>
       </div>
     </div>
 
-    <!-- PAINEL 7: HISTÓRICO DE CONFRONTOS (REGISTRO/EDIÇÃO + JOGADOR DESTAQUE) -->
-    <div id="section-hist-confrontos" class="space-y-6 w-full hidden">
+    <!-- PAINEL 7: HISTÓRICO DE CONFRONTOS (REGISTRO/EDIÇÃO + MVP + PESQUISA) -->
+    <div id="section-hist-confrontos" class="space-y-4 w-full hidden">
       
-      <!-- Painel de Cadastro e Edição de Confronto -->
-      <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-5" id="form-match-container">
-        <div class="border-b border-dark pb-3 flex items-center justify-between">
+      <!-- Painel de Cadastro e Edição de Confronto (image_8c5a31.png) -->
+      <div class="bg-dark-card border border-dark rounded-xl p-4 shadow-xl space-y-4" id="form-match-container">
+        <div class="border-b border-dark pb-2.5 flex items-center justify-between">
           <div>
-            <h2 class="text-xl font-extrabold text-white flex items-center gap-2" id="form-match-title">
-              <span>📝</span> Registrar Confronto (Texto + Locais + MVP)
+            <h2 class="text-lg font-extrabold text-white flex items-center gap-2" id="form-match-title">
+              <span>📝</span> Registrar Confronto
             </h2>
-            <p class="text-xs text-gray-400 mt-1">Escreva o resumo da partida (ex: <i>"Loud venceu Rex Regum Qeon por 2x0"</i>), adicione locais/mapas e selecione o Jogador Destaque.</p>
+            <p class="text-xs text-gray-400">Digite a competição, o resumo do confronto (reconhecendo nomes e TAGs) e escolha o Jogador Destaque.</p>
           </div>
           <button id="btn-cancel-edit" onclick="cancelMatchEdit()" class="hidden px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold rounded-lg transition">
             Cancelar Edição
           </button>
         </div>
 
-        <div class="space-y-4 bg-[#1f242d]/60 border border-dark p-4 rounded-xl">
+        <div class="space-y-3 bg-[#1f242d]/60 border border-dark p-3.5 rounded-xl">
           
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <!-- Nome da Competição -->
-            <div class="md:col-span-3">
-              <label class="block text-xs font-bold text-gray-300 mb-1.5">Competição / Torneio</label>
-              <input type="text" id="text-match-comp" placeholder="Ex: Six Major Montreal 2026 / Fase 1" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <!-- Competição + Fase -->
+            <div class="md:col-span-4 grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-bold text-gray-300 mb-1">Torneio / Competição</label>
+                <input type="text" id="text-match-comp" placeholder="Ex: Six Major Montreal" class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-gray-300 mb-1">Fase / Etapa</label>
+                <input type="text" id="text-match-phase" placeholder="Ex: Grande Final / Fase 1" class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              </div>
             </div>
 
-            <!-- Entrada em Texto Livre do Confronto -->
+            <!-- Resumo em Texto (com suporte a TAGs) -->
             <div class="md:col-span-5">
-              <label class="block text-xs font-bold text-blue-400 mb-1.5">Resumo do Confronto (Texto)</label>
-              <input type="text" id="text-match-desc" oninput="updateMvpPlayerDropdown()" placeholder="Ex: Loud venceu Rex Regum Qeon por 2x0" class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              <label class="block text-[11px] font-bold text-blue-400 mb-1">Resumo do Confronto (Texto com Nomes ou TAGs)</label>
+              <input type="text" id="text-match-desc" oninput="updateMvpPlayerDropdown()" placeholder="Ex: LLL venceu C9 por 2x0 ou Loud 2x1 FaZe" class="w-full bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
             </div>
 
-            <!-- Seleção do Jogador Destaque (MVP) do Confronto -->
-            <div class="md:col-span-4">
-              <label class="block text-xs font-bold text-yellow-400 mb-1.5 flex items-center gap-1">
-                <span>⭐</span> Jogador Destaque (MVP)
-              </label>
-              <input type="text" id="text-match-mvp" list="mvp-players-list" placeholder="Digite ou escolha o MVP..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-yellow-300 focus:outline-none focus:border-yellow-500">
+            <!-- MVP Destaque com Botões de Sorteio -->
+            <div class="md:col-span-3">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-[11px] font-bold text-yellow-400">⭐ Jogador Destaque (MVP)</label>
+                <div class="flex gap-1">
+                  <button type="button" onclick="pickRandomMvp(false)" title="Escolher MVP Aleatório dos 2 Times" class="px-1.5 py-0.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/40 text-[10px] font-bold rounded">🎲 Qualquer</button>
+                  <button type="button" onclick="pickRandomMvp(true)" title="Escolher MVP Aleatório do Vencedor" class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/40 text-[10px] font-bold rounded">🏆 Vencedor</button>
+                </div>
+              </div>
+              <input type="text" id="text-match-mvp" list="mvp-players-list" placeholder="Digite ou selecione o MVP..." class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-yellow-300 focus:outline-none focus:border-yellow-500">
               <datalist id="mvp-players-list"></datalist>
             </div>
           </div>
 
-          <!-- Seção Dinâmica de Mapas / Locais / Estúdios -->
-          <div class="border-t border-dark/60 pt-3 space-y-3">
+          <!-- Seção de Mapas -->
+          <div class="border-t border-dark/60 pt-2.5 space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-gray-300 flex items-center gap-1.5">
-                <span>🗺️</span> Detalhamento por Mapa, Estúdio ou Local (Opcional):
+                <span>🗺️</span> Detalhamento por Mapa / Local (Opcional):
               </span>
-              <button onclick="addMapRow()" class="px-3 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold rounded-lg transition flex items-center gap-1">
-                <span>➕</span> Adicionar Mapa/Local
+              <button onclick="addMapRow()" class="px-2.5 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold rounded-lg transition flex items-center gap-1">
+                <span>➕</span> Adicionar Mapa
               </button>
             </div>
 
-            <div id="map-rows-container" class="space-y-2"></div>
+            <div id="map-rows-container" class="space-y-1.5"></div>
           </div>
 
-          <!-- Botão de Ação -->
-          <div class="flex justify-end pt-2">
-            <button id="btn-submit-match" onclick="submitTextMatch()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-lg shadow-lg transition flex items-center gap-2">
+          <!-- Botão Salvar -->
+          <div class="flex justify-end pt-1">
+            <button id="btn-submit-match" onclick="submitTextMatch()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-lg shadow transition flex items-center gap-1.5">
               <span>💾</span> Salvar Confronto
             </button>
           </div>
@@ -239,29 +252,47 @@
         </div>
       </div>
 
-      <!-- Tabela do Histórico de Confrontos Registrados -->
-      <div class="bg-dark-card border border-dark rounded-xl p-5 shadow-xl space-y-4">
-        <div class="flex items-center justify-between border-b border-dark pb-3">
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <span>📜</span> Registros do Histórico de Confrontos
+      <!-- Barra de Busca, Filtros e Consulta de MVPs -->
+      <div class="bg-dark-card border border-dark rounded-xl p-3.5 shadow-xl space-y-3">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-dark pb-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <span>🔍</span> Filtrar Confrontos & Consultar MVPs
           </h3>
-          <button onclick="clearMatchHistory()" class="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold rounded-lg transition">
-            Limpar Todo Histórico
-          </button>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="text" id="search-history-query" oninput="renderRegisteredMatchesTable()" placeholder="Pesquisar por Equipe, Região, Torneio, Mapa ou MVP..." class="w-64 bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+            
+            <button onclick="toggleMvpStatsModal()" class="px-3 py-1.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 text-xs font-bold rounded-lg transition flex items-center gap-1">
+              <span>⭐</span> Ranking de MVPs Cadastrados
+            </button>
+
+            <button onclick="clearMatchHistory()" class="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold rounded-lg transition">
+              Limpar Histórico
+            </button>
+          </div>
         </div>
 
+        <!-- Painel Expansível de Ranking de MVPs dos Confrontos -->
+        <div id="mvp-stats-panel" class="hidden bg-[#1f242d] border border-dark p-3 rounded-xl space-y-2">
+          <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5">
+            <span>⭐</span> Contagem de MVPs por Jogador nos Confrontos Registrados:
+          </h4>
+          <div id="mvp-stats-list" class="flex flex-wrap gap-2 text-xs"></div>
+        </div>
+
+        <!-- Tabela do Histórico de Confrontos -->
         <div class="overflow-x-auto custom-scroll">
           <table class="w-full text-left">
             <thead class="bg-[#1f242d] text-gray-400 text-xs font-bold uppercase">
               <tr>
-                <th class="px-3.5 py-3">Competição</th>
-                <th class="px-3.5 py-3 text-right">Time 1</th>
-                <th class="px-3.5 py-3 text-center">Placar</th>
-                <th class="px-3.5 py-3">Time 2</th>
-                <th class="px-3.5 py-3 text-center">Resultado Geral</th>
-                <th class="px-3.5 py-3">Locais / Mapas</th>
-                <th class="px-3.5 py-3 text-center">MVP Destaque</th>
-                <th class="px-3.5 py-3 text-center w-20">Ações</th>
+                <th class="px-3 py-2.5">Competição / Fase</th>
+                <th class="px-3 py-2.5 text-right">Time 1</th>
+                <th class="px-3 py-2.5 text-center">Placar</th>
+                <th class="px-3 py-2.5">Time 2</th>
+                <th class="px-3 py-2.5 text-center">Resultado Geral</th>
+                <th class="px-3 py-2.5">Locais / Mapas</th>
+                <th class="px-3 py-2.5 text-center">MVP Destaque</th>
+                <th class="px-3 py-2.5 text-center w-20">Ações</th>
               </tr>
             </thead>
             <tbody id="registered-matches-body" class="divide-y divide-dark text-xs text-gray-200">
@@ -293,7 +324,9 @@
 
     let selectedTeam1 = localStorage.getItem('gcr6_selected_team1') || '';
     let selectedTeam2 = localStorage.getItem('gcr6_selected_team2') || '';
-    let selectedH2HComp = 'ALL';
+    
+    // Filtro H2H Multi-seleção (Competições ou Região)
+    let selectedH2HComps = new Set(['ALL']);
     let registeredConfrontos = JSON.parse(localStorage.getItem('gcr6_match_history') || '[]');
     let editingMatchId = null;
 
@@ -328,7 +361,7 @@
       }
     }
 
-    function createLogoHtml(url, sizeClass = "w-8 h-8") {
+    function createLogoHtml(url, sizeClass = "w-7 h-7") {
       if (!url) return '';
       return `<img src="${url}" crossorigin="anonymous" onload="autoRemoveBackground(this)" class="${sizeClass} object-contain shrink-0 logo-transparent" onerror="this.style.display='none'">`;
     }
@@ -361,10 +394,10 @@
         const btn = document.getElementById(`nav-${t}`);
         const section = document.getElementById(`section-${t}`);
         if (t === tabId) {
-          btn.className = "px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow-md";
+          btn.className = "px-3 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow";
           section.classList.remove('hidden');
         } else {
-          btn.className = "px-4 py-2 text-sm font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white";
+          btn.className = "px-3 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white";
           section.classList.add('hidden');
         }
       });
@@ -372,10 +405,10 @@
     }
 
     function getPosBadge(idx) {
-      if (idx === 0) return '<span class="text-2xl drop-shadow">🥇</span>';
-      if (idx === 1) return '<span class="text-2xl drop-shadow">🥈</span>';
-      if (idx === 2) return '<span class="text-2xl drop-shadow">🥉</span>';
-      return `<span class="text-sm font-bold text-gray-400">${idx + 1}º</span>`;
+      if (idx === 0) return '<span class="text-xl drop-shadow">🥇</span>';
+      if (idx === 1) return '<span class="text-xl drop-shadow">🥈</span>';
+      if (idx === 2) return '<span class="text-xl drop-shadow">🥉</span>';
+      return `<span class="text-xs font-bold text-gray-400">${idx + 1}º</span>`;
     }
 
     function sortRegionsBRFirst(array) {
@@ -422,7 +455,7 @@
       const isAllSelected = activeRegions.size === availableRegions.length;
       
       const allBtn = document.createElement('button');
-      allBtn.className = `px-3.5 py-1.5 text-xs font-bold rounded-lg transition ${
+      allBtn.className = `px-2.5 py-1 text-xs font-bold rounded-lg transition ${
         isAllSelected ? 'bg-blue-600 text-white shadow' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'
       }`;
       allBtn.textContent = 'Todas';
@@ -432,7 +465,7 @@
       availableRegions.forEach(reg => {
         const isSelected = activeRegions.has(reg);
         const btn = document.createElement('button');
-        btn.className = `px-3.5 py-1.5 text-xs font-bold rounded-lg transition flex items-center gap-1.5 ${
+        btn.className = `px-2.5 py-1 text-xs font-bold rounded-lg transition flex items-center gap-1 ${
           isSelected ? 'bg-blue-600/30 border border-blue-500 text-blue-300' : 'bg-[#21262d] border border-dark text-gray-400 hover:text-white'
         }`;
         btn.innerHTML = `<span>${isSelected ? '✓' : '+'}</span> <span>${reg}</span>`;
@@ -463,7 +496,7 @@
 
       groups.forEach((group) => {
         const card = document.createElement('div');
-        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
+        const cardWidth = group.isGeral ? "w-[440px] md:w-[480px]" : "w-[380px] md:w-[410px]";
         const stickyClasses = group.isGeral 
           ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
           : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
@@ -472,44 +505,44 @@
         
         let rowsHtml = group.teams.map((item, idx) => {
           const pos = getPosBadge(idx);
-          const logo = createLogoHtml(item.logo, "w-8 h-8");
-          const regionTd = group.isGeral ? `<td class="px-3.5 py-3 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
+          const logo = createLogoHtml(item.logo, "w-7 h-7");
+          const regionTd = group.isGeral ? `<td class="px-3 py-2.5 text-xs font-semibold text-blue-400">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-3.5 py-3 text-center align-middle">${pos}</td>
-              <td class="px-3.5 py-3 font-bold text-white text-sm">
-                <div class="flex items-center gap-2.5">${logo}<span>${item.name}</span></div>
+              <td class="px-3 py-2.5 text-center align-middle">${pos}</td>
+              <td class="px-3 py-2.5 font-bold text-white text-xs">
+                <div class="flex items-center gap-2">${logo}<span>${item.name}</span></div>
               </td>
-              <td class="px-3.5 py-3 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
+              <td class="px-3 py-2.5 text-xs text-gray-400 font-mono font-semibold">${item.tag || '-'}</td>
               ${regionTd}
-              <td class="px-3.5 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
+              <td class="px-3 py-2.5 text-right font-extrabold text-yellow-400 text-sm">${item.titles}</td>
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-3.5 py-3">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3 py-2.5">Região</th>` : '';
         const colCount = group.isGeral ? 5 : 4;
 
         card.innerHTML = `
-          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-sm text-white truncate flex items-center gap-2">
+          <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
               ${group.isGeral ? '📌 ' : ''}${group.title}
             </h3>
-            <span class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.teams.length} times</span>
+            <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.teams.length} times</span>
           </div>
-          <div class="overflow-y-auto max-h-[650px] custom-scroll">
+          <div class="overflow-y-auto max-h-[600px] custom-scroll">
             <table class="w-full text-left">
-              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
                 <tr>
-                  <th class="px-3.5 py-3 w-10 text-center">Pos</th>
-                  <th class="px-3.5 py-3">Time</th>
-                  <th class="px-3.5 py-3">TAG</th>
+                  <th class="px-3 py-2.5 w-10 text-center">Pos</th>
+                  <th class="px-3 py-2.5">Time</th>
+                  <th class="px-3 py-2.5">TAG</th>
                   ${regionTh}
-                  <th class="px-3.5 py-3 text-right">Títulos</th>
+                  <th class="px-3 py-2.5 text-right">Títulos</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
             </table>
           </div>
         `;
@@ -530,7 +563,7 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        const cardWidth = group.isGeral ? "w-[620px] md:w-[680px]" : "w-[500px] md:w-[560px]";
+        const cardWidth = group.isGeral ? "w-[560px] md:w-[600px]" : "w-[460px] md:w-[500px]";
         const stickyClasses = group.isGeral 
           ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
           : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
@@ -538,44 +571,44 @@
         card.className = stickyClasses;
 
         let rowsHtml = group.list.map((item) => {
-          const logo = createLogoHtml(item.logo, "w-7 h-7");
-          const regionTd = group.isGeral ? `<td class="px-3.5 py-3 text-xs font-bold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
+          const logo = createLogoHtml(item.logo, "w-6 h-6");
+          const regionTd = group.isGeral ? `<td class="px-3 py-2.5 text-xs font-bold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-3.5 py-3 font-bold text-white text-sm">${item.comp}</td>
-              <td class="px-3.5 py-3 text-xs text-blue-400 font-mono font-bold whitespace-nowrap">${item.season}</td>
-              <td class="px-3.5 py-3 text-sm font-bold text-yellow-400">
-                <div class="flex items-center gap-2.5">${logo}<span class="whitespace-nowrap">${item.champion}</span></div>
+              <td class="px-3 py-2.5 font-bold text-white text-xs">${item.comp}</td>
+              <td class="px-3 py-2.5 text-xs text-blue-400 font-mono font-bold whitespace-nowrap">${item.season}</td>
+              <td class="px-3 py-2.5 text-xs font-bold text-yellow-400">
+                <div class="flex items-center gap-2">${logo}<span class="whitespace-nowrap">${item.champion}</span></div>
               </td>
-              <td class="px-3.5 py-3 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>
+              <td class="px-3 py-2.5 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>
               ${regionTd}
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-3.5 py-3 whitespace-nowrap">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3 py-2.5 whitespace-nowrap">Região</th>` : '';
         const colCount = group.isGeral ? 5 : 4;
 
         card.innerHTML = `
-          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-sm text-white truncate flex items-center gap-2">
+          <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
               ${group.isGeral ? '📌 ' : ''}${group.title}
             </h3>
-            <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.list.length} edições</span>
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.list.length} edições</span>
           </div>
-          <div class="overflow-y-auto max-h-[650px] custom-scroll">
+          <div class="overflow-y-auto max-h-[600px] custom-scroll">
             <table class="w-full text-left">
-              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
                 <tr>
-                  <th class="px-3.5 py-3">Competição</th>
-                  <th class="px-3.5 py-3 whitespace-nowrap">Temp.</th>
-                  <th class="px-3.5 py-3">Campeão</th>
-                  <th class="px-3.5 py-3 whitespace-nowrap">TAG</th>
+                  <th class="px-3 py-2.5">Competição</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Temp.</th>
+                  <th class="px-3 py-2.5">Campeão</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">TAG</th>
                   ${regionTh}
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
             </table>
           </div>
         `;
@@ -613,78 +646,78 @@
       const topChampions = Object.values(teamStats).sort((a, b) => b.wins - a.wins);
 
       const cardHistory = document.createElement('div');
-      cardHistory.className = "sticky left-0 z-20 w-[540px] md:w-[600px] shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col";
+      cardHistory.className = "sticky left-0 z-20 w-[480px] md:w-[520px] shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col";
       
       let historyRows = filteredList.map(item => {
-        const logo = createLogoHtml(item.logo, "w-7 h-7");
+        const logo = createLogoHtml(item.logo, "w-6 h-6");
         return `
           <tr class="hover:bg-dark-hover/50">
-            <td class="px-3.5 py-3 text-xs text-blue-400 font-mono font-bold whitespace-nowrap">${item.season}</td>
-            <td class="px-3.5 py-3 text-sm font-bold text-white">
-              <div class="flex items-center gap-2.5">${logo}<span>${item.champion}</span></div>
+            <td class="px-3 py-2.5 text-xs text-blue-400 font-mono font-bold whitespace-nowrap">${item.season}</td>
+            <td class="px-3 py-2.5 text-xs font-bold text-white">
+              <div class="flex items-center gap-2">${logo}<span>${item.champion}</span></div>
             </td>
-            <td class="px-3.5 py-3 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>
-            <td class="px-3.5 py-3 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>
+            <td class="px-3 py-2.5 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>
           </tr>
         `;
       }).join('');
 
       cardHistory.innerHTML = `
-        <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
-          <h3 class="font-bold text-sm text-white truncate">📌 Histórico de Edições - ${selectedComp}</h3>
-          <span class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${filteredList.length} edições</span>
+        <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
+          <h3 class="font-bold text-xs text-white truncate">📌 Histórico de Edições - ${selectedComp}</h3>
+          <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-bold shrink-0 ml-1">${filteredList.length} edições</span>
         </div>
-        <div class="overflow-y-auto max-h-[650px] custom-scroll">
+        <div class="overflow-y-auto max-h-[600px] custom-scroll">
           <table class="w-full text-left">
-            <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
+            <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
               <tr>
-                <th class="px-3.5 py-3 whitespace-nowrap">Temporada</th>
-                <th class="px-3.5 py-3">Campeão</th>
-                <th class="px-3.5 py-3 whitespace-nowrap">TAG</th>
-                <th class="px-3.5 py-3 whitespace-nowrap">Região</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Temporada</th>
+                <th class="px-3 py-2.5">Campeão</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">TAG</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Região</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-dark text-gray-200">${historyRows || '<tr><td colspan="4" class="p-5 text-center text-xs text-gray-500">Sem histórico</td></tr>'}</tbody>
+            <tbody class="divide-y divide-dark text-gray-200">${historyRows || '<tr><td colspan="4" class="p-4 text-center text-xs text-gray-500">Sem histórico</td></tr>'}</tbody>
           </table>
         </div>
       `;
 
       const cardRank = document.createElement('div');
-      cardRank.className = "w-[500px] md:w-[560px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+      cardRank.className = "w-[440px] md:w-[480px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
 
       let rankRows = topChampions.map((item, idx) => {
         const pos = getPosBadge(idx);
-        const logo = createLogoHtml(item.logo, "w-7 h-7");
+        const logo = createLogoHtml(item.logo, "w-6 h-6");
         return `
           <tr class="hover:bg-dark-hover/50">
-            <td class="px-3.5 py-3 text-center align-middle">${pos}</td>
-            <td class="px-3.5 py-3 font-bold text-white text-sm">
-              <div class="flex items-center gap-2.5">${logo}<span>${item.name}</span></div>
+            <td class="px-3 py-2.5 text-center align-middle">${pos}</td>
+            <td class="px-3 py-2.5 font-bold text-white text-xs">
+              <div class="flex items-center gap-2">${logo}<span>${item.name}</span></div>
             </td>
-            <td class="px-3.5 py-3 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>
-            <td class="px-3.5 py-3 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>
-            <td class="px-3.5 py-3 text-right font-extrabold text-yellow-400 text-base">${item.wins}x</td>
+            <td class="px-3 py-2.5 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>
+            <td class="px-3 py-2.5 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>
+            <td class="px-3 py-2.5 text-right font-extrabold text-yellow-400 text-sm">${item.wins}x</td>
           </tr>
         `;
       }).join('');
 
       cardRank.innerHTML = `
-        <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
-          <h3 class="font-bold text-sm text-white truncate">Maiores Campeões - ${selectedComp}</h3>
-          <span class="text-xs bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${topChampions.length} equipes</span>
+        <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
+          <h3 class="font-bold text-xs text-white truncate">Maiores Campeões - ${selectedComp}</h3>
+          <span class="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full font-bold shrink-0 ml-1">${topChampions.length} equipes</span>
         </div>
-        <div class="overflow-y-auto max-h-[650px] custom-scroll">
+        <div class="overflow-y-auto max-h-[600px] custom-scroll">
           <table class="w-full text-left">
-            <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
+            <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
               <tr>
-                <th class="px-3.5 py-3 w-10 text-center">Pos</th>
-                <th class="px-3.5 py-3">Time</th>
-                <th class="px-3.5 py-3 whitespace-nowrap">TAG</th>
-                <th class="px-3.5 py-3 whitespace-nowrap">Região</th>
-                <th class="px-3.5 py-3 text-right">Títulos</th>
+                <th class="px-3 py-2.5 w-10 text-center">Pos</th>
+                <th class="px-3 py-2.5">Time</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">TAG</th>
+                <th class="px-3 py-2.5 whitespace-nowrap">Região</th>
+                <th class="px-3 py-2.5 text-right">Títulos</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-dark text-gray-200">${rankRows || '<tr><td colspan="5" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
+            <tbody class="divide-y divide-dark text-gray-200">${rankRows || '<tr><td colspan="5" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>'}</tbody>
           </table>
         </div>
       `;
@@ -707,7 +740,7 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        const cardWidth = group.isGeral ? "w-[540px] md:w-[580px]" : "w-[440px] md:w-[480px]";
+        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
         const stickyClasses = group.isGeral 
           ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
           : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
@@ -716,46 +749,46 @@
 
         let rowsHtml = group.players.map((item, idx) => {
           const pos = getPosBadge(idx);
-          const logo = createLogoHtml(item.logo, "w-7 h-7");
-          const regionTd = group.isGeral ? `<td class="px-3.5 py-3 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
+          const logo = createLogoHtml(item.logo, "w-6 h-6");
+          const regionTd = group.isGeral ? `<td class="px-3 py-2.5 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-3.5 py-3 text-center align-middle">${pos}</td>
-              <td class="px-3.5 py-3 font-bold text-white text-sm">${item.name}</td>
-              <td class="px-3.5 py-3 font-semibold text-xs text-gray-300">
-                <div class="flex items-center gap-2">${logo}<span>${item.team}</span></div>
+              <td class="px-3 py-2.5 text-center align-middle">${pos}</td>
+              <td class="px-3 py-2.5 font-bold text-white text-xs">${item.name}</td>
+              <td class="px-3 py-2.5 font-semibold text-xs text-gray-300">
+                <div class="flex items-center gap-1.5">${logo}<span>${item.team}</span></div>
               </td>
               ${regionTd}
-              <td class="px-3.5 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
-              <td class="px-3.5 py-3 text-right font-extrabold text-purple-400 text-base">${item.mvps}</td>
+              <td class="px-3 py-2.5 text-right font-extrabold text-yellow-400 text-sm">${item.titles}</td>
+              <td class="px-3 py-2.5 text-right font-extrabold text-purple-400 text-sm">${item.mvps}</td>
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-3.5 py-3 whitespace-nowrap">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3 py-2.5 whitespace-nowrap">Região</th>` : '';
         const colCount = group.isGeral ? 6 : 5;
 
         card.innerHTML = `
-          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-sm text-white truncate flex items-center gap-2">
+          <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
               ${group.isGeral ? '📌 ' : ''}${group.title}
             </h3>
-            <span class="text-xs bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.players.length} jogadores</span>
+            <span class="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.players.length} jogadores</span>
           </div>
-          <div class="overflow-y-auto max-h-[650px] custom-scroll">
+          <div class="overflow-y-auto max-h-[600px] custom-scroll">
             <table class="w-full text-left">
-              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
                 <tr>
-                  <th class="px-3.5 py-3 w-10 text-center">Pos</th>
-                  <th class="px-3.5 py-3">Jogador</th>
-                  <th class="px-3.5 py-3">Time</th>
+                  <th class="px-3 py-2.5 w-10 text-center">Pos</th>
+                  <th class="px-3 py-2.5">Jogador</th>
+                  <th class="px-3 py-2.5">Time</th>
                   ${regionTh}
-                  <th class="px-3.5 py-3 text-right">Títulos</th>
-                  <th class="px-3.5 py-3 text-right">MVPs</th>
+                  <th class="px-3 py-2.5 text-right">Títulos</th>
+                  <th class="px-3 py-2.5 text-right">MVPs</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
             </table>
           </div>
         `;
@@ -777,7 +810,7 @@
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        const cardWidth = group.isGeral ? "w-[540px] md:w-[580px]" : "w-[440px] md:w-[480px]";
+        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
         const stickyClasses = group.isGeral 
           ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
           : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
@@ -786,46 +819,46 @@
 
         let rowsHtml = group.players.map((item, idx) => {
           const pos = getPosBadge(idx);
-          const logo = createLogoHtml(item.logo, "w-7 h-7");
-          const regionTd = group.isGeral ? `<td class="px-3.5 py-3 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
+          const logo = createLogoHtml(item.logo, "w-6 h-6");
+          const regionTd = group.isGeral ? `<td class="px-3 py-2.5 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
-              <td class="px-3.5 py-3 text-center align-middle">${pos}</td>
-              <td class="px-3.5 py-3 font-bold text-white text-sm">${item.name}</td>
-              <td class="px-3.5 py-3 font-semibold text-xs text-gray-300">
-                <div class="flex items-center gap-2">${logo}<span>${item.team}</span></div>
+              <td class="px-3 py-2.5 text-center align-middle">${pos}</td>
+              <td class="px-3 py-2.5 font-bold text-white text-xs">${item.name}</td>
+              <td class="px-3 py-2.5 font-semibold text-xs text-gray-300">
+                <div class="flex items-center gap-1.5">${logo}<span>${item.team}</span></div>
               </td>
               ${regionTd}
-              <td class="px-3.5 py-3 text-right font-extrabold text-purple-400 text-base">${item.mvps}</td>
-              <td class="px-3.5 py-3 text-right font-extrabold text-yellow-400 text-base">${item.titles}</td>
+              <td class="px-3 py-2.5 text-right font-extrabold text-purple-400 text-sm">${item.mvps}</td>
+              <td class="px-3 py-2.5 text-right font-extrabold text-yellow-400 text-sm">${item.titles}</td>
             </tr>
           `;
         }).join('');
 
-        const regionTh = group.isGeral ? `<th class="px-3.5 py-3 whitespace-nowrap">Região</th>` : '';
+        const regionTh = group.isGeral ? `<th class="px-3 py-2.5 whitespace-nowrap">Região</th>` : '';
         const colCount = group.isGeral ? 6 : 5;
 
         card.innerHTML = `
-          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
-            <h3 class="font-bold text-sm text-white truncate flex items-center gap-2">
+          <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
+            <h3 class="font-bold text-xs text-white truncate flex items-center gap-1.5">
               ${group.isGeral ? '📌 ' : ''}${group.title}
             </h3>
-            <span class="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.players.length} jogadores</span>
+            <span class="text-[10px] bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold shrink-0 ml-1">${group.players.length} jogadores</span>
           </div>
-          <div class="overflow-y-auto max-h-[650px] custom-scroll">
+          <div class="overflow-y-auto max-h-[600px] custom-scroll">
             <table class="w-full text-left">
-              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
                 <tr>
-                  <th class="px-3.5 py-3 w-10 text-center">Pos</th>
-                  <th class="px-3.5 py-3">Jogador</th>
-                  <th class="px-3.5 py-3">Time</th>
+                  <th class="px-3 py-2.5 w-10 text-center">Pos</th>
+                  <th class="px-3 py-2.5">Jogador</th>
+                  <th class="px-3 py-2.5">Time</th>
                   ${regionTh}
-                  <th class="px-3.5 py-3 text-right">MVPs</th>
-                  <th class="px-3.5 py-3 text-right">Títulos</th>
+                  <th class="px-3 py-2.5 text-right">MVPs</th>
+                  <th class="px-3 py-2.5 text-right">Títulos</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-4 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
             </table>
           </div>
         `;
@@ -834,7 +867,7 @@
     }
 
     /* =========================================================================
-       CONFRONTO DIRETO (SIMULAÇÃO + RETROSPECTIVA H2H + JOGADOR DE OURO)
+       CONFRONTO DIRETO (SIMULAÇÃO + RETROSPECTIVA H2H COMPACTA)
     ========================================================================= */
     function setupConfrontoOptions() {
       const teamNames = Array.from(new Set(dataListaTimes.map(t => t.name))).sort();
@@ -873,22 +906,22 @@
       });
 
       if (filtered.length === 0) {
-        listEl.innerHTML = `<div class="p-4 text-xs text-gray-500 text-center font-bold">Nenhum time encontrado para "${inputVal}"</div>`;
+        listEl.innerHTML = `<div class="p-3 text-xs text-gray-500 text-center font-bold">Nenhum time encontrado para "${inputVal}"</div>`;
         return;
       }
 
       listEl.innerHTML = filtered.map(t => {
-        const logo = createLogoHtml(t.logo, "w-6 h-6");
+        const logo = createLogoHtml(t.logo, "w-5 h-5");
         const safeName = t.name.replace(/'/g, "\\'");
         return `
-          <div onclick="selectTeamForConfronto(${teamNum}, '${safeName}')" class="px-3.5 py-2.5 hover:bg-dark-hover flex items-center justify-between cursor-pointer transition">
-            <div class="flex items-center gap-2.5">
-              ${logo}
-              <span class="text-sm font-bold text-white">${t.name}</span>
-            </div>
+          <div onclick="selectTeamForConfronto(${teamNum}, '${safeName}')" class="px-3 py-2 hover:bg-dark-hover flex items-center justify-between cursor-pointer transition">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${t.tag || '-'}</span>
-              <span class="text-xs font-bold text-blue-400">${t.region || '-'}</span>
+              ${logo}
+              <span class="text-xs font-bold text-white">${t.name}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${t.tag || '-'}</span>
+              <span class="text-[10px] font-bold text-blue-400">${t.region || '-'}</span>
             </div>
           </div>
         `;
@@ -910,8 +943,27 @@
       renderConfronto();
     }
 
-    function changeH2HCompetitionFilter(val) {
-      selectedH2HComp = val;
+    function toggleH2HCompFilter(compOrReg) {
+      if (compOrReg === 'ALL') {
+        selectedH2HComps = new Set(['ALL']);
+      } else {
+        if (selectedH2HComps.has('ALL')) selectedH2HComps.clear();
+
+        // Se for filtro de região
+        if (compOrReg.startsWith('REG_')) {
+          const regName = compOrReg.replace('REG_', '');
+          const compsInRegion = dataHistorico.filter(h => h.region === regName).map(h => h.comp);
+          compsInRegion.forEach(c => selectedH2HComps.add(c));
+        } else {
+          if (selectedH2HComps.has(compOrReg)) {
+            selectedH2HComps.delete(compOrReg);
+          } else {
+            selectedH2HComps.add(compOrReg);
+          }
+        }
+
+        if (selectedH2HComps.size === 0) selectedH2HComps.add('ALL');
+      }
       renderConfronto();
     }
 
@@ -932,51 +984,51 @@
       const players2 = dataJogadores.filter(j => j.team.toLowerCase().trim() === (name2||'').toLowerCase().trim());
 
       function buildTeamCardHtml(team, players, accentColor, borderAccent) {
-        const logo = createLogoHtml(team.logo, "w-14 h-14");
+        const logo = createLogoHtml(team.logo, "w-10 h-10");
         
         let playerRows = players.map(p => `
           <tr class="hover:bg-dark-hover/50">
-            <td class="px-3.5 py-2.5 font-bold text-white text-sm">${p.name}</td>
-            <td class="px-3.5 py-2.5 text-right font-extrabold text-yellow-400 text-base">${p.titles}</td>
-            <td class="px-3.5 py-2.5 text-right font-extrabold text-purple-400 text-base">${p.mvps}</td>
+            <td class="px-3 py-1.5 font-bold text-white text-xs">${p.name}</td>
+            <td class="px-3 py-1.5 text-right font-extrabold text-yellow-400 text-xs">${p.titles}</td>
+            <td class="px-3 py-1.5 text-right font-extrabold text-purple-400 text-xs">${p.mvps}</td>
           </tr>
         `).join('');
 
         if (players.length === 0) {
-          playerRows = `<tr><td colspan="3" class="p-5 text-center text-xs text-gray-500">Nenhum jogador cadastrado nesta equipe</td></tr>`;
+          playerRows = `<tr><td colspan="3" class="p-4 text-center text-xs text-gray-500">Nenhum jogador cadastrado nesta equipe</td></tr>`;
         }
 
         return `
-          <div class="bg-dark-card border-2 ${borderAccent} rounded-xl overflow-hidden shadow-2xl flex flex-col w-full">
-            <div class="bg-[#1f242d] p-5 border-b border-dark flex items-center justify-between">
-              <div class="flex items-center gap-3.5">
+          <div class="bg-dark-card border-2 ${borderAccent} rounded-xl overflow-hidden shadow-xl flex flex-col w-full">
+            <div class="bg-[#1f242d] p-3.5 border-b border-dark flex items-center justify-between">
+              <div class="flex items-center gap-3">
                 ${logo}
                 <div>
-                  <h3 class="text-xl font-extrabold text-white">${team.name}</h3>
-                  <div class="flex items-center gap-2 mt-1">
-                    <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag || '-'}</span>
-                    <span class="text-xs font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${team.region || '-'}</span>
+                  <h3 class="text-base font-extrabold text-white">${team.name}</h3>
+                  <div class="flex items-center gap-1.5 mt-0.5">
+                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag || '-'}</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${team.region || '-'}</span>
                   </div>
                 </div>
               </div>
               <div class="text-right">
-                <span class="block text-[10px] uppercase font-bold text-gray-400">Títulos do Time</span>
-                <span class="text-2xl font-black text-yellow-400">${team.titles}</span>
+                <span class="block text-[9px] uppercase font-bold text-gray-400">Títulos</span>
+                <span class="text-xl font-black text-yellow-400">${team.titles}</span>
               </div>
             </div>
 
-            <div class="p-5 space-y-3">
-              <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
-                <span>👥 Jogadores da Equipe</span>
+            <div class="p-3.5 space-y-2">
+              <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                <span>👥 Elenco</span>
                 <span class="${accentColor}">${players.length} inscritos</span>
               </h4>
               <div class="overflow-hidden border border-dark rounded-lg">
                 <table class="w-full text-left">
-                  <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-xs uppercase font-bold">
+                  <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[10px] uppercase font-bold">
                     <tr>
-                      <th class="px-3.5 py-2.5">Jogador</th>
-                      <th class="px-3.5 py-2.5 text-right">Títulos</th>
-                      <th class="px-3.5 py-2.5 text-right">MVPs</th>
+                      <th class="px-3 py-1.5">Jogador</th>
+                      <th class="px-3 py-1.5 text-right">Títulos</th>
+                      <th class="px-3 py-1.5 text-right">MVPs</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-dark text-gray-200">${playerRows}</tbody>
@@ -991,13 +1043,10 @@
       const card2Html = buildTeamCardHtml(team2, players2, "text-red-400", "border-red-500/60");
 
       const vsElementHtml = `
-        <div class="flex flex-col items-center justify-center py-4 lg:py-12 gap-2">
-          <div class="relative flex items-center justify-center">
-            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-red-600 via-orange-500 to-yellow-400 flex items-center justify-center shadow-[0_0_25px_rgba(234,179,8,0.5)] border-2 border-yellow-300 transform scale-105">
-              <span class="text-xl font-black italic text-white tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">VS</span>
-            </div>
+        <div class="flex flex-col items-center justify-center py-2 lg:py-8 gap-1">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-red-600 to-yellow-400 flex items-center justify-center shadow-lg border border-yellow-300">
+            <span class="text-base font-black italic text-white tracking-tighter">VS</span>
           </div>
-          <span class="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mt-1">Confronto</span>
         </div>
       `;
 
@@ -1016,15 +1065,14 @@
         return (t1 === sel1 && t2 === sel2) || (t1 === sel2 && t2 === sel1);
       });
 
-      const compOptions = Array.from(new Set(allDirectMatches.map(m => m.competition).filter(Boolean))).sort();
-      let compSelectHtml = `
-        <option value="ALL" ${selectedH2HComp === 'ALL' ? 'selected' : ''}>Todas as Competições (${allDirectMatches.length})</option>
-        ${compOptions.map(c => `<option value="${c}" ${selectedH2HComp === c ? 'selected' : ''}>${c}</option>`).join('')}
-      `;
+      // Lista de competições dos confrontos diretos
+      const directComps = Array.from(new Set(allDirectMatches.map(m => m.competition).filter(Boolean))).sort();
 
-      const filteredMatches = selectedH2HComp === 'ALL' 
+      // Aplicar filtro selecionado
+      const isAllSelected = selectedH2HComps.has('ALL');
+      const filteredMatches = isAllSelected 
         ? allDirectMatches 
-        : allDirectMatches.filter(m => m.competition === selectedH2HComp);
+        : allDirectMatches.filter(m => selectedH2HComps.has(m.competition));
 
       let wins1 = 0, wins2 = 0, draws = 0;
       const locationStats = {};
@@ -1068,7 +1116,7 @@
           });
         }
 
-        // Contabilizar MVPs para determinar o Jogador de Ouro
+        // Contabilizar MVPs
         if (m.mvp && m.mvp.trim()) {
           const playerName = m.mvp.trim();
           if (!mvpCounts[playerName]) {
@@ -1084,101 +1132,142 @@
         }
       });
 
-      // Calcular o Jogador de Ouro (Quem mais foi MVP no H2H)
+      // Calcular Jogador de Ouro (Exibição Ultra-Compacta com Logo do Time)
       const sortedMvps = Object.values(mvpCounts).sort((a, b) => b.count - a.count);
       const goldenPlayer = sortedMvps.length > 0 && sortedMvps[0].count > 0 ? sortedMvps[0] : null;
 
-      let goldenPlayerHtml = `
-        <div class="bg-gradient-to-r from-yellow-500/10 via-amber-500/20 to-yellow-500/10 border border-yellow-500/40 p-3 rounded-xl flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="text-3xl drop-shadow-[0_0_10px_rgba(234,179,8,0.8)]">🏅</span>
+      let playerTeamLogoUrl = '';
+      if (goldenPlayer) {
+        if (goldenPlayer.logo) {
+          playerTeamLogoUrl = goldenPlayer.logo;
+        } else if (goldenPlayer.team) {
+          const tObj = dataListaTimes.find(t => t.name.toLowerCase() === goldenPlayer.team.toLowerCase());
+          if (tObj) playerTeamLogoUrl = tObj.logo;
+        }
+      }
+      const playerTeamLogoHtml = playerTeamLogoUrl ? createLogoHtml(playerTeamLogoUrl, "w-6 h-6") : '<span class="text-lg">⭐</span>';
+
+      let goldenPlayerStripHtml = `
+        <div class="bg-gradient-to-r from-yellow-500/10 via-amber-500/20 to-yellow-500/10 border border-yellow-500/40 px-3 py-1.5 rounded-lg flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            ${playerTeamLogoHtml}
             <div>
-              <span class="text-[10px] uppercase font-black tracking-widest text-yellow-400 block">Jogador de Ouro do Duelo</span>
-              <span class="text-sm font-extrabold text-white">${goldenPlayer ? goldenPlayer.name : 'Nenhum destaque registrado'}</span>
-              ${goldenPlayer && goldenPlayer.team ? `<span class="text-[10px] font-semibold text-gray-400 block">${goldenPlayer.team}</span>` : ''}
+              <span class="text-[9px] uppercase font-black text-yellow-400 block tracking-wider">Jogador de Ouro do Duelo</span>
+              <span class="text-xs font-extrabold text-white">${goldenPlayer ? goldenPlayer.name : 'Nenhum destaque'}</span>
             </div>
           </div>
-          <div class="text-right">
-            <span class="text-lg font-black text-yellow-400">${goldenPlayer ? goldenPlayer.count : 0}x</span>
-            <span class="block text-[9px] font-bold text-yellow-500/80 uppercase">MVP</span>
-          </div>
+          <span class="text-sm font-black text-yellow-400 font-mono">${goldenPlayer ? goldenPlayer.count : 0}x MVP</span>
         </div>
       `;
 
+      // Renderizar Grade Compacta de 25 Mapas sem scroll
       const locationList = Object.values(locationStats).sort((a, b) => b.total - a.total);
       
-      let locationRowsHtml = locationList.map(loc => `
-        <div class="bg-[#1f242d] border border-dark rounded-lg p-2.5 flex items-center justify-between text-xs">
-          <div class="font-bold text-white flex items-center gap-1.5 truncate">
+      let locationGridHtml = locationList.map(loc => `
+        <div class="bg-[#1f242d] border border-dark rounded p-1.5 flex items-center justify-between text-[11px]">
+          <div class="font-bold text-gray-200 truncate flex items-center gap-1">
             <span>🗺️</span>
             <span class="truncate">${loc.location}</span>
           </div>
-          <div class="flex items-center gap-2 shrink-0 font-mono font-bold">
-            <span class="text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${loc.total} ${loc.total === 1 ? 'jogo' : 'jogos'}</span>
-            <span class="text-blue-400 bg-blue-500/10 border border-blue-500/30 px-2 py-0.5 rounded">${team1.tag || 'T1'}: ${loc.wins1}v</span>
-            <span class="text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded">${team2.tag || 'T2'}: ${loc.wins2}v</span>
+          <div class="flex items-center gap-1 font-mono font-bold shrink-0">
+            <span class="text-blue-400 bg-blue-500/10 border border-blue-500/30 px-1 py-0.5 rounded text-[10px]">${team1.tag || 'T1'}:${loc.wins1}</span>
+            <span class="text-red-400 bg-red-500/10 border border-red-500/30 px-1 py-0.5 rounded text-[10px]">${team2.tag || 'T2'}:${loc.wins2}</span>
           </div>
         </div>
       `).join('');
 
       if (locationList.length === 0) {
-        locationRowsHtml = `<div class="p-3 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum mapa ou local específico detalhado para estes confrontos.</div>`;
+        locationGridHtml = `<div class="col-span-full p-2.5 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum mapa ou local específico detalhado para estes confrontos.</div>`;
       }
 
+      // Renderizar botões do filtro multi-seleção de competições e regiões
+      const availableRegionsH2H = sortRegionsBRFirst(dataHistorico.map(h => h.region));
+
+      let filterButtonsHtml = `
+        <button onclick="toggleH2HCompFilter('ALL')" class="px-2 py-0.5 text-[10px] font-bold rounded ${isAllSelected ? 'bg-blue-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'}">Todas</button>
+      `;
+
+      // Botões por Região
+      availableRegionsH2H.forEach(r => {
+        filterButtonsHtml += `<button onclick="toggleH2HCompFilter('REG_${r}')" class="px-2 py-0.5 text-[10px] font-bold rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20">Região ${r}</button>`;
+      });
+
+      // Botões por Competição
+      directComps.forEach(c => {
+        const isSelected = selectedH2HComps.has(c);
+        filterButtonsHtml += `
+          <button onclick="toggleH2HCompFilter('${c.replace(/'/g, "\\'")}')" class="px-2 py-0.5 text-[10px] font-bold rounded ${isSelected ? 'bg-blue-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'}">
+            ${c}
+          </button>
+        `;
+      });
+
       h2hContainer.innerHTML = `
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark pb-3">
-          <div>
-            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
-              <span>📊</span> Retrospectiva Direta
-            </h3>
-            <p class="text-xs text-gray-400 mt-0.5">${team1.name} vs ${team2.name}</p>
+        <!-- Cabeçalho da Retrospectiva Direta com Logos e Tag -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark pb-2.5">
+          <div class="flex items-center gap-2">
+            ${createLogoHtml(team1.logo, "w-6 h-6")}
+            <div>
+              <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
+                <span>📊</span> Retrospectiva Direta
+              </h3>
+              <p class="text-[11px] text-gray-400 font-semibold">${team1.name} (${team1.tag || '-'}) vs ${team2.name} (${team2.tag || '-'})</p>
+            </div>
+            ${createLogoHtml(team2.logo, "w-6 h-6")}
           </div>
-          <div>
-            <select id="select-h2h-comp" onchange="changeH2HCompetitionFilter(this.value)" class="bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
-              ${compSelectHtml}
-            </select>
+
+          <div class="bg-blue-500/10 border border-blue-500/30 px-2.5 py-1 rounded-lg text-right">
+            <span class="block text-[9px] font-bold text-blue-400 uppercase">Total de Confrontos</span>
+            <span class="text-sm font-black text-white font-mono">${filteredMatches.length} partidas</span>
           </div>
         </div>
 
-        <!-- Placar de Vitórias Globais -->
+        <!-- Filtros Multi-Seleção de Competição & Regiões -->
+        <div class="space-y-1 bg-[#1f242d]/60 border border-dark p-2 rounded-lg">
+          <span class="text-[10px] font-bold text-gray-300 block">🎯 Filtrar Competições / Regiões:</span>
+          <div class="flex flex-wrap gap-1">${filterButtonsHtml}</div>
+        </div>
+
+        <!-- Placar de Vitórias da Retrospectiva -->
         <div class="grid grid-cols-3 gap-2 text-center">
-          <div class="bg-blue-500/10 border border-blue-500/30 p-2.5 rounded-lg">
-            <span class="block text-[10px] font-bold text-blue-400 uppercase truncate">Vitórias (${team1.name})</span>
-            <span class="text-xl font-black text-white">${wins1}</span>
+          <div class="bg-blue-500/10 border border-blue-500/30 p-2 rounded-lg">
+            <div class="flex items-center justify-center gap-1">
+              ${createLogoHtml(team1.logo, "w-4 h-4")}
+              <span class="text-[10px] font-bold text-blue-400 uppercase truncate">VITÓRIAS (${team1.tag || team1.name})</span>
+            </div>
+            <span class="text-lg font-black text-white">${wins1}</span>
           </div>
-          <div class="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-lg">
-            <span class="block text-[10px] font-bold text-amber-400 uppercase">Empates</span>
-            <span class="text-xl font-black text-white">${draws}</span>
+          <div class="bg-amber-500/10 border border-amber-500/30 p-2 rounded-lg">
+            <span class="block text-[10px] font-bold text-amber-400 uppercase">EMPATES</span>
+            <span class="text-lg font-black text-white">${draws}</span>
           </div>
-          <div class="bg-red-500/10 border border-red-500/30 p-2.5 rounded-lg">
-            <span class="block text-[10px] font-bold text-red-400 uppercase truncate">Vitórias (${team2.name})</span>
-            <span class="text-xl font-black text-white">${wins2}</span>
+          <div class="bg-red-500/10 border border-red-500/30 p-2 rounded-lg">
+            <div class="flex items-center justify-center gap-1">
+              <span class="text-[10px] font-bold text-red-400 uppercase truncate">VITÓRIAS (${team2.tag || team2.name})</span>
+              ${createLogoHtml(team2.logo, "w-4 h-4")}
+            </div>
+            <span class="text-lg font-black text-white">${wins2}</span>
           </div>
         </div>
 
-        <!-- Card do Jogador de Ouro -->
-        ${goldenPlayerHtml}
+        <!-- Jogador de Ouro Faixa Ultra-Compacta -->
+        ${goldenPlayerStripHtml}
 
-        <div class="bg-[#1f242d]/60 border border-dark p-2 rounded-lg flex items-center justify-between text-xs">
-          <span class="font-bold text-gray-300">Total de Partidas no Filtro:</span>
-          <span class="font-black text-yellow-400">${filteredMatches.length} partidas</span>
-        </div>
-
-        <!-- Estatísticas por Local / Mapa (Sem Scroll Interno) -->
-        <div class="space-y-2 pt-1">
-          <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
-            <span>📍 Desempenho por Local / Mapa</span>
+        <!-- Desempenho por Local / Mapa (Grade Densa de Até 25 Mapas Sem Scroll) -->
+        <div class="space-y-1.5 pt-1">
+          <div class="flex items-center justify-between">
+            <h4 class="text-[11px] font-bold text-gray-300 uppercase tracking-wider">📍 Desempenho por Local / Mapa</h4>
             <span class="text-[10px] font-mono text-gray-400">${locationList.length} locais</span>
-          </h4>
-          <div class="space-y-2">
-            ${locationRowsHtml}
+          </div>
+          <div class="grid grid-cols-2 lg:grid-cols-3 gap-1.5">
+            ${locationGridHtml}
           </div>
         </div>
       `;
     }
 
     /* =========================================================================
-       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS + MVP (COM CORREÇÃO DE POSIÇÃO)
+       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS (TAGS + MVP SORTEIO + FASE)
     ========================================================================= */
     function updateMvpPlayerDropdown() {
       const descText = (document.getElementById('text-match-desc').value || '').trim();
@@ -1219,20 +1308,62 @@
       });
     }
 
+    function pickRandomMvp(onlyWinner = false) {
+      const descText = (document.getElementById('text-match-desc').value || '').trim();
+      if (!descText) {
+        alert('⚠️ Digite primeiro o resumo do confronto no campo de texto para identificar as equipes.');
+        return;
+      }
+
+      const parsed = parseMatchText(descText);
+      if (!parsed) {
+        alert('⚠️ Não foi possível identificar as equipes no resumo digitado.');
+        return;
+      }
+
+      let candidatePlayers = [];
+
+      if (onlyWinner) {
+        let winnerTeamName = '';
+        if (parsed.score1 > parsed.score2) winnerTeamName = parsed.team1;
+        else if (parsed.score2 > parsed.score1) winnerTeamName = parsed.team2;
+        
+        if (!winnerTeamName) {
+          alert('⚠️ O confronto terminou em empate! Escolha "Qualquer" para sortear entre os dois times.');
+          return;
+        }
+
+        candidatePlayers = dataJogadores.filter(j => j.team.toLowerCase().trim() === winnerTeamName.toLowerCase().trim());
+      } else {
+        candidatePlayers = dataJogadores.filter(j => {
+          const tNorm = j.team.toLowerCase().trim();
+          return tNorm === parsed.team1.toLowerCase().trim() || tNorm === parsed.team2.toLowerCase().trim();
+        });
+      }
+
+      if (candidatePlayers.length === 0) {
+        alert('⚠️ Nenhum jogador encontrado cadastrado para esta(s) equipe(s).');
+        return;
+      }
+
+      const randomPlayer = candidatePlayers[Math.floor(Math.random() * candidatePlayers.length)];
+      document.getElementById('text-match-mvp').value = randomPlayer.name;
+    }
+
     function addMapRow(locationVal = '', winnerVal = '') {
       const container = document.getElementById('map-rows-container');
       const rowId = 'map-row-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
 
       const div = document.createElement('div');
       div.id = rowId;
-      div.className = "flex flex-col md:flex-row items-center gap-2 bg-[#21262d] border border-dark p-2 rounded-lg";
+      div.className = "flex flex-col md:flex-row items-center gap-2 bg-[#21262d] border border-dark p-1.5 rounded-lg";
 
       div.innerHTML = `
         <div class="flex-1 w-full">
-          <input type="text" class="map-location-name w-full bg-[#161b22] border border-dark rounded px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500" value="${locationVal}" placeholder="Nome do Mapa, Estúdio ou Local (ex: Clubhouse / Estúdio A)">
+          <input type="text" class="map-location-name w-full bg-[#161b22] border border-dark rounded px-2.5 py-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500" value="${locationVal}" placeholder="Nome do Mapa, Estúdio ou Local (ex: Clubhouse / Estúdio A)">
         </div>
         <div class="flex-1 w-full">
-          <input type="text" class="map-winner-desc w-full bg-[#161b22] border border-dark rounded px-3 py-1.5 text-xs font-bold text-yellow-400 focus:outline-none focus:border-blue-500" value="${winnerVal}" placeholder="Vencedor / Placar do Mapa (ex: Loud 7x5 ou Empate)">
+          <input type="text" class="map-winner-desc w-full bg-[#161b22] border border-dark rounded px-2.5 py-1 text-xs font-bold text-yellow-400 focus:outline-none focus:border-blue-500" value="${winnerVal}" placeholder="Vencedor / Placar do Mapa (ex: Loud 7x5 ou Empate)">
         </div>
         <button onclick="document.getElementById('${rowId}').remove()" class="text-red-400 hover:text-red-300 font-bold p-1">❌</button>
       `;
@@ -1240,7 +1371,7 @@
       container.appendChild(div);
     }
 
-    /* CORREÇÃO DO PARSER: Identifica a ordem de aparição na frase (indexOf) */
+    /* RECONHECIMENTO DE TAGS E NOMES DAS EQUIPES */
     function parseMatchText(descText) {
       if (!descText) return null;
       const text = descText.trim();
@@ -1265,7 +1396,6 @@
         }
       });
 
-      // Ordenar primariamente pela posição onde a equipe aparece no texto
       matchesFound.sort((a, b) => a.pos - b.pos || b.length - a.length);
 
       const uniqueMatches = [];
@@ -1300,11 +1430,12 @@
 
     function submitTextMatch() {
       const comp = (document.getElementById('text-match-comp').value || 'Campeonato').trim();
+      const phase = (document.getElementById('text-match-phase').value || '').trim();
       const descText = (document.getElementById('text-match-desc').value || '').trim();
       const mvpVal = (document.getElementById('text-match-mvp').value || '').trim();
 
       if (!descText) {
-        alert('⚠️ Digite o resumo do confronto no campo de texto (ex: "Loud venceu Rex Regum Qeon por 2x0").');
+        alert('⚠️ Digite o resumo do confronto no campo de texto.');
         return;
       }
 
@@ -1313,6 +1444,9 @@
         alert('⚠️ Não foi possível identificar as equipes no texto. Certifique-se de usar os nomes ou TAGs dos times cadastrados.');
         return;
       }
+
+      // Salvar a última competição usada no localStorage
+      localStorage.setItem('gcr6_last_comp', comp);
 
       const mapRows = document.querySelectorAll('#map-rows-container > div');
       const mapsData = [];
@@ -1325,6 +1459,8 @@
         }
       });
 
+      let formattedComp = phase ? `${comp} - ${phase}` : comp;
+
       let resultText = descText;
       if (parsed.score1 > parsed.score2) {
         resultText = `Vitória da ${parsed.team1} ${parsed.score1}x${parsed.score2}`;
@@ -1335,12 +1471,13 @@
       }
 
       if (editingMatchId) {
-        // Modo Edição
         const index = registeredConfrontos.findIndex(m => m.id === editingMatchId);
         if (index !== -1) {
           registeredConfrontos[index] = {
             ...registeredConfrontos[index],
-            competition: comp,
+            competition: formattedComp,
+            rawComp: comp,
+            phase: phase,
             team1: parsed.team1,
             logo1: parsed.logo1,
             score1: parsed.score1,
@@ -1355,10 +1492,11 @@
         }
         alert(`✅ Confronto atualizado com sucesso!`);
       } else {
-        // Novo Cadastro
         const matchObj = {
           id: Date.now() + Math.random(),
-          competition: comp,
+          competition: formattedComp,
+          rawComp: comp,
+          phase: phase,
           team1: parsed.team1,
           logo1: parsed.logo1,
           score1: parsed.score1,
@@ -1388,7 +1526,8 @@
 
       editingMatchId = id;
 
-      document.getElementById('text-match-comp').value = match.competition || '';
+      document.getElementById('text-match-comp').value = match.rawComp || match.competition || '';
+      document.getElementById('text-match-phase').value = match.phase || '';
       document.getElementById('text-match-desc').value = match.originalText || match.resultText || '';
       document.getElementById('text-match-mvp').value = match.mvp || '';
 
@@ -1410,37 +1549,96 @@
     function cancelMatchEdit() {
       editingMatchId = null;
 
-      document.getElementById('text-match-comp').value = '';
+      const lastComp = localStorage.getItem('gcr6_last_comp') || '';
+      document.getElementById('text-match-comp').value = lastComp;
+      document.getElementById('text-match-phase').value = '';
       document.getElementById('text-match-desc').value = '';
       document.getElementById('text-match-mvp').value = '';
       document.getElementById('map-rows-container').innerHTML = '';
 
-      document.getElementById('form-match-title').innerHTML = `<span>📝</span> Registrar Confronto (Texto + Locais + MVP)`;
+      document.getElementById('form-match-title').innerHTML = `<span>📝</span> Registrar Confronto`;
       document.getElementById('btn-submit-match').innerHTML = `<span>💾</span> Salvar Confronto`;
       document.getElementById('btn-cancel-edit').classList.add('hidden');
+    }
+
+    function toggleMvpStatsModal() {
+      const panel = document.getElementById('mvp-stats-panel');
+      if (panel) {
+        panel.classList.toggle('hidden');
+        if (!panel.classList.contains('hidden')) renderMvpStatsPanel();
+      }
+    }
+
+    function renderMvpStatsPanel() {
+      const listContainer = document.getElementById('mvp-stats-list');
+      if (!listContainer) return;
+
+      const counts = {};
+      registeredConfrontos.forEach(m => {
+        if (m.mvp && m.mvp.trim()) {
+          const name = m.mvp.trim();
+          counts[name] = (counts[name] || 0) + 1;
+        }
+      });
+
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+      if (sorted.length === 0) {
+        listContainer.innerHTML = `<span class="text-gray-500">Nenhum MVP registrado até o momento.</span>`;
+        return;
+      }
+
+      listContainer.innerHTML = sorted.map(([player, count]) => `
+        <span class="px-2.5 py-1 rounded bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 font-bold flex items-center gap-1">
+          <span>⭐</span> ${player}: <span class="text-white font-mono font-black">${count}x</span>
+        </span>
+      `).join('');
     }
 
     function renderRegisteredMatchesTable() {
       const body = document.getElementById('registered-matches-body');
       if (!body) return;
 
-      if (registeredConfrontos.length === 0) {
-        body.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-xs text-gray-500">Nenhum confronto registrado no histórico ainda. Use o painel acima para registrar.</td></tr>`;
+      const query = (document.getElementById('search-history-query')?.value || '').toLowerCase().trim();
+
+      const filtered = registeredConfrontos.filter(m => {
+        if (!query) return true;
+        
+        const compMatch = (m.competition || '').toLowerCase().includes(query);
+        const t1Match = (m.team1 || '').toLowerCase().includes(query);
+        const t2Match = (m.team2 || '').toLowerCase().includes(query);
+        const mvpMatch = (m.mvp || '').toLowerCase().includes(query);
+        const resMatch = (m.resultText || '').toLowerCase().includes(query);
+
+        // Buscar por região de uma das equipes
+        const t1Obj = dataListaTimes.find(t => t.name.toLowerCase() === (m.team1||'').toLowerCase());
+        const t2Obj = dataListaTimes.find(t => t.name.toLowerCase() === (m.team2||'').toLowerCase());
+        const reg1Match = t1Obj && (t1Obj.region || '').toLowerCase().includes(query);
+        const reg2Match = t2Obj && (t2Obj.region || '').toLowerCase().includes(query);
+
+        // Buscar por mapa/local
+        const mapMatch = m.maps && m.maps.some(mp => (mp.location || '').toLowerCase().includes(query) || (mp.winner || '').toLowerCase().includes(query));
+
+        return compMatch || t1Match || t2Match || mvpMatch || resMatch || reg1Match || reg2Match || mapMatch;
+      });
+
+      if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-xs text-gray-500">Nenhum confronto encontrado com os termos de busca digitados.</td></tr>`;
         return;
       }
 
-      body.innerHTML = registeredConfrontos.map(m => {
-        const logo1Html = createLogoHtml(m.logo1, "w-6 h-6");
-        const logo2Html = createLogoHtml(m.logo2, "w-6 h-6");
+      body.innerHTML = filtered.map(m => {
+        const logo1Html = createLogoHtml(m.logo1, "w-5 h-5");
+        const logo2Html = createLogoHtml(m.logo2, "w-5 h-5");
 
         const isEmpate = m.score1 === m.score2;
 
         let mapsHtml = '-';
         if (m.maps && m.maps.length > 0) {
           mapsHtml = m.maps.map(mp => `
-            <div class="text-[11px] bg-[#161b22] border border-dark px-2 py-0.5 rounded my-0.5 flex items-center justify-between gap-2">
-              <span class="text-gray-300 font-bold">${mp.location}:</span>
-              <span class="text-yellow-400 font-extrabold">${mp.winner}</span>
+            <div class="text-[10px] bg-[#161b22] border border-dark px-1.5 py-0.5 rounded my-0.5 flex items-center justify-between gap-1.5">
+              <span class="text-gray-300 font-bold truncate">${mp.location}:</span>
+              <span class="text-yellow-400 font-extrabold shrink-0">${mp.winner}</span>
             </div>
           `).join('');
         }
@@ -1451,30 +1649,32 @@
 
         return `
           <tr class="hover:bg-dark-hover/50">
-            <td class="px-3.5 py-3 font-semibold text-blue-400">${m.competition}</td>
-            <td class="px-3.5 py-3 text-right font-bold text-white">
-              <div class="flex items-center justify-end gap-2">
+            <td class="px-3 py-2.5 font-semibold text-blue-400">${m.competition}</td>
+            <td class="px-3 py-2.5 text-right font-bold text-white">
+              <div class="flex items-center justify-end gap-1.5">
                 <span>${m.team1}</span>
                 ${logo1Html}
               </div>
             </td>
-            <td class="px-3.5 py-3 text-center font-black text-yellow-400 bg-black/20 font-mono">${m.score1} x ${m.score2}</td>
-            <td class="px-3.5 py-3 font-bold text-white">
-              <div class="flex items-center gap-2">
+            <td class="px-3 py-2.5 text-center font-black text-yellow-400 bg-black/20 font-mono">${m.score1} x ${m.score2}</td>
+            <td class="px-3 py-2.5 font-bold text-white">
+              <div class="flex items-center gap-1.5">
                 ${logo2Html}
                 <span>${m.team2}</span>
               </div>
             </td>
-            <td class="px-3.5 py-3 text-center font-extrabold ${isEmpate ? 'text-amber-400' : 'text-emerald-400'}">${m.resultText || m.originalText}</td>
-            <td class="px-3.5 py-3">${mapsHtml}</td>
-            <td class="px-3.5 py-3 text-center">${mvpBadge}</td>
-            <td class="px-3.5 py-3 text-center whitespace-nowrap">
+            <td class="px-3 py-2.5 text-center font-extrabold ${isEmpate ? 'text-amber-400' : 'text-emerald-400'}">${m.resultText || m.originalText}</td>
+            <td class="px-3 py-2.5">${mapsHtml}</td>
+            <td class="px-3 py-2.5 text-center">${mvpBadge}</td>
+            <td class="px-3 py-2.5 text-center whitespace-nowrap">
               <button onclick="editMatchFromHistory(${m.id})" class="text-xs text-blue-400 hover:text-blue-300 font-bold p-1 mr-1" title="Editar Confronto">✏️</button>
               <button onclick="deleteMatchFromHistory(${m.id})" class="text-xs text-red-400 hover:text-red-300 font-bold p-1" title="Excluir Confronto">🗑️</button>
             </td>
           </tr>
         `;
       }).join('');
+
+      renderMvpStatsPanel();
     }
 
     function deleteMatchFromHistory(id) {
@@ -1601,6 +1801,12 @@
       dataListaTimes = await fetchCsvData(CSV_URL_LISTA_TIMES, parseListaTimesCsv);
 
       label.textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
+
+      // Carregar última competição digitada
+      const lastComp = localStorage.getItem('gcr6_last_comp') || '';
+      if (lastComp && document.getElementById('text-match-comp')) {
+        document.getElementById('text-match-comp').value = lastComp;
+      }
 
       updateAvailableRegions();
       renderAllSections();
