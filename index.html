@@ -136,7 +136,6 @@
     <!-- PAINEL 6: CONFRONTO DIRETO + RETROSPECTIVA H2H -->
     <div id="section-confronto" class="space-y-4 w-full hidden">
       
-      <!-- Barra de Seleção de Times (image_8c6137.png) - Compacta -->
       <div class="bg-dark-card border border-dark rounded-xl px-4 py-2.5 shadow-md">
         <div class="flex items-center justify-center gap-2 mb-2">
           <span class="text-sm">⚔️</span>
@@ -314,12 +313,11 @@
     const CSV_URL_JOGADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1601155160&single=true&output=csv';
     const CSV_URL_LISTA_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=913455731&single=true&output=csv';
 
-    // Lista Padrão de Mapas de Rainbow Six Siege
     const DEFAULT_R6_MAPS = [
       'Banco', 'Fronteira', 'Chalé', 'Consulado', 'Café Dostoyevsky', 
       'Oregon', 'Arranha-Céu', 'Parque Temático', 'Outback', 'Mansão', 
       'Laboratórios Nighthaven', 'Lair', 'Planícies de Esmeralda', 'Canal',
-      'Estúdio A', 'Estúdio B'
+      'Estúdio A', 'Estúdio B', 'Covil'
     ];
 
     let dataTimes = [];
@@ -338,6 +336,10 @@
 
     let registeredConfrontos = JSON.parse(localStorage.getItem('gcr6_match_history') || '[]');
     let editingMatchId = null;
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
 
     function autoRemoveBackground(img) {
       if (!img || img.dataset.processed === "true") return;
@@ -1066,7 +1068,6 @@
         <div class="lg:col-span-5">${card2Html}</div>
       `;
 
-      // 1. Filtrar confrontos diretos
       const allDirectMatches = registeredConfrontos.filter(m => {
         const t1 = (m.team1 || '').toLowerCase().trim();
         const t2 = (m.team2 || '').toLowerCase().trim();
@@ -1075,7 +1076,6 @@
         return (t1 === sel1 && t2 === sel2) || (t1 === sel2 && t2 === sel1);
       });
 
-      // Mapeamento de Competições & Fases
       const compPhaseMap = {};
       allDirectMatches.forEach(m => {
         const rawComp = m.rawComp || m.competition || 'Outros Torneios';
@@ -1157,7 +1157,6 @@
         }
       });
 
-      // Calcular Jogador de Ouro
       const sortedMvps = Object.values(mvpCounts).sort((a, b) => b.count - a.count);
       const goldenPlayer = sortedMvps.length > 0 && sortedMvps[0].count > 0 ? sortedMvps[0] : null;
 
@@ -1384,7 +1383,7 @@
       });
 
       uniqueTagTeams.forEach(t => {
-        const tagRegex = new RegExp(`\\b${t.tag}\\b`, 'gi');
+        const tagRegex = new RegExp(`(?:^|\\b)${escapeRegExp(t.tag)}(?:$|\\b)`, 'gi');
         result = result.replace(tagRegex, t.name);
       });
 
@@ -1392,7 +1391,7 @@
     }
 
     /* =========================================================================
-       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS
+       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS (COM LIMITE DE PALAVRAS E NO-OVERLAP)
     ========================================================================= */
     function updateMvpPlayerDropdown() {
       const descText = (document.getElementById('text-match-desc').value || '').trim();
@@ -1503,32 +1502,69 @@
     function parseMatchText(descText) {
       if (!descText) return null;
       const text = descText.trim();
-      const textNorm = text.toLowerCase();
 
-      let matchesFound = [];
-
-      dataListaTimes.forEach(t => {
-        const nameNorm = t.name.toLowerCase();
-        const tagNorm = t.tag ? t.tag.toLowerCase() : '';
-        
-        let pos = textNorm.indexOf(nameNorm);
-        let matchLength = nameNorm.length;
-
-        if (pos === -1 && tagNorm && tagNorm.length >= 2) {
-          pos = textNorm.indexOf(tagNorm);
-          matchLength = tagNorm.length;
+      const allKnownTeams = [...dataListaTimes, ...dataTimes];
+      const uniqueTeamsMap = new Map();
+      allKnownTeams.forEach(t => {
+        if (t && t.name && !uniqueTeamsMap.has(t.name.toLowerCase().trim())) {
+          uniqueTeamsMap.set(t.name.toLowerCase().trim(), t);
         }
-        
-        if (pos !== -1) {
-          matchesFound.push({ team: t, pos: pos, length: matchLength });
+      });
+      const teamsList = Array.from(uniqueTeamsMap.values());
+
+      let candidateMatches = [];
+
+      teamsList.forEach(t => {
+        const nameNorm = (t.name || '').toLowerCase().trim();
+        const tagNorm = (t.tag || '').toLowerCase().trim();
+
+        if (nameNorm.length >= 2) {
+          const nameRegex = new RegExp(`(?:^|\\b)${escapeRegExp(nameNorm)}(?:$|\\b)`, 'gi');
+          let m;
+          while ((m = nameRegex.exec(text)) !== null) {
+            candidateMatches.push({
+              team: t,
+              start: m.index,
+              end: m.index + nameNorm.length,
+              length: nameNorm.length
+            });
+          }
+        }
+
+        if (tagNorm.length >= 2) {
+          const tagRegex = new RegExp(`(?:^|\\b)${escapeRegExp(tagNorm)}(?:$|\\b)`, 'gi');
+          let m;
+          while ((m = tagRegex.exec(text)) !== null) {
+            candidateMatches.push({
+              team: t,
+              start: m.index,
+              end: m.index + tagNorm.length,
+              length: tagNorm.length
+            });
+          }
         }
       });
 
-      matchesFound.sort((a, b) => a.pos - b.pos || b.length - a.length);
+      // Dar prioridade aos nomes maiores (ex: Cloud9 sobre Loud)
+      candidateMatches.sort((a, b) => b.length - a.length);
+
+      // Eliminar correspondências que sobrepõem a mesma posição no texto
+      const nonOverlapping = [];
+      candidateMatches.forEach(cand => {
+        const hasOverlap = nonOverlapping.some(existing => {
+          return !(cand.end <= existing.start || cand.start >= existing.end);
+        });
+        if (!hasOverlap) {
+          nonOverlapping.push(cand);
+        }
+      });
+
+      // Ordenar os times encontrados pela ordem que aparecem na frase
+      nonOverlapping.sort((a, b) => a.start - b.start);
 
       const uniqueMatches = [];
-      matchesFound.forEach(m => {
-        if (!uniqueMatches.some(u => u.team.name === m.team.name)) {
+      nonOverlapping.forEach(m => {
+        if (!uniqueMatches.some(u => u.team.name.toLowerCase().trim() === m.team.name.toLowerCase().trim())) {
           uniqueMatches.push(m);
         }
       });
@@ -1569,7 +1605,7 @@
 
       const parsed = parseMatchText(descText);
       if (!parsed) {
-        alert('⚠️ Não foi possível identificar as equipes no texto. Certifique-se de usar os nomes ou TAGs dos times cadastrados.');
+        alert('⚠️ Não foi possível identificar as duas equipes no texto. Certifique-se de usar os nomes ou TAGs cadastrados.');
         return;
       }
 
