@@ -1160,12 +1160,12 @@
         if (m.mvp && m.mvp.trim()) {
           const playerName = m.mvp.trim();
           if (!mvpCounts[playerName]) {
-            const pObj = dataJogadores.find(j => j.name.toLowerCase() === playerName.toLowerCase());
+            const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === playerName.toLowerCase());
             mvpCounts[playerName] = {
               name: playerName,
               count: 0,
-              team: pObj ? pObj.team : '',
-              logo: pObj ? pObj.logo : ''
+              team: pObj ? pObj.team : (m.mvpTeam || ''),
+              logo: pObj ? pObj.logo : (m.mvpTeamLogo || '')
             };
           }
           mvpCounts[playerName].count += 1;
@@ -1180,7 +1180,8 @@
         if (goldenPlayer.logo) {
           playerTeamLogoUrl = goldenPlayer.logo;
         } else if (goldenPlayer.team) {
-          const tObj = dataListaTimes.find(t => t.name.toLowerCase() === goldenPlayer.team.toLowerCase());
+          const tObj = dataListaTimes.find(t => t.name.toLowerCase().trim() === goldenPlayer.team.toLowerCase().trim())
+                    || dataTimes.find(t => t.name.toLowerCase().trim() === goldenPlayer.team.toLowerCase().trim());
           if (tObj) playerTeamLogoUrl = tObj.logo;
         }
       }
@@ -1715,6 +1716,22 @@
       localStorage.setItem('gcr6_last_comp', comp);
       localStorage.setItem('gcr6_last_phase', phase);
 
+      // Obter time e logo do MVP no momento do registro do confronto
+      let mvpTeamVal = '';
+      let mvpTeamLogoVal = '';
+      if (mvpVal) {
+        const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === mvpVal.toLowerCase().trim());
+        if (pObj) {
+          mvpTeamVal = pObj.team;
+          mvpTeamLogoVal = pObj.logo;
+          if (!mvpTeamLogoVal && pObj.team) {
+            const tObj = dataListaTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim())
+                      || dataTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim());
+            if (tObj) mvpTeamLogoVal = tObj.logo;
+          }
+        }
+      }
+
       const mapRows = document.querySelectorAll('#map-rows-container > div');
       const mapsData = [];
 
@@ -1756,6 +1773,8 @@
             resultText: resultText,
             originalText: descText,
             mvp: mvpVal,
+            mvpTeam: mvpTeamVal || registeredConfrontos[index].mvpTeam || '',
+            mvpTeamLogo: mvpTeamLogoVal || registeredConfrontos[index].mvpTeamLogo || '',
             maps: mapsData
           };
         }
@@ -1775,6 +1794,8 @@
           resultText: resultText,
           originalText: descText,
           mvp: mvpVal,
+          mvpTeam: mvpTeamVal,
+          mvpTeamLogo: mvpTeamLogoVal,
           maps: mapsData,
           date: new Date().toLocaleDateString('pt-BR')
         };
@@ -1860,6 +1881,7 @@
       }
 
       listContainer.innerHTML = sorted.map(([player, count]) => {
+        // No Ranking do Modal de MVPs, busca o time ATUAL no momento na aba Jogadores
         const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === player.toLowerCase().trim());
         let logoUrl = pObj ? pObj.logo : '';
         if (!logoUrl && pObj && pObj.team) {
@@ -1933,8 +1955,24 @@
           `).join('');
         }
 
+        // Histórico de Confrontos: prioriza a logo gravada no confronto (momento da partida)
+        let mvpLogoUrl = m.mvpTeamLogo || '';
+        if (!mvpLogoUrl && m.mvp) {
+          const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === m.mvp.toLowerCase().trim());
+          if (pObj) {
+            mvpLogoUrl = pObj.logo;
+            if (!mvpLogoUrl && pObj.team) {
+              const tObj = dataListaTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim())
+                        || dataTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim());
+              if (tObj) mvpLogoUrl = tObj.logo;
+            }
+          }
+        }
+
+        const mvpLogoHtml = mvpLogoUrl ? createLogoHtml(mvpLogoUrl, "w-4 h-4") : '';
+
         const mvpBadge = m.mvp 
-          ? `<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-bold text-xs inline-flex items-center gap-1"><span>⭐</span> ${m.mvp}</span>`
+          ? `<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-bold text-xs inline-flex items-center gap-1.5">${mvpLogoHtml}<span>⭐ ${m.mvp}</span></span>`
           : '<span class="text-gray-500">-</span>';
 
         return `
