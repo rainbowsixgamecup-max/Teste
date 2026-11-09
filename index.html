@@ -352,6 +352,14 @@
     let registeredConfrontos = JSON.parse(localStorage.getItem('gcr6_match_history') || '[]');
     let editingMatchId = null;
 
+    function getTeamLogoByName(teamName) {
+      if (!teamName) return '';
+      const norm = teamName.toLowerCase().trim();
+      const found = dataListaTimes.find(t => t.name.toLowerCase().trim() === norm) 
+                 || dataTimes.find(t => t.name.toLowerCase().trim() === norm);
+      return found ? found.logo : '';
+    }
+
     function escapeRegExp(string) {
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
@@ -1168,14 +1176,14 @@
               count: 0,
               currentTeam: currentTeam,
               matchTeam: m.mvpTeam || currentTeam,
-              matchTeamLogo: m.mvpTeamLogo || (pObj ? pObj.logo : '')
+              matchTeamLogo: m.mvpTeamLogo || getTeamLogoByName(m.mvpTeam || currentTeam)
             };
           }
           mvpCounts[playerName].count += 1;
         }
       });
 
-      // REGRA: Seleciona apenas jogadores cujo time ATUAL pertença a uma das duas equipes do confronto
+      // REGRA: Apenas jogadores pertencentes atualmente a uma das duas equipes do confronto concorrem ao Jogador de Ouro
       const eligibleGoldenPlayers = Object.values(mvpCounts).filter(p => {
         const cTeam = (p.currentTeam || '').toLowerCase().trim();
         const t1 = name1.toLowerCase().trim();
@@ -1189,25 +1197,24 @@
       let goldenPlayerLogoHtml = '<span class="text-base">⭐</span>';
 
       if (goldenPlayer) {
-        // Logo do time em que disputou o confronto (Lado Esquerdo)
-        let matchLogoUrl = goldenPlayer.matchTeamLogo;
-        if (!matchLogoUrl && goldenPlayer.matchTeam) {
-          const tObj = dataListaTimes.find(t => t.name.toLowerCase().trim() === goldenPlayer.matchTeam.toLowerCase().trim())
-                    || dataTimes.find(t => t.name.toLowerCase().trim() === goldenPlayer.matchTeam.toLowerCase().trim());
-          if (tObj) matchLogoUrl = tObj.logo;
-        }
+        // Logo do time em que ele jogou no confronto (Esquerda)
+        const matchLogoUrl = goldenPlayer.matchTeamLogo || getTeamLogoByName(goldenPlayer.matchTeam);
         goldenPlayerLogoHtml = matchLogoUrl ? createLogoHtml(matchLogoUrl, "w-5 h-5") : '<span class="text-base">⭐</span>';
 
-        // Se mudou de time, exibe o time atual à direita do nome entre parênteses
-        const hasChangedTeam = goldenPlayer.currentTeam && 
-          goldenPlayer.matchTeam && 
-          goldenPlayer.currentTeam.toLowerCase().trim() !== goldenPlayer.matchTeam.toLowerCase().trim();
+        const pObjCurrent = dataJogadores.find(j => j.name.toLowerCase().trim() === goldenPlayer.name.toLowerCase().trim());
+        const currentTeamName = pObjCurrent ? pObjCurrent.team : goldenPlayer.currentTeam;
+        const currentLogoUrl = getTeamLogoByName(currentTeamName);
+        const currentLogoHtml = currentLogoUrl ? createLogoHtml(currentLogoUrl, "w-4 h-4") : '';
+
+        const hasChangedTeam = currentTeamName && goldenPlayer.matchTeam && currentTeamName.toLowerCase().trim() !== goldenPlayer.matchTeam.toLowerCase().trim();
 
         if (hasChangedTeam) {
           goldenPlayerDisplayHtml = `
-            <div class="truncate">
-              <span class="text-xs font-extrabold text-white truncate inline-block">${goldenPlayer.name}</span>
-              <span class="text-[10px] text-gray-400 font-normal ml-1">(${goldenPlayer.currentTeam})</span>
+            <div class="flex items-center gap-1.5 truncate">
+              <span class="text-xs font-extrabold text-white truncate">${goldenPlayer.name}</span>
+              <span class="flex items-center gap-1 text-[10px] text-gray-400 font-semibold border-l border-dark pl-1.5" title="Time Atual: ${currentTeamName}">
+                ${currentLogoHtml}
+              </span>
             </div>
           `;
         } else {
@@ -1749,14 +1756,16 @@
       if (mvpVal) {
         const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === mvpVal.toLowerCase().trim());
         if (pObj) {
-          mvpTeamVal = pObj.team;
-          mvpTeamLogoVal = pObj.logo;
-          if (!mvpTeamLogoVal && pObj.team) {
-            const tObj = dataListaTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim())
-                      || dataTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim());
-            if (tObj) mvpTeamLogoVal = tObj.logo;
+          // Identifica o time defendido pelo jogador nesta partida em específico
+          if (pObj.team.toLowerCase().trim() === parsed.team1.toLowerCase().trim() || pObj.team.toLowerCase().trim() === parsed.team2.toLowerCase().trim()) {
+            mvpTeamVal = pObj.team;
+          } else {
+            mvpTeamVal = parsed.score1 >= parsed.score2 ? parsed.team1 : parsed.team2;
           }
+        } else {
+          mvpTeamVal = parsed.score1 >= parsed.score2 ? parsed.team1 : parsed.team2;
         }
+        mvpTeamLogoVal = getTeamLogoByName(mvpTeamVal);
       }
 
       const mapRows = document.querySelectorAll('#map-rows-container > div');
@@ -1801,7 +1810,7 @@
             originalText: descText,
             mvp: mvpVal,
             mvpTeam: mvpTeamVal || registeredConfrontos[index].mvpTeam || '',
-            mvpTeamLogo: mvpTeamLogoVal || registeredConfrontos[index].mvpTeamLogo || '',
+            mvpTeamLogo: mvpTeamLogoVal || getTeamLogoByName(mvpTeamVal) || registeredConfrontos[index].mvpTeamLogo || '',
             maps: mapsData
           };
         }
@@ -1909,12 +1918,8 @@
 
       listContainer.innerHTML = sorted.map(([player, count]) => {
         const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === player.toLowerCase().trim());
-        let logoUrl = pObj ? pObj.logo : '';
-        if (!logoUrl && pObj && pObj.team) {
-          const tObj = dataListaTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim()) 
-                    || dataTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim());
-          if (tObj) logoUrl = tObj.logo;
-        }
+        const currentTeamName = pObj ? pObj.team : '';
+        const logoUrl = getTeamLogoByName(currentTeamName);
         const logoHtml = logoUrl ? createLogoHtml(logoUrl, "w-4 h-4") : '';
 
         return `
@@ -1981,36 +1986,40 @@
           `).join('');
         }
 
-        // Histórico de Confrontos: Exibe a logo do time da partida no lado esquerdo
-        let mvpLogoUrl = m.mvpTeamLogo || '';
-        if (!mvpLogoUrl && m.mvp) {
-          const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === m.mvp.toLowerCase().trim());
-          if (pObj) {
-            mvpLogoUrl = pObj.logo;
-            if (!mvpLogoUrl && pObj.team) {
-              const tObj = dataListaTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim())
-                        || dataTimes.find(t => t.name.toLowerCase().trim() === pObj.team.toLowerCase().trim());
-              if (tObj) mvpLogoUrl = tObj.logo;
-            }
+        let mvpBadge = '<span class="text-gray-500">-</span>';
+
+        if (m.mvp && m.mvp.trim()) {
+          const pObjCurrent = dataJogadores.find(j => j.name.toLowerCase().trim() === m.mvp.toLowerCase().trim());
+          const currentTeamName = pObjCurrent ? pObjCurrent.team : '';
+          const currentTeamLogoUrl = getTeamLogoByName(currentTeamName);
+
+          let matchTeamName = m.mvpTeam || '';
+          if (!matchTeamName) {
+            matchTeamName = (pObjCurrent && (pObjCurrent.team.toLowerCase().trim() === m.team1.toLowerCase().trim() || pObjCurrent.team.toLowerCase().trim() === m.team2.toLowerCase().trim()))
+              ? pObjCurrent.team
+              : m.team1;
           }
+
+          const matchTeamLogoUrl = m.mvpTeamLogo || getTeamLogoByName(matchTeamName);
+
+          const matchLogoHtml = matchTeamLogoUrl ? createLogoHtml(matchTeamLogoUrl, "w-4 h-4") : '';
+          const currentLogoHtml = currentTeamLogoUrl ? createLogoHtml(currentTeamLogoUrl, "w-4 h-4") : '';
+
+          const hasChangedTeam = currentTeamName && matchTeamName && currentTeamName.toLowerCase().trim() !== matchTeamName.toLowerCase().trim();
+
+          let rightLogoHtml = '';
+          if (hasChangedTeam && currentLogoHtml) {
+            rightLogoHtml = `<span class="flex items-center gap-1 text-[10px] text-gray-400 font-semibold border-l border-dark pl-1.5 ml-1" title="Time Atual: ${currentTeamName}">${currentLogoHtml}</span>`;
+          }
+
+          mvpBadge = `
+            <span class="px-2.5 py-1 rounded-lg bg-yellow-500/10 text-yellow-300 border border-yellow-500/30 font-bold text-xs inline-flex items-center gap-1.5 shadow-sm">
+              ${matchLogoHtml}
+              <span>⭐ ${m.mvp}</span>
+              ${rightLogoHtml}
+            </span>
+          `;
         }
-
-        const mvpLogoHtml = mvpLogoUrl ? createLogoHtml(mvpLogoUrl, "w-4 h-4") : '';
-        
-        // Verifica se o jogador mudou de time atualmente
-        const pObjCurrent = m.mvp ? dataJogadores.find(j => j.name.toLowerCase().trim() === m.mvp.toLowerCase().trim()) : null;
-        const currentTeamName = pObjCurrent ? pObjCurrent.team : '';
-        const matchTeamName = m.mvpTeam || '';
-        const hasChangedTeam = currentTeamName && matchTeamName && currentTeamName.toLowerCase().trim() !== matchTeamName.toLowerCase().trim();
-
-        let mvpTextHtml = m.mvp || '';
-        if (hasChangedTeam) {
-          mvpTextHtml += ` <span class="text-[10px] text-gray-400 font-normal">(${currentTeamName})</span>`;
-        }
-
-        const mvpBadge = m.mvp 
-          ? `<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-bold text-xs inline-flex items-center gap-1.5">${mvpLogoHtml}<span>⭐ ${mvpTextHtml}</span></span>`
-          : '<span class="text-gray-500">-</span>';
 
         return `
           <tr class="hover:bg-dark-hover/50">
