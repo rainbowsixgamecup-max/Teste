@@ -318,15 +318,15 @@
   <datalist id="registered-maps-list"></datalist>
 
   <script>
-    /* =========================================================================
-   LINKS COM ATUALIZAÇÃO EM TEMPO REAL (GVIZ API)
+/* =========================================================================
+   LINKS DO GOOGLE SHEETS (EXPORTAÇÃO DIRETA EM TEMPO REAL)
 ========================================================================= */
 const SPREADSHEET_ID = '1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L';
 
-const CSV_URL_TIMES = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=0`;
-const CSV_URL_HISTORICO = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=195413319`;
-const CSV_URL_JOGADORES = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=1601155160`;
-const CSV_URL_LISTA_TIMES = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=913455731`;
+const CSV_URL_TIMES = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=0`;
+const CSV_URL_HISTORICO = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=195413319`;
+const CSV_URL_JOGADORES = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=1601155160`;
+const CSV_URL_LISTA_TIMES = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=913455731`;
 
     const DEFAULT_R6_MAPS = [
       'Banco', 'Fronteira', 'Chalé', 'Consulado', 'Café Dostoyevsky', 
