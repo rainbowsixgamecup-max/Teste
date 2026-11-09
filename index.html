@@ -133,7 +133,7 @@
       </div>
     </div>
 
-    <!-- PAINEL 6: CONFRONTO DIRETO + RETROSPECTIVA H2H COMPACTA -->
+    <!-- PAINEL 6: CONFRONTO DIRETO + RETROSPECTIVA H2H -->
     <div id="section-confronto" class="space-y-4 w-full hidden">
       
       <!-- Barra de Seleção de Times (image_8c6137.png) - Compacta -->
@@ -176,17 +176,17 @@
       </div>
     </div>
 
-    <!-- PAINEL 7: HISTÓRICO DE CONFRONTOS (REGISTRO/EDIÇÃO + MVP + PESQUISA) -->
+    <!-- PAINEL 7: HISTÓRICO DE CONFRONTOS -->
     <div id="section-hist-confrontos" class="space-y-4 w-full hidden">
       
-      <!-- Painel de Cadastro e Edição de Confronto (image_8c5a31.png) -->
+      <!-- Painel de Cadastro e Edição de Confronto -->
       <div class="bg-dark-card border border-dark rounded-xl p-4 shadow-xl space-y-4" id="form-match-container">
         <div class="border-b border-dark pb-2.5 flex items-center justify-between">
           <div>
             <h2 class="text-lg font-extrabold text-white flex items-center gap-2" id="form-match-title">
               <span>📝</span> Registrar Confronto
             </h2>
-            <p class="text-xs text-gray-400">Digite a competição, o resumo do confronto (reconhecendo nomes e TAGs) e escolha o Jogador Destaque.</p>
+            <p class="text-xs text-gray-400">Digite a competição, o resumo do confronto e escolha o Jogador Destaque.</p>
           </div>
           <button id="btn-cancel-edit" onclick="cancelMatchEdit()" class="hidden px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold rounded-lg transition">
             Cancelar Edição
@@ -272,7 +272,6 @@
           </div>
         </div>
 
-        <!-- Painel Expansível de Ranking de MVPs dos Confrontos -->
         <div id="mvp-stats-panel" class="hidden bg-[#1f242d] border border-dark p-3 rounded-xl space-y-2">
           <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5">
             <span>⭐</span> Contagem de MVPs por Jogador nos Confrontos Registrados:
@@ -280,7 +279,6 @@
           <div id="mvp-stats-list" class="flex flex-wrap gap-2 text-xs"></div>
         </div>
 
-        <!-- Tabela do Histórico de Confrontos -->
         <div class="overflow-x-auto custom-scroll">
           <table class="w-full text-left">
             <thead class="bg-[#1f242d] text-gray-400 text-xs font-bold uppercase">
@@ -325,8 +323,10 @@
     let selectedTeam1 = localStorage.getItem('gcr6_selected_team1') || '';
     let selectedTeam2 = localStorage.getItem('gcr6_selected_team2') || '';
     
-    // Filtro H2H Multi-seleção (Competições ou Região)
-    let selectedH2HComps = new Set(['ALL']);
+    // Conjunto de chaves de seleção H2H ("COMP::FASE" ou "ALL")
+    let selectedH2HKeys = new Set(['ALL']);
+    let compSearchQuery = '';
+
     let registeredConfrontos = JSON.parse(localStorage.getItem('gcr6_match_history') || '[]');
     let editingMatchId = null;
 
@@ -867,7 +867,7 @@
     }
 
     /* =========================================================================
-       CONFRONTO DIRETO (SIMULAÇÃO + RETROSPECTIVA H2H COMPACTA)
+       CONFRONTO DIRETO (SIMULAÇÃO + RETROSPECTIVA H2H COM PESQUISA DE TORNEIOS)
     ========================================================================= */
     function setupConfrontoOptions() {
       const teamNames = Array.from(new Set(dataListaTimes.map(t => t.name))).sort();
@@ -943,26 +943,25 @@
       renderConfronto();
     }
 
-    function toggleH2HCompFilter(compOrReg) {
-      if (compOrReg === 'ALL') {
-        selectedH2HComps = new Set(['ALL']);
-      } else {
-        if (selectedH2HComps.has('ALL')) selectedH2HComps.clear();
-
-        // Se for filtro de região
-        if (compOrReg.startsWith('REG_')) {
-          const regName = compOrReg.replace('REG_', '');
-          const compsInRegion = dataHistorico.filter(h => h.region === regName).map(h => h.comp);
-          compsInRegion.forEach(c => selectedH2HComps.add(c));
+    function toggleH2HKeySelection(key, allAvailableKeys = []) {
+      if (key === 'ALL') {
+        if (selectedH2HKeys.has('ALL')) {
+          selectedH2HKeys.clear();
         } else {
-          if (selectedH2HComps.has(compOrReg)) {
-            selectedH2HComps.delete(compOrReg);
-          } else {
-            selectedH2HComps.add(compOrReg);
-          }
+          selectedH2HKeys = new Set(['ALL', ...allAvailableKeys]);
+        }
+      } else {
+        if (selectedH2HKeys.has('ALL')) selectedH2HKeys.delete('ALL');
+
+        if (selectedH2HKeys.has(key)) {
+          selectedH2HKeys.delete(key);
+        } else {
+          selectedH2HKeys.add(key);
         }
 
-        if (selectedH2HComps.size === 0) selectedH2HComps.add('ALL');
+        if (allAvailableKeys.length > 0 && selectedH2HKeys.size === allAvailableKeys.length) {
+          selectedH2HKeys.add('ALL');
+        }
       }
       renderConfronto();
     }
@@ -977,20 +976,21 @@
       const name1 = selectedTeam1 || (dataListaTimes[0] ? dataListaTimes[0].name : '');
       const name2 = selectedTeam2 || (dataListaTimes[1] ? dataListaTimes[1].name : '');
 
-      const team1 = dataListaTimes.find(t => t.name.toLowerCase().trim() === (name1||'').toLowerCase().trim()) || { name: name1, logo: '', tag: '-', region: '-', titles: 0 };
-      const team2 = dataListaTimes.find(t => t.name.toLowerCase().trim() === (name2||'').toLowerCase().trim()) || { name: name2, logo: '', tag: '-', region: '-', titles: 0 };
+      const team1 = dataListaTimes.find(t => t.name.toLowerCase().trim() === (name1||'').toLowerCase().trim()) || { name: name1, logo: '', tag: '-', region: '-', titles: 0, starPlayer: '' };
+      const team2 = dataListaTimes.find(t => t.name.toLowerCase().trim() === (name2||'').toLowerCase().trim()) || { name: name2, logo: '', tag: '-', region: '-', titles: 0, starPlayer: '' };
 
       const players1 = dataJogadores.filter(j => j.team.toLowerCase().trim() === (name1||'').toLowerCase().trim());
       const players2 = dataJogadores.filter(j => j.team.toLowerCase().trim() === (name2||'').toLowerCase().trim());
 
+      // Quadro dos Times com Layout Ampliado e Elegante
       function buildTeamCardHtml(team, players, accentColor, borderAccent) {
-        const logo = createLogoHtml(team.logo, "w-10 h-10");
+        const logo = createLogoHtml(team.logo, "w-9 h-9");
         
         let playerRows = players.map(p => `
-          <tr class="hover:bg-dark-hover/50">
-            <td class="px-3 py-1.5 font-bold text-white text-xs">${p.name}</td>
-            <td class="px-3 py-1.5 text-right font-extrabold text-yellow-400 text-xs">${p.titles}</td>
-            <td class="px-3 py-1.5 text-right font-extrabold text-purple-400 text-xs">${p.mvps}</td>
+          <tr class="hover:bg-dark-hover/50 transition">
+            <td class="px-3.5 py-2 font-bold text-white text-xs">${p.name}</td>
+            <td class="px-3.5 py-2 text-right font-extrabold text-yellow-400 text-xs">${p.titles}</td>
+            <td class="px-3.5 py-2 text-right font-extrabold text-purple-400 text-xs">${p.mvps}</td>
           </tr>
         `).join('');
 
@@ -999,40 +999,42 @@
         }
 
         return `
-          <div class="bg-dark-card border-2 ${borderAccent} rounded-xl overflow-hidden shadow-xl flex flex-col w-full">
-            <div class="bg-[#1f242d] p-3.5 border-b border-dark flex items-center justify-between">
+          <div class="bg-dark-card border-2 ${borderAccent} rounded-xl overflow-hidden shadow-xl flex flex-col w-full min-h-[360px]">
+            <div class="bg-[#1f242d] p-4 border-b border-dark flex items-center justify-between">
               <div class="flex items-center gap-3">
                 ${logo}
                 <div>
-                  <h3 class="text-base font-extrabold text-white">${team.name}</h3>
+                  <h3 class="text-lg font-extrabold text-white">${team.name}</h3>
                   <div class="flex items-center gap-1.5 mt-0.5">
                     <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag || '-'}</span>
                     <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${team.region || '-'}</span>
                   </div>
                 </div>
               </div>
-              <div class="text-right">
+              <div class="text-right bg-[#161b22] px-3 py-1.5 rounded-lg border border-dark">
                 <span class="block text-[9px] uppercase font-bold text-gray-400">Títulos</span>
-                <span class="text-xl font-black text-yellow-400">${team.titles}</span>
+                <span class="text-2xl font-black text-yellow-400">${team.titles}</span>
               </div>
             </div>
 
-            <div class="p-3.5 space-y-2">
-              <h4 class="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
-                <span>👥 Elenco</span>
-                <span class="${accentColor}">${players.length} inscritos</span>
-              </h4>
-              <div class="overflow-hidden border border-dark rounded-lg">
-                <table class="w-full text-left">
-                  <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[10px] uppercase font-bold">
-                    <tr>
-                      <th class="px-3 py-1.5">Jogador</th>
-                      <th class="px-3 py-1.5 text-right">Títulos</th>
-                      <th class="px-3 py-1.5 text-right">MVPs</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-dark text-gray-200">${playerRows}</tbody>
-                </table>
+            <div class="p-4 space-y-2.5 flex-1 flex flex-col justify-between">
+              <div>
+                <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between mb-2">
+                  <span>👥 Elenco Oficial</span>
+                  <span class="${accentColor} font-extrabold">${players.length} inscritos</span>
+                </h4>
+                <div class="overflow-hidden border border-dark rounded-xl">
+                  <table class="w-full text-left">
+                    <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[10px] uppercase font-bold">
+                      <tr>
+                        <th class="px-3.5 py-2">Jogador</th>
+                        <th class="px-3.5 py-2 text-right">Títulos</th>
+                        <th class="px-3.5 py-2 text-right">MVPs</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-dark text-gray-200">${playerRows}</tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -1065,14 +1067,31 @@
         return (t1 === sel1 && t2 === sel2) || (t1 === sel2 && t2 === sel1);
       });
 
-      // Lista de competições dos confrontos diretos
-      const directComps = Array.from(new Set(allDirectMatches.map(m => m.competition).filter(Boolean))).sort();
+      // Mapeamento de Competições & Fases
+      const compPhaseMap = {};
+      allDirectMatches.forEach(m => {
+        const rawComp = m.rawComp || m.competition || 'Outros Torneios';
+        const phase = m.phase || 'Fase Geral';
+        if (!compPhaseMap[rawComp]) compPhaseMap[rawComp] = new Set();
+        compPhaseMap[rawComp].add(phase);
+      });
 
-      // Aplicar filtro selecionado
-      const isAllSelected = selectedH2HComps.has('ALL');
+      const allAvailableKeys = [];
+      Object.keys(compPhaseMap).forEach(comp => {
+        compPhaseMap[comp].forEach(phase => {
+          allAvailableKeys.push(`${comp}::${phase}`);
+        });
+      });
+
+      const isAllSelected = selectedH2HKeys.has('ALL');
+
       const filteredMatches = isAllSelected 
         ? allDirectMatches 
-        : allDirectMatches.filter(m => selectedH2HComps.has(m.competition));
+        : allDirectMatches.filter(m => {
+            const rawComp = m.rawComp || m.competition || 'Outros Torneios';
+            const phase = m.phase || 'Fase Geral';
+            return selectedH2HKeys.has(`${rawComp}::${phase}`);
+          });
 
       let wins1 = 0, wins2 = 0, draws = 0;
       const locationStats = {};
@@ -1091,7 +1110,6 @@
           wins2++;
         }
 
-        // Processar estatísticas por local / mapa
         if (m.maps && Array.isArray(m.maps)) {
           m.maps.forEach(mp => {
             const locName = (mp.location || 'Local Não Especificado').trim();
@@ -1116,7 +1134,6 @@
           });
         }
 
-        // Contabilizar MVPs
         if (m.mvp && m.mvp.trim()) {
           const playerName = m.mvp.trim();
           if (!mvpCounts[playerName]) {
@@ -1132,7 +1149,7 @@
         }
       });
 
-      // Calcular Jogador de Ouro (Exibição Ultra-Compacta com Logo do Time)
+      // Calcular Jogador de Ouro
       const sortedMvps = Object.values(mvpCounts).sort((a, b) => b.count - a.count);
       const goldenPlayer = sortedMvps.length > 0 && sortedMvps[0].count > 0 ? sortedMvps[0] : null;
 
@@ -1145,22 +1162,44 @@
           if (tObj) playerTeamLogoUrl = tObj.logo;
         }
       }
-      const playerTeamLogoHtml = playerTeamLogoUrl ? createLogoHtml(playerTeamLogoUrl, "w-6 h-6") : '<span class="text-lg">⭐</span>';
+      const playerTeamLogoHtml = playerTeamLogoUrl ? createLogoHtml(playerTeamLogoUrl, "w-5 h-5") : '<span class="text-base">⭐</span>';
 
-      let goldenPlayerStripHtml = `
-        <div class="bg-gradient-to-r from-yellow-500/10 via-amber-500/20 to-yellow-500/10 border border-yellow-500/40 px-3 py-1.5 rounded-lg flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            ${playerTeamLogoHtml}
-            <div>
-              <span class="text-[9px] uppercase font-black text-yellow-400 block tracking-wider">Jogador de Ouro do Duelo</span>
-              <span class="text-xs font-extrabold text-white">${goldenPlayer ? goldenPlayer.name : 'Nenhum destaque'}</span>
+      // Painel Estrelas + Jogador de Ouro (image_7f27ee.png)
+      const goldenAndStarStripHtml = `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 bg-gradient-to-r from-yellow-500/10 via-amber-500/20 to-yellow-500/10 border border-yellow-500/40 p-2 rounded-xl items-center">
+          <!-- Jogador Estrela Time 1 -->
+          <div class="flex items-center gap-2 bg-[#1f242d]/80 border border-dark p-2 rounded-lg">
+            ${createLogoHtml(team1.logo, "w-6 h-6")}
+            <div class="truncate">
+              <span class="text-[9px] uppercase font-black text-blue-400 block tracking-wider">Jogador Estrela</span>
+              <span class="text-xs font-extrabold text-white truncate block">${team1.starPlayer || 'Não informado'}</span>
             </div>
           </div>
-          <span class="text-sm font-black text-yellow-400 font-mono">${goldenPlayer ? goldenPlayer.count : 0}x MVP</span>
+
+          <!-- Jogador de Ouro do Duelo -->
+          <div class="flex items-center justify-between bg-yellow-500/20 border border-yellow-500/50 p-2 rounded-lg">
+            <div class="flex items-center gap-2 truncate">
+              ${playerTeamLogoHtml}
+              <div class="truncate">
+                <span class="text-[9px] uppercase font-black text-yellow-400 block tracking-wider">Jogador de Ouro</span>
+                <span class="text-xs font-extrabold text-white truncate block">${goldenPlayer ? goldenPlayer.name : 'Nenhum'}</span>
+              </div>
+            </div>
+            <span class="text-xs font-black text-yellow-400 font-mono shrink-0">${goldenPlayer ? goldenPlayer.count + 'x' : '0x'}</span>
+          </div>
+
+          <!-- Jogador Estrela Time 2 -->
+          <div class="flex items-center gap-2 bg-[#1f242d]/80 border border-dark p-2 rounded-lg">
+            ${createLogoHtml(team2.logo, "w-6 h-6")}
+            <div class="truncate">
+              <span class="text-[9px] uppercase font-black text-red-400 block tracking-wider">Jogador Estrela</span>
+              <span class="text-xs font-extrabold text-white truncate block">${team2.starPlayer || 'Não informado'}</span>
+            </div>
+          </div>
         </div>
       `;
 
-      // Renderizar Grade Compacta de 25 Mapas sem scroll
+      // Renderizar Grade de 25 Mapas
       const locationList = Object.values(locationStats).sort((a, b) => b.total - a.total);
       
       let locationGridHtml = locationList.map(loc => `
@@ -1180,30 +1219,63 @@
         locationGridHtml = `<div class="col-span-full p-2.5 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum mapa ou local específico detalhado para estes confrontos.</div>`;
       }
 
-      // Renderizar botões do filtro multi-seleção de competições e regiões
-      const availableRegionsH2H = sortRegionsBRFirst(dataHistorico.map(h => h.region));
+      // Renderizar Menu Suspenso de Competições e Fases (image_89a036.png)
+      let compSearchFilterHtml = `
+        <div class="relative w-full">
+          <button onclick="document.getElementById('comp-dropdown-menu').classList.toggle('hidden')" class="w-full bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center justify-between shadow-sm">
+            <span class="flex items-center gap-1.5 truncate">
+              <span>🎯</span> Competições / Fases (${isAllSelected ? 'Todas Selecionadas' : selectedH2HKeys.size + ' Selecionadas'})
+            </span>
+            <span class="text-xs text-gray-400">▼</span>
+          </button>
 
-      let filterButtonsHtml = `
-        <button onclick="toggleH2HCompFilter('ALL')" class="px-2 py-0.5 text-[10px] font-bold rounded ${isAllSelected ? 'bg-blue-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'}">Todas</button>
+          <div id="comp-dropdown-menu" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-[#161b22] border border-dark rounded-xl shadow-2xl p-3 z-50 space-y-2.5 max-h-72 overflow-y-auto custom-scroll">
+            <input type="text" id="input-search-comp" oninput="compSearchQuery = this.value; renderConfronto();" placeholder="Pesquisar competição ou fase (ex: Wor)..." value="${compSearchQuery}" class="w-full bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+            
+            <div class="space-y-2">
+              <label class="flex items-center gap-2 text-xs font-extrabold text-blue-400 bg-[#1f242d] p-2 rounded-lg cursor-pointer border border-blue-500/30">
+                <input type="checkbox" ${isAllSelected ? 'checked' : ''} onchange="toggleH2HKeySelection('ALL', [${allAvailableKeys.map(k => `'${k.replace(/'/g, "\\'")}'`).join(',')}])" class="rounded accent-blue-600">
+                <span>Selecionar Todas as Competições e Fases</span>
+              </label>
+
+              <div class="space-y-2">
       `;
 
-      // Botões por Região
-      availableRegionsH2H.forEach(r => {
-        filterButtonsHtml += `<button onclick="toggleH2HCompFilter('REG_${r}')" class="px-2 py-0.5 text-[10px] font-bold rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20">Região ${r}</button>`;
+      const q = compSearchQuery.toLowerCase().trim();
+
+      Object.keys(compPhaseMap).forEach(comp => {
+        const phases = Array.from(compPhaseMap[comp]);
+        const matchingPhases = phases.filter(p => !q || comp.toLowerCase().includes(q) || p.toLowerCase().includes(q));
+
+        if (matchingPhases.length > 0) {
+          compSearchFilterHtml += `
+            <div class="bg-[#1f242d]/60 border border-dark p-2 rounded-lg space-y-1">
+              <div class="text-xs font-bold text-white flex items-center gap-1">
+                <span>🏆</span> ${comp}
+              </div>
+              <div class="pl-3 space-y-1">
+          `;
+
+          matchingPhases.forEach(phase => {
+            const key = `${comp}::${phase}`;
+            const isChecked = isAllSelected || selectedH2HKeys.has(key);
+
+            compSearchFilterHtml += `
+              <label class="flex items-center gap-2 text-[11px] font-semibold text-gray-300 hover:text-white cursor-pointer">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleH2HKeySelection('${key.replace(/'/g, "\\'")}', [${allAvailableKeys.map(k => `'${k.replace(/'/g, "\\'")}'`).join(',')}])" class="rounded accent-blue-600">
+                <span>${phase}</span>
+              </label>
+            `;
+          });
+
+          compSearchFilterHtml += `</div></div>`;
+        }
       });
 
-      // Botões por Competição
-      directComps.forEach(c => {
-        const isSelected = selectedH2HComps.has(c);
-        filterButtonsHtml += `
-          <button onclick="toggleH2HCompFilter('${c.replace(/'/g, "\\'")}')" class="px-2 py-0.5 text-[10px] font-bold rounded ${isSelected ? 'bg-blue-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'}">
-            ${c}
-          </button>
-        `;
-      });
+      compSearchFilterHtml += `</div></div></div></div>`;
 
       h2hContainer.innerHTML = `
-        <!-- Cabeçalho da Retrospectiva Direta com Logos e Tag -->
+        <!-- Cabeçalho da Retrospectiva Direta com Logos e TAGs -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark pb-2.5">
           <div class="flex items-center gap-2">
             ${createLogoHtml(team1.logo, "w-6 h-6")}
@@ -1222,11 +1294,8 @@
           </div>
         </div>
 
-        <!-- Filtros Multi-Seleção de Competição & Regiões -->
-        <div class="space-y-1 bg-[#1f242d]/60 border border-dark p-2 rounded-lg">
-          <span class="text-[10px] font-bold text-gray-300 block">🎯 Filtrar Competições / Regiões:</span>
-          <div class="flex flex-wrap gap-1">${filterButtonsHtml}</div>
-        </div>
+        <!-- Menu Suspenso de Competições e Fases -->
+        ${compSearchFilterHtml}
 
         <!-- Placar de Vitórias da Retrospectiva -->
         <div class="grid grid-cols-3 gap-2 text-center">
@@ -1250,10 +1319,10 @@
           </div>
         </div>
 
-        <!-- Jogador de Ouro Faixa Ultra-Compacta -->
-        ${goldenPlayerStripHtml}
+        <!-- Painel Unificado: Jogador Estrela 1 | Jogador de Ouro | Jogador Estrela 2 -->
+        ${goldenAndStarStripHtml}
 
-        <!-- Desempenho por Local / Mapa (Grade Densa de Até 25 Mapas Sem Scroll) -->
+        <!-- Desempenho por Local / Mapa -->
         <div class="space-y-1.5 pt-1">
           <div class="flex items-center justify-between">
             <h4 class="text-[11px] font-bold text-gray-300 uppercase tracking-wider">📍 Desempenho por Local / Mapa</h4>
@@ -1267,7 +1336,7 @@
     }
 
     /* =========================================================================
-       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS (TAGS + MVP SORTEIO + FASE)
+       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS
     ========================================================================= */
     function updateMvpPlayerDropdown() {
       const descText = (document.getElementById('text-match-desc').value || '').trim();
@@ -1371,7 +1440,6 @@
       container.appendChild(div);
     }
 
-    /* RECONHECIMENTO DE TAGS E NOMES DAS EQUIPES */
     function parseMatchText(descText) {
       if (!descText) return null;
       const text = descText.trim();
@@ -1445,7 +1513,6 @@
         return;
       }
 
-      // Salvar a última competição usada no localStorage
       localStorage.setItem('gcr6_last_comp', comp);
 
       const mapRows = document.querySelectorAll('#map-rows-container > div');
@@ -1610,13 +1677,11 @@
         const mvpMatch = (m.mvp || '').toLowerCase().includes(query);
         const resMatch = (m.resultText || '').toLowerCase().includes(query);
 
-        // Buscar por região de uma das equipes
         const t1Obj = dataListaTimes.find(t => t.name.toLowerCase() === (m.team1||'').toLowerCase());
         const t2Obj = dataListaTimes.find(t => t.name.toLowerCase() === (m.team2||'').toLowerCase());
         const reg1Match = t1Obj && (t1Obj.region || '').toLowerCase().includes(query);
         const reg2Match = t2Obj && (t2Obj.region || '').toLowerCase().includes(query);
 
-        // Buscar por mapa/local
         const mapMatch = m.maps && m.maps.some(mp => (mp.location || '').toLowerCase().includes(query) || (mp.winner || '').toLowerCase().includes(query));
 
         return compMatch || t1Match || t2Match || mvpMatch || resMatch || reg1Match || reg2Match || mapMatch;
@@ -1746,7 +1811,8 @@
         logo: r[1] || '',
         tag: (r[2] || '').toUpperCase(),
         region: (r[3] || '').toUpperCase(),
-        titles: parseInt(r[4] || '0', 10) || 0
+        titles: parseInt(r[4] || '0', 10) || 0,
+        starPlayer: r[5] || ''
       })).filter(t => {
         if (!t.name) return false;
         const norm = t.name.toLowerCase().trim();
@@ -1802,7 +1868,6 @@
 
       label.textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
 
-      // Carregar última competição digitada
       const lastComp = localStorage.getItem('gcr6_last_comp') || '';
       if (lastComp && document.getElementById('text-match-comp')) {
         document.getElementById('text-match-comp').value = lastComp;
