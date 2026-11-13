@@ -259,16 +259,17 @@
           </h3>
 
           <div class="flex flex-wrap items-center gap-2">
-            <!-- Menu Suspenso de Competições / Fases da Tabela -->
-            <div class="relative">
+            <!-- Menu Suspenso Hierárquico (Competição > Fases) com Busca -->
+            <div class="relative" id="table-comp-filter-wrapper">
               <button type="button" onclick="toggleTableCompDropdown()" class="bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-sm">
                 <span>🎯</span>
                 <span id="label-table-comp-filter">Competições / Fases (Todas)</span>
                 <span class="text-xs text-gray-400">▼</span>
               </button>
               
-              <div id="dropdown-table-comp-filter" class="hidden absolute right-0 top-full mt-1.5 bg-[#161b22] border border-dark rounded-xl shadow-2xl p-3 z-50 space-y-2 w-64 max-h-72 overflow-y-auto custom-scroll">
-                <div id="container-table-comp-options" class="space-y-1.5"></div>
+              <div id="dropdown-table-comp-filter" class="hidden absolute right-0 top-full mt-1.5 bg-[#161b22] border border-dark rounded-xl shadow-2xl p-3 z-50 space-y-2.5 w-80 max-h-80 overflow-y-auto custom-scroll">
+                <input type="text" id="input-search-table-comp" oninput="onTableCompSearchInput(this.value)" placeholder="Pesquisar competição ou fase (ex: Wor)..." class="w-full bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+                <div id="container-table-comp-options" class="space-y-2"></div>
               </div>
             </div>
 
@@ -286,7 +287,7 @@
 
         <div id="mvp-stats-panel" class="hidden bg-[#1f242d] border border-dark p-3 rounded-xl space-y-2">
           <h4 class="text-xs font-bold text-yellow-400 flex items-center gap-1.5">
-            <span>⭐</span> Contagem de MVPs por Jogador nos Confrontos Registrados:
+            <span>⭐</span> Contagem de MVPs por Jogador (Filtro Atual):
           </h4>
           <div id="mvp-stats-list" class="flex flex-wrap gap-2 text-xs"></div>
         </div>
@@ -344,13 +345,62 @@
     let selectedTeam1 = localStorage.getItem('gcr6_selected_team1') || '';
     let selectedTeam2 = localStorage.getItem('gcr6_selected_team2') || '';
     
+    // Estado do Filtro de Competições / Fases da aba Confronto (H2H)
     let selectedH2HKeys = new Set(['ALL']);
     let compSearchQuery = '';
+    let isH2HDropdownOpen = false;
 
+    // Estado do Filtro de Competições / Fases da aba Histórico de Confrontos
     let selectedTableCompKeys = new Set(['ALL']);
+    let tableCompSearchQuery = '';
 
     let registeredConfrontos = JSON.parse(localStorage.getItem('gcr6_match_history') || '[]');
     let editingMatchId = null;
+
+    // Fechar menus suspensos ao clicar fora deles
+    document.addEventListener('click', (e) => {
+      const dd1 = document.getElementById('dropdown-container-1');
+      if (dd1 && !dd1.contains(e.target)) {
+        document.getElementById('list-team-1')?.classList.add('hidden');
+      }
+
+      const dd2 = document.getElementById('dropdown-container-2');
+      if (dd2 && !dd2.contains(e.target)) {
+        document.getElementById('list-team-2')?.classList.add('hidden');
+      }
+
+      const tableCompWrapper = document.getElementById('table-comp-filter-wrapper');
+      if (tableCompWrapper && !tableCompWrapper.contains(e.target)) {
+        document.getElementById('dropdown-table-comp-filter')?.classList.add('hidden');
+      }
+
+      const h2hCompWrapper = document.getElementById('h2h-comp-filter-wrapper');
+      if (h2hCompWrapper && !h2hCompWrapper.contains(e.target)) {
+        isH2HDropdownOpen = false;
+        document.getElementById('comp-dropdown-menu')?.classList.add('hidden');
+      }
+    });
+
+    function getMatchCompAndPhase(m) {
+      if (m.rawComp) {
+        return {
+          comp: m.rawComp.trim(),
+          phase: (m.phase || 'Fase Geral').trim()
+        };
+      }
+      const full = (m.competition || 'Campeonato').trim();
+      const idx = full.indexOf(' - ');
+      if (idx !== -1) {
+        return {
+          comp: full.slice(0, idx).trim(),
+          phase: full.slice(idx + 3).trim() || 'Fase Geral'
+        };
+      }
+      return {
+        comp: full,
+        phase: (m.phase || 'Fase Geral').trim()
+      };
+    }
 
     function getTeamLogoByName(teamName) {
       if (!teamName) return '';
@@ -358,6 +408,14 @@
       const found = dataListaTimes.find(t => t.name.toLowerCase().trim() === norm) 
                  || dataTimes.find(t => t.name.toLowerCase().trim() === norm);
       return found ? found.logo : '';
+    }
+
+    function getTeamRegionByName(teamName) {
+      if (!teamName) return '';
+      const norm = teamName.toLowerCase().trim();
+      const found = dataListaTimes.find(t => t.name.toLowerCase().trim() === norm)
+                 || dataTimes.find(t => t.name.toLowerCase().trim() === norm);
+      return found ? (found.region || '').toUpperCase() : '';
     }
 
     function escapeRegExp(string) {
@@ -456,10 +514,11 @@
 
     function updateAvailableRegions() {
       const regTimes = dataTimes.map(t => t.region);
+      const regListaTimes = dataListaTimes.map(t => t.region);
       const regHist = dataHistorico.map(h => h.region);
-      const regJog = dataJogadores.map(j => j.region);
+      const regJog = dataJogadores.map(j => j.naturalidade);
 
-      availableRegions = sortRegionsBRFirst([...regTimes, ...regHist, ...regJog]);
+      availableRegions = sortRegionsBRFirst([...regTimes, ...regListaTimes, ...regHist, ...regJog]);
       activeRegions = new Set(availableRegions);
       renderRegionFilterUI();
     }
@@ -760,21 +819,36 @@
       container.appendChild(cardRank);
     }
 
+    function getEnrichedJogadores() {
+      return dataJogadores.map(j => ({
+        ...j,
+        naturalidade: (j.naturalidade || '').toUpperCase(),
+        teamRegion: getTeamRegionByName(j.team)
+      }));
+    }
+
     function renderSectionJogadoresTitulos() {
       const container = document.getElementById('container-jogadores-titulos');
       container.innerHTML = '';
 
-      const sortedGeral = [...dataJogadores].sort((a, b) => b.titles - a.titles || b.mvps - a.mvps);
+      const enriched = getEnrichedJogadores();
+      const sortedGeral = [...enriched].sort((a, b) => b.titles - a.titles || b.mvps - a.mvps);
       const selectedRegs = availableRegions.filter(r => activeRegions.has(r));
 
       const groups = [
         { title: 'Ranking Geral (Títulos)', players: sortedGeral, isGeral: true },
-        ...selectedRegs.map(r => ({ title: `Região ${r}`, players: dataJogadores.filter(j => j.region === r).sort((a, b) => b.titles - a.titles || b.mvps - a.mvps), isGeral: false }))
+        ...selectedRegs.map(r => ({
+          title: `Região ${r}`,
+          players: enriched
+            .filter(j => (j.teamRegion || j.naturalidade) === r)
+            .sort((a, b) => b.titles - a.titles || b.mvps - a.mvps),
+          isGeral: false
+        }))
       ];
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
+        const cardWidth = group.isGeral ? "w-[550px] md:w-[600px]" : "w-[440px] md:w-[480px]";
         const stickyClasses = group.isGeral 
           ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
           : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
@@ -784,15 +858,16 @@
         let rowsHtml = group.players.map((item, idx) => {
           const pos = getPosBadge(idx);
           const logo = createLogoHtml(item.logo, "w-6 h-6");
-          const regionTd = group.isGeral ? `<td class="px-3 py-2.5 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
+          const regionTd = group.isGeral ? `<td class="px-3 py-2.5 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.teamRegion || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
               <td class="px-3 py-2.5 text-center align-middle">${pos}</td>
-              <td class="px-3 py-2.5 font-bold text-white text-xs">${item.name}</td>
+              <td class="px-3 py-2.5 font-bold text-white text-xs whitespace-nowrap">${item.name}</td>
               <td class="px-3 py-2.5 font-semibold text-xs text-gray-300">
-                <div class="flex items-center gap-1.5">${logo}<span>${item.team}</span></div>
+                <div class="flex items-center gap-1.5">${logo}<span class="whitespace-nowrap">${item.team}</span></div>
               </td>
+              <td class="px-3 py-2.5 text-xs font-semibold text-emerald-400 whitespace-nowrap">${item.naturalidade || '-'}</td>
               ${regionTd}
               <td class="px-3 py-2.5 text-right font-extrabold text-yellow-400 text-sm">${item.titles}</td>
               <td class="px-3 py-2.5 text-right font-extrabold text-purple-400 text-sm">${item.mvps}</td>
@@ -801,7 +876,7 @@
         }).join('');
 
         const regionTh = group.isGeral ? `<th class="px-3 py-2.5 whitespace-nowrap">Região</th>` : '';
-        const colCount = group.isGeral ? 6 : 5;
+        const colCount = group.isGeral ? 7 : 6;
 
         card.innerHTML = `
           <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
@@ -817,6 +892,7 @@
                   <th class="px-3 py-2.5 w-10 text-center">Pos</th>
                   <th class="px-3 py-2.5">Jogador</th>
                   <th class="px-3 py-2.5">Time</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Naturalidade</th>
                   ${regionTh}
                   <th class="px-3 py-2.5 text-right">Títulos</th>
                   <th class="px-3 py-2.5 text-right">MVPs</th>
@@ -834,17 +910,24 @@
       const container = document.getElementById('container-jogadores-mvps');
       container.innerHTML = '';
 
-      const sortedGeral = [...dataJogadores].sort((a, b) => b.mvps - a.mvps || b.titles - a.titles);
+      const enriched = getEnrichedJogadores();
+      const sortedGeral = [...enriched].sort((a, b) => b.mvps - a.mvps || b.titles - a.titles);
       const selectedRegs = availableRegions.filter(r => activeRegions.has(r));
 
       const groups = [
         { title: 'Ranking Geral (MVPs)', players: sortedGeral, isGeral: true },
-        ...selectedRegs.map(r => ({ title: `Região ${r}`, players: dataJogadores.filter(j => j.region === r).sort((a, b) => b.mvps - a.mvps || b.titles - a.titles), isGeral: false }))
+        ...selectedRegs.map(r => ({
+          title: `Região ${r}`,
+          players: enriched
+            .filter(j => (j.teamRegion || j.naturalidade) === r)
+            .sort((a, b) => b.mvps - a.mvps || b.titles - a.titles),
+          isGeral: false
+        }))
       ];
 
       groups.forEach(group => {
         const card = document.createElement('div');
-        const cardWidth = group.isGeral ? "w-[480px] md:w-[520px]" : "w-[400px] md:w-[440px]";
+        const cardWidth = group.isGeral ? "w-[550px] md:w-[600px]" : "w-[440px] md:w-[480px]";
         const stickyClasses = group.isGeral 
           ? `sticky left-0 z-20 ${cardWidth} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col` 
           : `${cardWidth} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
@@ -854,15 +937,16 @@
         let rowsHtml = group.players.map((item, idx) => {
           const pos = getPosBadge(idx);
           const logo = createLogoHtml(item.logo, "w-6 h-6");
-          const regionTd = group.isGeral ? `<td class="px-3 py-2.5 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>` : '';
+          const regionTd = group.isGeral ? `<td class="px-3 py-2.5 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.teamRegion || '-'}</td>` : '';
 
           return `
             <tr class="hover:bg-dark-hover/50">
               <td class="px-3 py-2.5 text-center align-middle">${pos}</td>
-              <td class="px-3 py-2.5 font-bold text-white text-xs">${item.name}</td>
+              <td class="px-3 py-2.5 font-bold text-white text-xs whitespace-nowrap">${item.name}</td>
               <td class="px-3 py-2.5 font-semibold text-xs text-gray-300">
-                <div class="flex items-center gap-1.5">${logo}<span>${item.team}</span></div>
+                <div class="flex items-center gap-1.5">${logo}<span class="whitespace-nowrap">${item.team}</span></div>
               </td>
+              <td class="px-3 py-2.5 text-xs font-semibold text-emerald-400 whitespace-nowrap">${item.naturalidade || '-'}</td>
               ${regionTd}
               <td class="px-3 py-2.5 text-right font-extrabold text-purple-400 text-sm">${item.mvps}</td>
               <td class="px-3 py-2.5 text-right font-extrabold text-yellow-400 text-sm">${item.titles}</td>
@@ -871,7 +955,7 @@
         }).join('');
 
         const regionTh = group.isGeral ? `<th class="px-3 py-2.5 whitespace-nowrap">Região</th>` : '';
-        const colCount = group.isGeral ? 6 : 5;
+        const colCount = group.isGeral ? 7 : 6;
 
         card.innerHTML = `
           <div class="bg-[#1f242d] px-3.5 py-2.5 border-b border-dark flex justify-between items-center shrink-0">
@@ -887,6 +971,7 @@
                   <th class="px-3 py-2.5 w-10 text-center">Pos</th>
                   <th class="px-3 py-2.5">Jogador</th>
                   <th class="px-3 py-2.5">Time</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Naturalidade</th>
                   ${regionTh}
                   <th class="px-3 py-2.5 text-right">MVPs</th>
                   <th class="px-3 py-2.5 text-right">Títulos</th>
@@ -977,15 +1062,55 @@
       renderConfronto();
     }
 
+    function toggleH2HDropdown() {
+      isH2HDropdownOpen = !isH2HDropdownOpen;
+      const menu = document.getElementById('comp-dropdown-menu');
+      if (menu) {
+        menu.classList.toggle('hidden', !isH2HDropdownOpen);
+        if (isH2HDropdownOpen) {
+          setTimeout(() => document.getElementById('input-search-comp')?.focus(), 10);
+        }
+      }
+    }
+
+    function onH2HCompSearchInput(val) {
+      compSearchQuery = val;
+      updateH2HCompDropdownList();
+    }
+
+    function toggleH2HCompGroup(compName, allAvailableKeys = []) {
+      const compPrefix = `${compName}::`;
+      const compKeys = allAvailableKeys.filter(k => k.startsWith(compPrefix));
+      const isAllGlobal = selectedH2HKeys.has('ALL');
+
+      if (isAllGlobal) {
+        selectedH2HKeys = new Set(allAvailableKeys.filter(k => !k.startsWith(compPrefix)));
+      } else {
+        const allCompSelected = compKeys.every(k => selectedH2HKeys.has(k));
+        if (allCompSelected) {
+          compKeys.forEach(k => selectedH2HKeys.delete(k));
+        } else {
+          compKeys.forEach(k => selectedH2HKeys.add(k));
+        }
+        if (allAvailableKeys.length > 0 && selectedH2HKeys.size === allAvailableKeys.length) {
+          selectedH2HKeys = new Set(['ALL']);
+        }
+      }
+      isH2HDropdownOpen = true;
+      renderConfronto();
+    }
+
     function toggleH2HKeySelection(key, allAvailableKeys = []) {
       if (key === 'ALL') {
         if (selectedH2HKeys.has('ALL')) {
           selectedH2HKeys.clear();
         } else {
-          selectedH2HKeys = new Set(['ALL', ...allAvailableKeys]);
+          selectedH2HKeys = new Set(['ALL']);
         }
       } else {
-        if (selectedH2HKeys.has('ALL')) selectedH2HKeys.delete('ALL');
+        if (selectedH2HKeys.has('ALL')) {
+          selectedH2HKeys = new Set(allAvailableKeys);
+        }
 
         if (selectedH2HKeys.has(key)) {
           selectedH2HKeys.delete(key);
@@ -994,10 +1119,103 @@
         }
 
         if (allAvailableKeys.length > 0 && selectedH2HKeys.size === allAvailableKeys.length) {
-          selectedH2HKeys.add('ALL');
+          selectedH2HKeys = new Set(['ALL']);
         }
       }
+      isH2HDropdownOpen = true;
       renderConfronto();
+    }
+
+    function getCurrentH2HCompPhaseMap() {
+      const name1 = selectedTeam1 || (dataListaTimes[0] ? dataListaTimes[0].name : '');
+      const name2 = selectedTeam2 || (dataListaTimes[1] ? dataListaTimes[1].name : '');
+
+      const allDirectMatches = registeredConfrontos.filter(m => {
+        const t1 = (m.team1 || '').toLowerCase().trim();
+        const t2 = (m.team2 || '').toLowerCase().trim();
+        const sel1 = name1.toLowerCase().trim();
+        const sel2 = name2.toLowerCase().trim();
+        return (t1 === sel1 && t2 === sel2) || (t1 === sel2 && t2 === sel1);
+      });
+
+      const compPhaseMap = {};
+      allDirectMatches.forEach(m => {
+        const { comp, phase } = getMatchCompAndPhase(m);
+        if (!compPhaseMap[comp]) compPhaseMap[comp] = new Set();
+        compPhaseMap[comp].add(phase);
+      });
+
+      const allAvailableKeys = [];
+      Object.keys(compPhaseMap).sort().forEach(comp => {
+        Array.from(compPhaseMap[comp]).sort().forEach(phase => {
+          allAvailableKeys.push(`${comp}::${phase}`);
+        });
+      });
+
+      return { compPhaseMap, allAvailableKeys, allDirectMatches };
+    }
+
+    function updateH2HCompDropdownList() {
+      const listContainer = document.getElementById('h2h-comp-list-container');
+      if (!listContainer) return;
+
+      const { compPhaseMap, allAvailableKeys } = getCurrentH2HCompPhaseMap();
+      const isAllSelected = selectedH2HKeys.has('ALL');
+      const q = compSearchQuery.toLowerCase().trim();
+      const keysParamStr = `[${allAvailableKeys.map(k => `'${k.replace(/'/g, "\\'")}'`).join(',')}]`;
+
+      let html = `
+        <label class="flex items-center gap-2 text-xs font-extrabold text-blue-400 bg-[#1f242d] p-2 rounded-lg cursor-pointer border border-blue-500/30">
+          <input type="checkbox" ${isAllSelected ? 'checked' : ''} onchange="toggleH2HKeySelection('ALL', ${keysParamStr})" class="rounded accent-blue-600">
+          <span>Selecionar Todas as Competições e Fases</span>
+        </label>
+        <div class="space-y-2">
+      `;
+
+      let hasAnyResult = false;
+
+      Object.keys(compPhaseMap).sort().forEach(comp => {
+        const phases = Array.from(compPhaseMap[comp]).sort();
+        const compMatchesSearch = !q || comp.toLowerCase().includes(q);
+        const matchingPhases = compMatchesSearch ? phases : phases.filter(p => p.toLowerCase().includes(q));
+
+        if (matchingPhases.length > 0) {
+          hasAnyResult = true;
+          const compKeys = phases.map(p => `${comp}::${p}`);
+          const isCompChecked = isAllSelected || (compKeys.length > 0 && compKeys.every(k => selectedH2HKeys.has(k)));
+          const safeComp = comp.replace(/'/g, "\\'");
+
+          html += `
+            <div class="bg-[#1f242d]/60 border border-dark p-2 rounded-lg space-y-1.5">
+              <label class="flex items-center gap-2 text-xs font-extrabold text-white cursor-pointer hover:text-blue-300">
+                <input type="checkbox" ${isCompChecked ? 'checked' : ''} onchange="toggleH2HCompGroup('${safeComp}', ${keysParamStr})" class="rounded accent-blue-600">
+                <span>🏆 ${comp}</span>
+              </label>
+              <div class="pl-5 space-y-1 border-l border-dark/80 ml-1.5">
+          `;
+
+          matchingPhases.forEach(phase => {
+            const key = `${comp}::${phase}`;
+            const isChecked = isAllSelected || selectedH2HKeys.has(key);
+
+            html += `
+              <label class="flex items-center gap-2 text-[11px] font-semibold text-gray-300 hover:text-white cursor-pointer">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleH2HKeySelection('${key.replace(/'/g, "\\'")}', ${keysParamStr})" class="rounded accent-blue-600">
+                <span>${phase}</span>
+              </label>
+            `;
+          });
+
+          html += `</div></div>`;
+        }
+      });
+
+      if (!hasAnyResult) {
+        html += `<div class="p-3 text-center text-xs text-gray-500">Nenhuma competição ou fase encontrada.</div>`;
+      }
+
+      html += `</div>`;
+      listContainer.innerHTML = html;
     }
 
     function renderConfronto() {
@@ -1091,37 +1309,14 @@
         <div class="lg:col-span-5">${card2Html}</div>
       `;
 
-      const allDirectMatches = registeredConfrontos.filter(m => {
-        const t1 = (m.team1 || '').toLowerCase().trim();
-        const t2 = (m.team2 || '').toLowerCase().trim();
-        const sel1 = name1.toLowerCase().trim();
-        const sel2 = name2.toLowerCase().trim();
-        return (t1 === sel1 && t2 === sel2) || (t1 === sel2 && t2 === sel1);
-      });
-
-      const compPhaseMap = {};
-      allDirectMatches.forEach(m => {
-        const rawComp = m.rawComp || m.competition || 'Outros Torneios';
-        const phase = m.phase || 'Fase Geral';
-        if (!compPhaseMap[rawComp]) compPhaseMap[rawComp] = new Set();
-        compPhaseMap[rawComp].add(phase);
-      });
-
-      const allAvailableKeys = [];
-      Object.keys(compPhaseMap).forEach(comp => {
-        compPhaseMap[comp].forEach(phase => {
-          allAvailableKeys.push(`${comp}::${phase}`);
-        });
-      });
-
+      const { allDirectMatches } = getCurrentH2HCompPhaseMap();
       const isAllSelected = selectedH2HKeys.has('ALL');
 
       const filteredMatches = isAllSelected 
         ? allDirectMatches 
         : allDirectMatches.filter(m => {
-            const rawComp = m.rawComp || m.competition || 'Outros Torneios';
-            const phase = m.phase || 'Fase Geral';
-            return selectedH2HKeys.has(`${rawComp}::${phase}`);
+            const { comp, phase } = getMatchCompAndPhase(m);
+            return selectedH2HKeys.has(`${comp}::${phase}`);
           });
 
       let wins1 = 0, wins2 = 0, draws = 0;
@@ -1183,7 +1378,6 @@
         }
       });
 
-      // REGRA: Apenas jogadores pertencentes atualmente a uma das duas equipes do confronto concorrem ao Jogador de Ouro
       const eligibleGoldenPlayers = Object.values(mvpCounts).filter(p => {
         const cTeam = (p.currentTeam || '').toLowerCase().trim();
         const t1 = name1.toLowerCase().trim();
@@ -1197,7 +1391,6 @@
       let goldenPlayerLogoHtml = '<span class="text-base">⭐</span>';
 
       if (goldenPlayer) {
-        // Logo do time em que ele jogou no confronto (Esquerda)
         const matchLogoUrl = goldenPlayer.matchTeamLogo || getTeamLogoByName(goldenPlayer.matchTeam);
         goldenPlayerLogoHtml = matchLogoUrl ? createLogoHtml(matchLogoUrl, "w-5 h-5") : '<span class="text-base">⭐</span>';
 
@@ -1272,59 +1465,21 @@
         locationGridHtml = `<div class="col-span-full p-2.5 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum mapa ou local específico detalhado para estes confrontos.</div>`;
       }
 
-      let compSearchFilterHtml = `
-        <div class="relative w-full">
-          <button onclick="document.getElementById('comp-dropdown-menu').classList.toggle('hidden')" class="w-full bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center justify-between shadow-sm">
+      const compSearchFilterHtml = `
+        <div class="relative w-full" id="h2h-comp-filter-wrapper">
+          <button type="button" onclick="toggleH2HDropdown()" class="w-full bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center justify-between shadow-sm">
             <span class="flex items-center gap-1.5 truncate">
               <span>🎯</span> Competições / Fases (${isAllSelected ? 'Todas Selecionadas' : selectedH2HKeys.size + ' Selecionadas'})
             </span>
             <span class="text-xs text-gray-400">▼</span>
           </button>
 
-          <div id="comp-dropdown-menu" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-[#161b22] border border-dark rounded-xl shadow-2xl p-3 z-50 space-y-2.5 max-h-72 overflow-y-auto custom-scroll">
-            <input type="text" id="input-search-comp" oninput="compSearchQuery = this.value; renderConfronto();" placeholder="Pesquisar competição ou fase (ex: Wor)..." value="${compSearchQuery}" class="w-full bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
-            
-            <div class="space-y-2">
-              <label class="flex items-center gap-2 text-xs font-extrabold text-blue-400 bg-[#1f242d] p-2 rounded-lg cursor-pointer border border-blue-500/30">
-                <input type="checkbox" ${isAllSelected ? 'checked' : ''} onchange="toggleH2HKeySelection('ALL', [${allAvailableKeys.map(k => `'${k.replace(/'/g, "\\'")}'`).join(',')}])" class="rounded accent-blue-600">
-                <span>Selecionar Todas as Competições e Fases</span>
-              </label>
-
-              <div class="space-y-2">
+          <div id="comp-dropdown-menu" class="${isH2HDropdownOpen ? '' : 'hidden'} absolute left-0 right-0 top-full mt-1.5 bg-[#161b22] border border-dark rounded-xl shadow-2xl p-3 z-50 space-y-2.5 max-h-72 overflow-y-auto custom-scroll">
+            <input type="text" id="input-search-comp" oninput="onH2HCompSearchInput(this.value)" placeholder="Pesquisar competição ou fase (ex: Wor)..." value="${compSearchQuery.replace(/"/g, '&quot;')}" class="w-full bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+            <div id="h2h-comp-list-container" class="space-y-2"></div>
+          </div>
+        </div>
       `;
-
-      const q = compSearchQuery.toLowerCase().trim();
-
-      Object.keys(compPhaseMap).forEach(comp => {
-        const phases = Array.from(compPhaseMap[comp]);
-        const matchingPhases = phases.filter(p => !q || comp.toLowerCase().includes(q) || p.toLowerCase().includes(q));
-
-        if (matchingPhases.length > 0) {
-          compSearchFilterHtml += `
-            <div class="bg-[#1f242d]/60 border border-dark p-2 rounded-lg space-y-1">
-              <div class="text-xs font-bold text-white flex items-center gap-1">
-                <span>🏆</span> ${comp}
-              </div>
-              <div class="pl-3 space-y-1">
-          `;
-
-          matchingPhases.forEach(phase => {
-            const key = `${comp}::${phase}`;
-            const isChecked = isAllSelected || selectedH2HKeys.has(key);
-
-            compSearchFilterHtml += `
-              <label class="flex items-center gap-2 text-[11px] font-semibold text-gray-300 hover:text-white cursor-pointer">
-                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleH2HKeySelection('${key.replace(/'/g, "\\'")}', [${allAvailableKeys.map(k => `'${k.replace(/'/g, "\\'")}'`).join(',')}])" class="rounded accent-blue-600">
-                <span>${phase}</span>
-              </label>
-            `;
-          });
-
-          compSearchFilterHtml += `</div></div>`;
-        }
-      });
-
-      compSearchFilterHtml += `</div></div></div></div>`;
 
       h2hContainer.innerHTML = `
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark pb-2.5">
@@ -1380,19 +1535,34 @@
           </div>
         </div>
       `;
+
+      updateH2HCompDropdownList();
     }
 
     /* =========================================================================
-       FILTRO DE COMPETIÇÕES DA TABELA DE CONFRONTOS REGISTRADOS
+       FILTRO HIERÁRQUICO (COMPETIÇÃO > FASES) E CONSULTA DA TABELA DE CONFRONTOS
     ========================================================================= */
-    function getAvailableTableComps() {
-      const set = new Set();
+    function getTableCompPhaseStructure() {
+      const compPhaseMap = {};
       registeredConfrontos.forEach(m => {
-        if (m.competition && m.competition.trim()) {
-          set.add(m.competition.trim());
-        }
+        const { comp, phase } = getMatchCompAndPhase(m);
+        if (!compPhaseMap[comp]) compPhaseMap[comp] = new Set();
+        compPhaseMap[comp].add(phase);
       });
-      return Array.from(set).sort();
+
+      const allKeys = [];
+      Object.keys(compPhaseMap).sort().forEach(comp => {
+        Array.from(compPhaseMap[comp]).sort().forEach(phase => {
+          allKeys.push(`${comp}::${phase}`);
+        });
+      });
+
+      return { compPhaseMap, allKeys };
+    }
+
+    function onTableCompSearchInput(val) {
+      tableCompSearchQuery = val;
+      renderTableCompFilterDropdown();
     }
 
     function renderTableCompFilterDropdown() {
@@ -1400,37 +1570,69 @@
       const label = document.getElementById('label-table-comp-filter');
       if (!container || !label) return;
 
-      const availableComps = getAvailableTableComps();
-      const isAllSelected = selectedTableCompKeys.has('ALL') || selectedTableCompKeys.size === 0;
+      const { compPhaseMap, allKeys } = getTableCompPhaseStructure();
+      const isAllSelected = selectedTableCompKeys.has('ALL');
 
       if (isAllSelected) {
         label.textContent = 'Competições / Fases (Todas)';
       } else {
-        label.textContent = `Competições (${selectedTableCompKeys.size}/${availableComps.length})`;
+        label.textContent = `Competições / Fases (${selectedTableCompKeys.size}/${allKeys.length})`;
       }
+
+      const q = tableCompSearchQuery.toLowerCase().trim();
 
       let html = `
-        <label class="flex items-center gap-2 text-xs font-extrabold text-blue-400 bg-[#1f242d] p-1.5 rounded-lg cursor-pointer border border-blue-500/30">
+        <label class="flex items-center gap-2 text-xs font-extrabold text-blue-400 bg-[#1f242d] p-2 rounded-lg cursor-pointer border border-blue-500/30">
           <input type="checkbox" ${isAllSelected ? 'checked' : ''} onchange="toggleTableCompSelection('ALL')" class="rounded accent-blue-600">
-          <span>Selecionar Todas</span>
+          <span>Selecionar Todas as Competições e Fases</span>
         </label>
+        <div class="space-y-2">
       `;
 
-      availableComps.forEach(comp => {
-        const isChecked = isAllSelected || selectedTableCompKeys.has(comp);
-        const safeComp = comp.replace(/'/g, "\\'");
-        html += `
-          <label class="flex items-center gap-2 text-[11px] font-semibold text-gray-300 hover:text-white cursor-pointer px-1 py-0.5">
-            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTableCompSelection('${safeComp}')" class="rounded accent-blue-600">
-            <span class="truncate">${comp}</span>
-          </label>
-        `;
+      let hasAnyMatch = false;
+
+      Object.keys(compPhaseMap).sort().forEach(comp => {
+        const phases = Array.from(compPhaseMap[comp]).sort();
+        const compMatchesSearch = !q || comp.toLowerCase().includes(q);
+        const matchingPhases = compMatchesSearch ? phases : phases.filter(p => p.toLowerCase().includes(q));
+
+        if (matchingPhases.length > 0) {
+          hasAnyMatch = true;
+          const compKeys = phases.map(p => `${comp}::${p}`);
+          const isCompChecked = isAllSelected || (compKeys.length > 0 && compKeys.every(k => selectedTableCompKeys.has(k)));
+          const safeComp = comp.replace(/'/g, "\\'");
+
+          html += `
+            <div class="bg-[#1f242d]/60 border border-dark p-2 rounded-lg space-y-1.5">
+              <label class="flex items-center gap-2 text-xs font-extrabold text-white cursor-pointer hover:text-blue-300">
+                <input type="checkbox" ${isCompChecked ? 'checked' : ''} onchange="toggleTableCompGroup('${safeComp}')" class="rounded accent-blue-600">
+                <span>🏆 ${comp}</span>
+              </label>
+              <div class="pl-5 space-y-1 border-l border-dark/80 ml-1.5">
+          `;
+
+          matchingPhases.forEach(phase => {
+            const key = `${comp}::${phase}`;
+            const isChecked = isAllSelected || selectedTableCompKeys.has(key);
+            const safeKey = key.replace(/'/g, "\\'");
+
+            html += `
+              <label class="flex items-center gap-2 text-[11px] font-semibold text-gray-300 hover:text-white cursor-pointer">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTableCompSelection('${safeKey}')" class="rounded accent-blue-600">
+                <span>${phase}</span>
+              </label>
+            `;
+          });
+
+          html += `</div></div>`;
+        }
       });
 
-      if (availableComps.length === 0) {
-        html += `<div class="text-[11px] text-gray-500 p-1">Nenhum confronto registrado.</div>`;
+      if (!hasAnyMatch) {
+        html += `<div class="text-xs text-gray-500 p-2 text-center">Nenhuma competição ou fase encontrada.</div>`;
       }
 
+      html += `</div>`;
       container.innerHTML = html;
     }
 
@@ -1439,13 +1641,42 @@
       if (dropdown) {
         dropdown.classList.toggle('hidden');
         if (!dropdown.classList.contains('hidden')) {
+          const searchInput = document.getElementById('input-search-table-comp');
+          if (searchInput) {
+            searchInput.value = tableCompSearchQuery;
+            setTimeout(() => searchInput.focus(), 10);
+          }
           renderTableCompFilterDropdown();
         }
       }
     }
 
+    function toggleTableCompGroup(compName) {
+      const { allKeys } = getTableCompPhaseStructure();
+      const compPrefix = `${compName}::`;
+      const compKeys = allKeys.filter(k => k.startsWith(compPrefix));
+      const isAllSelected = selectedTableCompKeys.has('ALL');
+
+      if (isAllSelected) {
+        selectedTableCompKeys = new Set(allKeys.filter(k => !k.startsWith(compPrefix)));
+      } else {
+        const allCompSelected = compKeys.every(k => selectedTableCompKeys.has(k));
+        if (allCompSelected) {
+          compKeys.forEach(k => selectedTableCompKeys.delete(k));
+        } else {
+          compKeys.forEach(k => selectedTableCompKeys.add(k));
+        }
+        if (allKeys.length > 0 && selectedTableCompKeys.size === allKeys.length) {
+          selectedTableCompKeys = new Set(['ALL']);
+        }
+      }
+
+      renderTableCompFilterDropdown();
+      renderRegisteredMatchesTable();
+    }
+
     function toggleTableCompSelection(key) {
-      const available = getAvailableTableComps();
+      const { allKeys } = getTableCompPhaseStructure();
       if (key === 'ALL') {
         if (selectedTableCompKeys.has('ALL')) {
           selectedTableCompKeys.clear();
@@ -1454,8 +1685,7 @@
         }
       } else {
         if (selectedTableCompKeys.has('ALL')) {
-          selectedTableCompKeys.clear();
-          available.forEach(c => selectedTableCompKeys.add(c));
+          selectedTableCompKeys = new Set(allKeys);
         }
 
         if (selectedTableCompKeys.has(key)) {
@@ -1464,13 +1694,44 @@
           selectedTableCompKeys.add(key);
         }
 
-        if (selectedTableCompKeys.size === available.length) {
+        if (allKeys.length > 0 && selectedTableCompKeys.size === allKeys.length) {
           selectedTableCompKeys = new Set(['ALL']);
         }
       }
 
       renderTableCompFilterDropdown();
       renderRegisteredMatchesTable();
+    }
+
+    function getFilteredRegisteredMatches() {
+      const query = (document.getElementById('search-history-query')?.value || '').toLowerCase().trim();
+      const isAllSelected = selectedTableCompKeys.has('ALL');
+
+      return registeredConfrontos.filter(m => {
+        const { comp, phase } = getMatchCompAndPhase(m);
+        const key = `${comp}::${phase}`;
+
+        if (!isAllSelected && !selectedTableCompKeys.has(key)) {
+          return false;
+        }
+
+        if (!query) return true;
+        
+        const compMatch = (m.competition || '').toLowerCase().includes(query) || comp.toLowerCase().includes(query) || phase.toLowerCase().includes(query);
+        const t1Match = (m.team1 || '').toLowerCase().includes(query);
+        const t2Match = (m.team2 || '').toLowerCase().includes(query);
+        const mvpMatch = (m.mvp || '').toLowerCase().includes(query);
+        const resMatch = (m.resultText || '').toLowerCase().includes(query);
+
+        const t1Obj = dataListaTimes.find(t => t.name.toLowerCase() === (m.team1||'').toLowerCase());
+        const t2Obj = dataListaTimes.find(t => t.name.toLowerCase() === (m.team2||'').toLowerCase());
+        const reg1Match = t1Obj && (t1Obj.region || '').toLowerCase().includes(query);
+        const reg2Match = t2Obj && (t2Obj.region || '').toLowerCase().includes(query);
+
+        const mapMatch = m.maps && m.maps.some(mp => (mp.location || '').toLowerCase().includes(query) || (mp.winner || '').toLowerCase().includes(query));
+
+        return compMatch || t1Match || t2Match || mvpMatch || resMatch || reg1Match || reg2Match || mapMatch;
+      });
     }
 
     /* =========================================================================
@@ -1756,7 +2017,6 @@
       if (mvpVal) {
         const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === mvpVal.toLowerCase().trim());
         if (pObj) {
-          // Identifica o time defendido pelo jogador nesta partida em específico
           if (pObj.team.toLowerCase().trim() === parsed.team1.toLowerCase().trim() || pObj.team.toLowerCase().trim() === parsed.team2.toLowerCase().trim()) {
             mvpTeamVal = pObj.team;
           } else {
@@ -1893,16 +2153,20 @@
       const panel = document.getElementById('mvp-stats-panel');
       if (panel) {
         panel.classList.toggle('hidden');
-        if (!panel.classList.contains('hidden')) renderMvpStatsPanel();
+        if (!panel.classList.contains('hidden')) {
+          renderMvpStatsPanel(getFilteredRegisteredMatches());
+        }
       }
     }
 
-    function renderMvpStatsPanel() {
+    function renderMvpStatsPanel(matchesList = null) {
       const listContainer = document.getElementById('mvp-stats-list');
       if (!listContainer) return;
 
+      const sourceMatches = matchesList || getFilteredRegisteredMatches();
       const counts = {};
-      registeredConfrontos.forEach(m => {
+
+      sourceMatches.forEach(m => {
         if (m.mvp && m.mvp.trim()) {
           const name = m.mvp.trim();
           counts[name] = (counts[name] || 0) + 1;
@@ -1912,7 +2176,7 @@
       const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
       if (sorted.length === 0) {
-        listContainer.innerHTML = `<span class="text-gray-500">Nenhum MVP registrado até o momento.</span>`;
+        listContainer.innerHTML = `<span class="text-gray-500">Nenhum MVP registrado para os filtros atuais.</span>`;
         return;
       }
 
@@ -1936,34 +2200,10 @@
       const body = document.getElementById('registered-matches-body');
       if (!body) return;
 
-      const query = (document.getElementById('search-history-query')?.value || '').toLowerCase().trim();
-      const isAllSelected = selectedTableCompKeys.has('ALL') || selectedTableCompKeys.size === 0;
-
-      const filtered = registeredConfrontos.filter(m => {
-        const matchComp = (m.competition || '').trim();
-        if (!isAllSelected && !selectedTableCompKeys.has(matchComp)) {
-          return false;
-        }
-
-        if (!query) return true;
-        
-        const compMatch = (m.competition || '').toLowerCase().includes(query);
-        const t1Match = (m.team1 || '').toLowerCase().includes(query);
-        const t2Match = (m.team2 || '').toLowerCase().includes(query);
-        const mvpMatch = (m.mvp || '').toLowerCase().includes(query);
-        const resMatch = (m.resultText || '').toLowerCase().includes(query);
-
-        const t1Obj = dataListaTimes.find(t => t.name.toLowerCase() === (m.team1||'').toLowerCase());
-        const t2Obj = dataListaTimes.find(t => t.name.toLowerCase() === (m.team2||'').toLowerCase());
-        const reg1Match = t1Obj && (t1Obj.region || '').toLowerCase().includes(query);
-        const reg2Match = t2Obj && (t2Obj.region || '').toLowerCase().includes(query);
-
-        const mapMatch = m.maps && m.maps.some(mp => (mp.location || '').toLowerCase().includes(query) || (mp.winner || '').toLowerCase().includes(query));
-
-        return compMatch || t1Match || t2Match || mvpMatch || resMatch || reg1Match || reg2Match || mapMatch;
-      });
+      const filtered = getFilteredRegisteredMatches();
 
       renderTableCompFilterDropdown();
+      renderMvpStatsPanel(filtered);
 
       if (filtered.length === 0) {
         body.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-xs text-gray-500">Nenhum confronto encontrado com os filtros selecionados.</td></tr>`;
@@ -2047,8 +2287,6 @@
           </tr>
         `;
       }).join('');
-
-      renderMvpStatsPanel();
     }
 
     function deleteMatchFromHistory(id) {
@@ -2160,7 +2398,7 @@
         logo: r[2] || '',
         titles: parseInt(r[3] || '0', 10) || 0,
         mvps: parseInt(r[4] || '0', 10) || 0,
-        region: (r[5] || '').toUpperCase()
+        naturalidade: (r[5] || '').toUpperCase()
       })).filter(j => {
         if (!j.name) return false;
         const norm = j.name.toLowerCase().trim();
