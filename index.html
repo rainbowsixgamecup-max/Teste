@@ -44,6 +44,12 @@
         <button id="nav-times" onclick="switchMainTab('times')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow">
           Ranking Times
         </button>
+        <button id="nav-composicoes" onclick="switchMainTab('composicoes')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+          Composições
+        </button>
+        <button id="nav-transferencias" onclick="switchMainTab('transferencias')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+          Transferências
+        </button>
         <button id="nav-hist-regioes" onclick="switchMainTab('hist-regioes')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Histórico (Regiões)
         </button>
@@ -85,6 +91,166 @@
         <span>🛡️</span> Ranking de Equipes (Geral + Regiões Selecionadas)
       </h2>
       <div class="flex flex-nowrap items-start gap-4 overflow-x-auto pb-3 custom-scroll w-full" id="container-times"></div>
+    </div>
+
+    <!-- PAINEL COMPOSIÇÕES -->
+    <div id="section-composicoes" class="space-y-4 w-full hidden">
+      <div class="bg-dark-card border border-dark rounded-xl p-4 shadow-xl space-y-3">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-dark pb-3">
+          <div>
+            <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+              <span>🧩</span> Composições das Equipes
+            </h2>
+            <p class="text-xs text-gray-400">Elencos organizados por time com região, TAG, naturalidade e títulos conquistados.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="relative">
+              <input type="text" id="comp-roster-search" oninput="renderSectionComposicoes()" placeholder="Pesquisar Time, TAG ou Jogador..." class="w-64 sm:w-72 bg-[#21262d] border border-dark rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              <span class="absolute right-2.5 top-1.5 text-xs text-gray-400 pointer-events-none">🔍</span>
+            </div>
+            <span id="composicoes-counter" class="text-xs bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2.5 py-1.5 rounded-lg font-bold">0 times</span>
+          </div>
+        </div>
+
+        <!-- Filtros Simultâneos: Região dos Times & Naturalidade dos Jogadores -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div class="bg-[#1f242d]/60 border border-dark rounded-lg p-2.5 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                <span>🌍</span> Região dos Times
+              </span>
+              <button type="button" onclick="toggleCompTeamRegion('ALL')" class="text-[10px] font-bold text-gray-400 hover:text-white underline">Alternar Todas</button>
+            </div>
+            <div id="comp-team-regions-bar" class="flex flex-wrap items-center gap-1.5"></div>
+          </div>
+
+          <div class="bg-[#1f242d]/60 border border-dark rounded-lg p-2.5 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                <span>🏳️</span> Naturalidade dos Jogadores
+              </span>
+              <button type="button" onclick="toggleCompPlayerNat('ALL')" class="text-[10px] font-bold text-gray-400 hover:text-white underline">Alternar Todas</button>
+            </div>
+            <div id="comp-player-nats-bar" class="flex flex-wrap items-center gap-1.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="container-composicoes" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 items-start w-full"></div>
+    </div>
+
+    <!-- PAINEL TRANSFERÊNCIAS -->
+    <div id="section-transferencias" class="space-y-4 w-full hidden">
+      
+      <!-- Painel de Edição Rápida de Transferência (aparece ao clicar em Editar) -->
+      <div id="edit-transfer-panel" class="hidden bg-dark-card border-2 border-blue-500/60 rounded-xl p-4 shadow-2xl space-y-3">
+        <div class="flex items-center justify-between border-b border-dark pb-2">
+          <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
+            <span>✏️</span> Editar Registro de Transferência
+          </h3>
+          <button type="button" onclick="cancelEditTransfer()" class="px-2.5 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold rounded-lg">Cancelar</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-gray-300 mb-1">Jogador</label>
+            <input type="text" id="edit-tr-player" class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-red-400 mb-1">Time que Saiu</label>
+            <input type="text" id="edit-tr-from" list="transfer-teams-datalist" class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-emerald-400 mb-1">Time que Entrou</label>
+            <input type="text" id="edit-tr-to" list="transfer-teams-datalist" class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-yellow-400 mb-1">Títulos pelo Time Anterior</label>
+            <input type="number" min="0" id="edit-tr-titles" class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-yellow-300 focus:outline-none focus:border-yellow-500">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-blue-400 mb-1">Janela</label>
+            <input type="text" id="edit-tr-window" class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <button type="button" onclick="saveEditedTransfer()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold rounded-lg shadow transition flex items-center gap-1.5">
+            <span>💾</span> Salvar Alterações
+          </button>
+        </div>
+      </div>
+
+      <!-- Cabeçalho e Filtros Simultâneos de Transferências -->
+      <div class="bg-dark-card border border-dark rounded-xl p-4 shadow-xl space-y-3">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-dark pb-3">
+          <div>
+            <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+              <span>🔄</span> Histórico de Transferências
+            </h2>
+            <p class="text-xs text-gray-400">Movimentações ordenadas da mais recente (última linha da planilha) para a mais antiga.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Barra de Pesquisa por Nome -->
+            <div class="relative">
+              <input type="text" id="transfer-search-input" oninput="renderSectionTransferencias()" placeholder="Pesquisar por nome do jogador..." class="w-60 sm:w-64 bg-[#21262d] border border-dark rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              <span class="absolute right-2.5 top-1.5 text-xs text-gray-400 pointer-events-none">🔍</span>
+            </div>
+
+            <!-- Filtro Multi-seleção de Times (Separado) -->
+            <div class="relative" id="transfer-team-filter-wrapper">
+              <button type="button" onclick="toggleTransferTeamDropdown()" class="bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-sm">
+                <span>🛡️</span>
+                <span id="label-transfer-team-filter">Times (Todos)</span>
+                <span class="text-xs text-gray-400">▼</span>
+              </button>
+
+              <div id="dropdown-transfer-team-filter" class="hidden absolute right-0 top-full mt-1.5 bg-[#161b22] border border-dark rounded-xl shadow-2xl p-3 z-50 space-y-2 w-72 max-h-80 overflow-y-auto custom-scroll">
+                <input type="text" id="input-search-transfer-team" oninput="renderTransferTeamDropdownOptions()" placeholder="Buscar time..." class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+                <div id="container-transfer-team-options" class="space-y-1"></div>
+              </div>
+            </div>
+
+            <!-- Filtro Multi-seleção de Janelas (Separado) -->
+            <div class="relative" id="transfer-window-filter-wrapper">
+              <button type="button" onclick="toggleTransferWindowDropdown()" class="bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-sm">
+                <span>🗓️</span>
+                <span id="label-transfer-window-filter">Janelas (Todas)</span>
+                <span class="text-xs text-gray-400">▼</span>
+              </button>
+
+              <div id="dropdown-transfer-window-filter" class="hidden absolute right-0 top-full mt-1.5 bg-[#161b22] border border-dark rounded-xl shadow-2xl p-3 z-50 space-y-2 w-64 max-h-80 overflow-y-auto custom-scroll">
+                <div id="container-transfer-window-options" class="space-y-1"></div>
+              </div>
+            </div>
+
+            <button type="button" id="btn-reset-transfer-overrides" onclick="resetTransferLocalOverrides()" class="hidden px-2.5 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold rounded-lg transition" title="Restaurar dados originais da planilha">
+              ↺ Restaurar Planilha
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabela / Timeline de Transferências -->
+        <div class="w-full max-h-[680px] overflow-y-auto overflow-x-auto custom-scroll">
+          <table class="w-full text-left whitespace-nowrap">
+            <thead class="sticky top-0 z-10 bg-[#1f242d] text-gray-400 text-[11px] font-bold uppercase border-b border-dark">
+              <tr>
+                <th class="px-3.5 py-2.5 w-12 text-center">#</th>
+                <th class="px-3.5 py-2.5">Jogador</th>
+                <th class="px-3.5 py-2.5 text-right">Time que Saiu</th>
+                <th class="px-2 py-2.5 text-center w-10"></th>
+                <th class="px-3.5 py-2.5">Time que Entrou</th>
+                <th class="px-3.5 py-2.5 text-center">Títulos pelo Time Anterior</th>
+                <th class="px-3.5 py-2.5 text-center">Janela</th>
+                <th class="px-3.5 py-2.5 text-center w-20">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="container-transferencias-body" class="divide-y divide-dark text-xs text-gray-200"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- PAINEL 2: HISTÓRICO POR REGIÕES -->
@@ -329,6 +495,7 @@
   </div>
 
   <datalist id="registered-maps-list"></datalist>
+  <datalist id="transfer-teams-datalist"></datalist>
 
   <script>
     /* =========================================================================
@@ -341,6 +508,7 @@
     const CSV_URL_HIST_CAMPEOES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1867864365&single=true&output=csv';
     const CSV_URL_HIST_MVPS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=177392940&single=true&output=csv';
     const CSV_URL_LISTA_CAMPS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=186098930&single=true&output=csv';
+    const CSV_URL_TRANSFERENCIAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1257576838&single=true&output=csv';
 
     const DEFAULT_R6_MAPS = [
       'Banco', 'Fronteira', 'Chalé', 'Consulado', 'Café Dostoyevsky', 
@@ -356,9 +524,23 @@
     let dataHistCampeoes = [];
     let dataHistMvps = [];
     let dataListaCamps = [];
+    let dataTransferenciasRaw = [];
 
     let availableRegions = [];
     let activeRegions = new Set();
+
+    // Estado da Aba Composições
+    let compAvailableTeamRegions = [];
+    let compActiveTeamRegions = new Set();
+    let compAvailablePlayerNats = [];
+    let compActivePlayerNats = new Set();
+
+    // Estado da Aba Transferências
+    let selectedTransferTeams = new Set(['ALL']);
+    let selectedTransferWindows = new Set(['ALL']);
+    let transferOverrides = JSON.parse(localStorage.getItem('gcr6_transfer_overrides') || '{}');
+    let deletedTransferIds = new Set(JSON.parse(localStorage.getItem('gcr6_transfer_deleted') || '[]'));
+    let editingTransferId = null;
 
     let selectedTeam1 = localStorage.getItem('gcr6_selected_team1') || '';
     let selectedTeam2 = localStorage.getItem('gcr6_selected_team2') || '';
@@ -397,6 +579,16 @@
         isH2HDropdownOpen = false;
         document.getElementById('comp-dropdown-menu')?.classList.add('hidden');
       }
+
+      const trTeamWrapper = document.getElementById('transfer-team-filter-wrapper');
+      if (trTeamWrapper && !trTeamWrapper.contains(e.target)) {
+        document.getElementById('dropdown-transfer-team-filter')?.classList.add('hidden');
+      }
+
+      const trWinWrapper = document.getElementById('transfer-window-filter-wrapper');
+      if (trWinWrapper && !trWinWrapper.contains(e.target)) {
+        document.getElementById('dropdown-transfer-window-filter')?.classList.add('hidden');
+      }
     });
 
     function getMatchCompAndPhase(m) {
@@ -420,20 +612,27 @@
       };
     }
 
-    function getTeamLogoByName(teamName) {
-      if (!teamName) return '';
+    function getTeamInfoByName(teamName) {
+      if (!teamName) return null;
       const norm = teamName.toLowerCase().trim();
-      const found = dataListaTimes.find(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm)) 
-                 || dataTimes.find(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm));
+      return dataListaTimes.find(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm))
+          || dataTimes.find(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm))
+          || null;
+    }
+
+    function getTeamLogoByName(teamName) {
+      const found = getTeamInfoByName(teamName);
       return found ? found.logo : '';
     }
 
     function getTeamRegionByName(teamName) {
-      if (!teamName) return '';
-      const norm = teamName.toLowerCase().trim();
-      const found = dataListaTimes.find(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm))
-                 || dataTimes.find(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm));
+      const found = getTeamInfoByName(teamName);
       return found ? (found.region || '').toUpperCase() : '';
+    }
+
+    function getTeamTagByName(teamName) {
+      const found = getTeamInfoByName(teamName);
+      return found ? (found.tag || '').toUpperCase() : '';
     }
 
     function getPlayerInfoByName(playerName) {
@@ -530,7 +729,7 @@
     }
 
     function switchMainTab(tabId) {
-      const allTabs = ['times', 'hist-regioes', 'hist-competicoes', 'hist-campeoes', 'hist-mvps', 'jogadores-titulos', 'jogadores-mvps', 'confronto', 'hist-confrontos'];
+      const allTabs = ['times', 'composicoes', 'transferencias', 'hist-regioes', 'hist-competicoes', 'hist-campeoes', 'hist-mvps', 'jogadores-titulos', 'jogadores-mvps', 'confronto', 'hist-confrontos'];
       allTabs.forEach(t => {
         const btn = document.getElementById(`nav-${t}`);
         const section = document.getElementById(`section-${t}`);
@@ -543,7 +742,8 @@
           section.classList.add('hidden');
         }
       });
-      document.getElementById('region-filter-bar').style.display = (tabId === 'hist-competicoes' || tabId === 'confronto' || tabId === 'hist-confrontos') ? 'none' : 'flex';
+      const hideGlobalRegionBar = ['composicoes', 'transferencias', 'hist-competicoes', 'confronto', 'hist-confrontos'].includes(tabId);
+      document.getElementById('region-filter-bar').style.display = hideGlobalRegionBar ? 'none' : 'flex';
     }
 
     function getPosBadge(idx) {
@@ -621,6 +821,8 @@
 
     function renderAllSections() {
       renderSectionTimes();
+      renderSectionComposicoes();
+      renderSectionTransferencias();
       renderSectionHistRegioes();
       renderSectionHistCampeoes();
       renderSectionHistMvps();
@@ -629,6 +831,560 @@
       renderRegisteredMatchesTable();
     }
 
+    /* =========================================================================
+       ABA COMPOSIÇÕES (QUADRINHOS POR TIME + FILTROS DE REGIÃO / NATURALIDADE / BUSCA)
+    ========================================================================= */
+    function setupComposicoesFilters() {
+      const teamRegs = dataJogadores.map(j => getTeamRegionByName(j.team) || 'SEM REGIÃO');
+      const playerNats = dataJogadores.map(j => (j.naturalidade || 'N/I').toUpperCase());
+
+      compAvailableTeamRegions = sortRegionsBRFirst(teamRegs);
+      compAvailablePlayerNats = sortRegionsBRFirst(playerNats);
+
+      compActiveTeamRegions = new Set(compAvailableTeamRegions);
+      compActivePlayerNats = new Set(compAvailablePlayerNats);
+
+      renderComposicoesFilterBars();
+    }
+
+    function toggleCompTeamRegion(reg) {
+      if (reg === 'ALL') {
+        if (compActiveTeamRegions.size === compAvailableTeamRegions.length) {
+          compActiveTeamRegions.clear();
+        } else {
+          compActiveTeamRegions = new Set(compAvailableTeamRegions);
+        }
+      } else {
+        if (compActiveTeamRegions.has(reg)) compActiveTeamRegions.delete(reg);
+        else compActiveTeamRegions.add(reg);
+      }
+      renderComposicoesFilterBars();
+      renderSectionComposicoes();
+    }
+
+    function toggleCompPlayerNat(nat) {
+      if (nat === 'ALL') {
+        if (compActivePlayerNats.size === compAvailablePlayerNats.length) {
+          compActivePlayerNats.clear();
+        } else {
+          compActivePlayerNats = new Set(compAvailablePlayerNats);
+        }
+      } else {
+        if (compActivePlayerNats.has(nat)) compActivePlayerNats.delete(nat);
+        else compActivePlayerNats.add(nat);
+      }
+      renderComposicoesFilterBars();
+      renderSectionComposicoes();
+    }
+
+    function renderComposicoesFilterBars() {
+      const regBar = document.getElementById('comp-team-regions-bar');
+      const natBar = document.getElementById('comp-player-nats-bar');
+      if (!regBar || !natBar) return;
+
+      const isAllReg = compActiveTeamRegions.size === compAvailableTeamRegions.length;
+      regBar.innerHTML = `
+        <button type="button" onclick="toggleCompTeamRegion('ALL')" class="px-2 py-0.5 text-[11px] font-bold rounded transition ${isAllReg ? 'bg-blue-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'}">
+          Todas
+        </button>
+        ${compAvailableTeamRegions.map(r => {
+          const active = compActiveTeamRegions.has(r);
+          return `<button type="button" onclick="toggleCompTeamRegion('${r.replace(/'/g, "\\'")}')" class="px-2 py-0.5 text-[11px] font-bold rounded transition flex items-center gap-1 ${active ? 'bg-blue-600/30 border border-blue-500 text-blue-300' : 'bg-[#21262d] border border-dark text-gray-400 hover:text-white'}"><span>${active ? '✓' : '+'}</span><span>${r}</span></button>`;
+        }).join('')}
+      `;
+
+      const isAllNat = compActivePlayerNats.size === compAvailablePlayerNats.length;
+      natBar.innerHTML = `
+        <button type="button" onclick="toggleCompPlayerNat('ALL')" class="px-2 py-0.5 text-[11px] font-bold rounded transition ${isAllNat ? 'bg-emerald-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'}">
+          Todas
+        </button>
+        ${compAvailablePlayerNats.map(n => {
+          const active = compActivePlayerNats.has(n);
+          return `<button type="button" onclick="toggleCompPlayerNat('${n.replace(/'/g, "\\'")}')" class="px-2 py-0.5 text-[11px] font-bold rounded transition flex items-center gap-1 ${active ? 'bg-emerald-600/30 border border-emerald-500 text-emerald-300' : 'bg-[#21262d] border border-dark text-gray-400 hover:text-white'}"><span>${active ? '✓' : '+'}</span><span>${n}</span></button>`;
+        }).join('')}
+      `;
+    }
+
+    function renderSectionComposicoes() {
+      const container = document.getElementById('container-composicoes');
+      const counter = document.getElementById('composicoes-counter');
+      if (!container) return;
+
+      const query = (document.getElementById('comp-roster-search')?.value || '').toLowerCase().trim();
+
+      // Agrupar jogadores por Time
+      const teamsMap = new Map();
+
+      dataJogadores.forEach(j => {
+        const teamName = (j.team || 'Sem Time').trim();
+        const key = teamName.toLowerCase();
+        const teamInfo = getTeamInfoByName(teamName);
+
+        if (!teamsMap.has(key)) {
+          teamsMap.set(key, {
+            name: teamInfo ? teamInfo.name : teamName,
+            logo: (teamInfo && teamInfo.logo) ? teamInfo.logo : (j.logo || ''),
+            region: (teamInfo && teamInfo.region) ? teamInfo.region.toUpperCase() : 'SEM REGIÃO',
+            tag: (teamInfo && teamInfo.tag) ? teamInfo.tag.toUpperCase() : '-',
+            players: []
+          });
+        }
+
+        const entry = teamsMap.get(key);
+        if (!entry.logo && j.logo) entry.logo = j.logo;
+        entry.players.push({
+          name: j.name,
+          naturalidade: (j.naturalidade || 'N/I').toUpperCase(),
+          titles: j.titles || 0,
+          mvps: j.mvps || 0
+        });
+      });
+
+      const filteredTeams = [];
+
+      teamsMap.forEach(team => {
+        // Filtro por Região do Time
+        if (!compActiveTeamRegions.has(team.region)) return;
+
+        const teamMatchesQuery = !query ||
+          team.name.toLowerCase().includes(query) ||
+          (team.tag && team.tag.toLowerCase().includes(query));
+
+        // Filtrar jogadores pela Naturalidade selecionada e pela busca (se a busca não bateu no time)
+        const matchingPlayers = team.players.filter(p => {
+          const natOk = compActivePlayerNats.has(p.naturalidade);
+          if (!natOk) return false;
+          if (teamMatchesQuery) return true;
+          return p.name.toLowerCase().includes(query);
+        });
+
+        if (matchingPlayers.length > 0) {
+          filteredTeams.push({
+            ...team,
+            players: matchingPlayers.sort((a, b) => b.titles - a.titles || a.name.localeCompare(b.name))
+          });
+        }
+      });
+
+      filteredTeams.sort((a, b) => a.name.localeCompare(b.name));
+
+      if (counter) {
+        const totalPlayers = filteredTeams.reduce((acc, t) => acc + t.players.length, 0);
+        counter.textContent = `${filteredTeams.length} times • ${totalPlayers} jogadores`;
+      }
+
+      if (filteredTeams.length === 0) {
+        container.innerHTML = `<div class="col-span-full bg-dark-card border border-dark rounded-xl p-8 text-center text-xs text-gray-500 font-bold">Nenhuma composição encontrada para os filtros selecionados.</div>`;
+        return;
+      }
+
+      container.innerHTML = filteredTeams.map(team => {
+        const logoHtml = createLogoHtml(team.logo, "w-9 h-9");
+        const rowsHtml = team.players.map(p => `
+          <tr class="hover:bg-dark-hover/50 transition">
+            <td class="px-3 py-2 font-bold text-white text-xs">${p.name}</td>
+            <td class="px-3 py-2 text-center">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${p.naturalidade}</span>
+            </td>
+            <td class="px-3 py-2 text-right font-extrabold text-yellow-400 text-xs font-mono">${p.titles}</td>
+          </tr>
+        `).join('');
+
+        return `
+          <div class="bg-dark-card border border-dark hover:border-blue-500/50 transition rounded-xl overflow-hidden shadow-lg flex flex-col">
+            <div class="bg-[#1f242d] px-3.5 py-3 border-b border-dark flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                ${logoHtml}
+                <div class="min-w-0">
+                  <h3 class="text-sm font-extrabold text-white truncate" title="${team.name}">${team.name}</h3>
+                  <div class="flex items-center gap-1.5 mt-1">
+                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag || '-'}</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${team.region}</span>
+                  </div>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold bg-[#161b22] border border-dark px-2 py-1 rounded-lg text-gray-300 shrink-0">
+                ${team.players.length} jog.
+              </span>
+            </div>
+
+            <div class="w-full overflow-x-hidden">
+              <table class="w-full text-left">
+                <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[10px] uppercase font-bold">
+                  <tr>
+                    <th class="px-3 py-2">Jogador</th>
+                    <th class="px-3 py-2 text-center">Naturalidade</th>
+                    <th class="px-3 py-2 text-right">Títulos</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-dark text-gray-200">
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* =========================================================================
+       ABA TRANSFERÊNCIAS (ORDEM CRONOLÓGICA, FILTROS SEPARADOS, EDIÇÃO/REMOÇÃO)
+    ========================================================================= */
+    function getEffectiveTransfersList() {
+      const list = [];
+
+      dataTransferenciasRaw.forEach(item => {
+        if (deletedTransferIds.has(item.id)) return;
+        const override = transferOverrides[item.id];
+        list.push(override ? { ...item, ...override } : item);
+      });
+
+      // Ordena da linha mais recente (maior rowIndex = última linha da planilha) para a mais antiga
+      return list.sort((a, b) => b.rowIndex - a.rowIndex);
+    }
+
+    function updateTransferDatalistsAndFilters() {
+      const teamsDatalist = document.getElementById('transfer-teams-datalist');
+      if (teamsDatalist) {
+        const allTeamNames = Array.from(new Set([
+          ...dataListaTimes.map(t => t.name),
+          ...dataTimes.map(t => t.name)
+        ].filter(Boolean))).sort();
+        teamsDatalist.innerHTML = allTeamNames.map(n => `<option value="${n}"></option>`).join('');
+      }
+
+      const resetBtn = document.getElementById('btn-reset-transfer-overrides');
+      if (resetBtn) {
+        const hasLocalChanges = Object.keys(transferOverrides).length > 0 || deletedTransferIds.size > 0;
+        resetBtn.classList.toggle('hidden', !hasLocalChanges);
+      }
+
+      renderTransferTeamDropdownOptions();
+      renderTransferWindowDropdownOptions();
+    }
+
+    function getTransferFilterOptions() {
+      const list = getEffectiveTransfersList();
+      const teamsSet = new Set();
+      const windowsSet = new Set();
+
+      list.forEach(t => {
+        if (t.fromTeam && t.fromTeam.trim()) teamsSet.add(t.fromTeam.trim());
+        if (t.toTeam && t.toTeam.trim()) teamsSet.add(t.toTeam.trim());
+        if (t.window && t.window.trim()) windowsSet.add(t.window.trim());
+      });
+
+      return {
+        teams: Array.from(teamsSet).sort((a, b) => a.localeCompare(b)),
+        windows: Array.from(windowsSet)
+      };
+    }
+
+    function toggleTransferTeamDropdown() {
+      const dd = document.getElementById('dropdown-transfer-team-filter');
+      if (dd) {
+        dd.classList.toggle('hidden');
+        if (!dd.classList.contains('hidden')) {
+          renderTransferTeamDropdownOptions();
+          setTimeout(() => document.getElementById('input-search-transfer-team')?.focus(), 10);
+        }
+      }
+    }
+
+    function toggleTransferWindowDropdown() {
+      const dd = document.getElementById('dropdown-transfer-window-filter');
+      if (dd) {
+        dd.classList.toggle('hidden');
+        if (!dd.classList.contains('hidden')) {
+          renderTransferWindowDropdownOptions();
+        }
+      }
+    }
+
+    function renderTransferTeamDropdownOptions() {
+      const container = document.getElementById('container-transfer-team-options');
+      const label = document.getElementById('label-transfer-team-filter');
+      if (!container || !label) return;
+
+      const { teams } = getTransferFilterOptions();
+      const searchQ = (document.getElementById('input-search-transfer-team')?.value || '').toLowerCase().trim();
+      const isAll = selectedTransferTeams.has('ALL');
+
+      label.textContent = isAll
+        ? 'Times (Todos)'
+        : `Times (${selectedTransferTeams.size} selecionados)`;
+
+      const filteredTeams = teams.filter(t => !searchQ || t.toLowerCase().includes(searchQ));
+
+      let html = `
+        <label class="flex items-center gap-2 text-xs font-extrabold text-blue-400 bg-[#1f242d] p-2 rounded-lg cursor-pointer border border-blue-500/30">
+          <input type="checkbox" ${isAll ? 'checked' : ''} onchange="toggleTransferTeamSelection('ALL')" class="rounded accent-blue-600">
+          <span>Todos os Times</span>
+        </label>
+      `;
+
+      filteredTeams.forEach(team => {
+        const isChecked = isAll || selectedTransferTeams.has(team);
+        const logoHtml = createLogoHtml(getTeamLogoByName(team), "w-4 h-4");
+        const safeTeam = team.replace(/'/g, "\\'");
+
+        html += `
+          <label class="flex items-center gap-2 text-xs font-semibold text-gray-200 hover:bg-dark-hover px-2 py-1.5 rounded cursor-pointer">
+            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTransferTeamSelection('${safeTeam}')" class="rounded accent-blue-600">
+            ${logoHtml}
+            <span class="truncate">${team}</span>
+          </label>
+        `;
+      });
+
+      if (filteredTeams.length === 0) {
+        html += `<div class="text-xs text-gray-500 text-center py-2">Nenhum time encontrado.</div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function renderTransferWindowDropdownOptions() {
+      const container = document.getElementById('container-transfer-window-options');
+      const label = document.getElementById('label-transfer-window-filter');
+      if (!container || !label) return;
+
+      const { windows } = getTransferFilterOptions();
+      const isAll = selectedTransferWindows.has('ALL');
+
+      label.textContent = isAll
+        ? 'Janelas (Todas)'
+        : `Janelas (${selectedTransferWindows.size} selecionadas)`;
+
+      let html = `
+        <label class="flex items-center gap-2 text-xs font-extrabold text-emerald-400 bg-[#1f242d] p-2 rounded-lg cursor-pointer border border-emerald-500/30">
+          <input type="checkbox" ${isAll ? 'checked' : ''} onchange="toggleTransferWindowSelection('ALL')" class="rounded accent-emerald-600">
+          <span>Todas as Janelas</span>
+        </label>
+      `;
+
+      windows.forEach(win => {
+        const isChecked = isAll || selectedTransferWindows.has(win);
+        const safeWin = win.replace(/'/g, "\\'");
+
+        html += `
+          <label class="flex items-center gap-2 text-xs font-semibold text-gray-200 hover:bg-dark-hover px-2 py-1.5 rounded cursor-pointer">
+            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTransferWindowSelection('${safeWin}')" class="rounded accent-emerald-600">
+            <span class="truncate">${win}</span>
+          </label>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function toggleTransferTeamSelection(teamName) {
+      const { teams } = getTransferFilterOptions();
+      if (teamName === 'ALL') {
+        if (selectedTransferTeams.has('ALL')) selectedTransferTeams.clear();
+        else selectedTransferTeams = new Set(['ALL']);
+      } else {
+        if (selectedTransferTeams.has('ALL')) {
+          selectedTransferTeams = new Set(teams);
+        }
+        if (selectedTransferTeams.has(teamName)) selectedTransferTeams.delete(teamName);
+        else selectedTransferTeams.add(teamName);
+
+        if (teams.length > 0 && selectedTransferTeams.size === teams.length) {
+          selectedTransferTeams = new Set(['ALL']);
+        }
+      }
+      renderTransferTeamDropdownOptions();
+      renderSectionTransferencias();
+    }
+
+    function toggleTransferWindowSelection(winName) {
+      const { windows } = getTransferFilterOptions();
+      if (winName === 'ALL') {
+        if (selectedTransferWindows.has('ALL')) selectedTransferWindows.clear();
+        else selectedTransferWindows = new Set(['ALL']);
+      } else {
+        if (selectedTransferWindows.has('ALL')) {
+          selectedTransferWindows = new Set(windows);
+        }
+        if (selectedTransferWindows.has(winName)) selectedTransferWindows.delete(winName);
+        else selectedTransferWindows.add(winName);
+
+        if (windows.length > 0 && selectedTransferWindows.size === windows.length) {
+          selectedTransferWindows = new Set(['ALL']);
+        }
+      }
+      renderTransferWindowDropdownOptions();
+      renderSectionTransferencias();
+    }
+
+    function renderSectionTransferencias() {
+      const body = document.getElementById('container-transferencias-body');
+      if (!body) return;
+
+      const list = getEffectiveTransfersList();
+      const query = (document.getElementById('transfer-search-input')?.value || '').toLowerCase().trim();
+      const isAllTeams = selectedTransferTeams.has('ALL');
+      const isAllWindows = selectedTransferWindows.has('ALL');
+
+      const filtered = list.filter(tr => {
+        // Filtro por Nome
+        if (query) {
+          const matchPlayer = (tr.player || '').toLowerCase().includes(query);
+          const matchFrom = (tr.fromTeam || '').toLowerCase().includes(query);
+          const matchTo = (tr.toTeam || '').toLowerCase().includes(query);
+          if (!matchPlayer && !matchFrom && !matchTo) return false;
+        }
+
+        // Filtro por Time (1 ou mais - verifica time que saiu ou time que entrou)
+        if (!isAllTeams) {
+          const hasFrom = selectedTransferTeams.has(tr.fromTeam);
+          const hasTo = selectedTransferTeams.has(tr.toTeam);
+          if (!hasFrom && !hasTo) return false;
+        }
+
+        // Filtro por Janela (1 ou mais)
+        if (!isAllWindows) {
+          if (!selectedTransferWindows.has(tr.window)) return false;
+        }
+
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-xs text-gray-500">Nenhuma transferência encontrada com os filtros atuais.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = filtered.map((tr, idx) => {
+        const fromLogoUrl = tr.fromLogo || getTeamLogoByName(tr.fromTeam);
+        const toLogoUrl = tr.toLogo || getTeamLogoByName(tr.toTeam);
+
+        const fromLogoHtml = createLogoHtml(fromLogoUrl, "w-6 h-6");
+        const toLogoHtml = createLogoHtml(toLogoUrl, "w-6 h-6");
+
+        const isLatestBadge = idx === 0 && !query && isAllTeams && isAllWindows
+          ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Mais Recente</span>`
+          : '';
+
+        const titlesCount = parseInt(tr.titlesWon || '0', 10) || 0;
+        const titlesBadge = titlesCount > 0
+          ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 font-extrabold text-xs font-mono">🏆 ${titlesCount}</span>`
+          : `<span class="text-gray-500 font-mono text-xs">0</span>`;
+
+        const safeId = tr.id.replace(/'/g, "\\'");
+
+        return `
+          <tr class="hover:bg-dark-hover/50 transition">
+            <td class="px-3.5 py-2.5 text-center font-mono text-gray-500 font-bold">${filtered.length - idx}º</td>
+            <td class="px-3.5 py-2.5 font-extrabold text-white text-xs">
+              <span>${tr.player}</span>${isLatestBadge}
+            </td>
+            <td class="px-3.5 py-2.5 text-right font-bold text-red-300 text-xs">
+              <div class="flex items-center justify-end gap-2">
+                <span>${tr.fromTeam || 'Sem Time'}</span>
+                ${fromLogoHtml}
+              </div>
+            </td>
+            <td class="px-2 py-2.5 text-center">
+              <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 font-black text-xs">➔</span>
+            </td>
+            <td class="px-3.5 py-2.5 font-bold text-emerald-300 text-xs">
+              <div class="flex items-center gap-2">
+                ${toLogoHtml}
+                <span>${tr.toTeam || 'Sem Time'}</span>
+              </div>
+            </td>
+            <td class="px-3.5 py-2.5 text-center">${titlesBadge}</td>
+            <td class="px-3.5 py-2.5 text-center">
+              <span class="px-2.5 py-0.5 rounded bg-blue-500/15 border border-blue-500/30 text-blue-300 font-mono font-bold text-[11px]">${tr.window || '-'}</span>
+            </td>
+            <td class="px-3.5 py-2.5 text-center whitespace-nowrap">
+              <button type="button" onclick="editTransferRow('${safeId}')" class="text-xs text-blue-400 hover:text-blue-300 font-bold p-1 mr-1" title="Editar Transferência">✏️</button>
+              <button type="button" onclick="deleteTransferRow('${safeId}')" class="text-xs text-red-400 hover:text-red-300 font-bold p-1" title="Remover Transferência">🗑️</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function editTransferRow(id) {
+      const list = getEffectiveTransfersList();
+      const item = list.find(t => t.id === id);
+      if (!item) return;
+
+      editingTransferId = id;
+      document.getElementById('edit-tr-player').value = item.player || '';
+      document.getElementById('edit-tr-from').value = item.fromTeam || '';
+      document.getElementById('edit-tr-to').value = item.toTeam || '';
+      document.getElementById('edit-tr-titles').value = item.titlesWon || 0;
+      document.getElementById('edit-tr-window').value = item.window || '';
+
+      const panel = document.getElementById('edit-transfer-panel');
+      panel.classList.remove('hidden');
+      panel.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEditTransfer() {
+      editingTransferId = null;
+      document.getElementById('edit-transfer-panel')?.classList.add('hidden');
+    }
+
+    function saveEditedTransfer() {
+      if (!editingTransferId) return;
+
+      const player = document.getElementById('edit-tr-player').value.trim();
+      const fromTeam = document.getElementById('edit-tr-from').value.trim();
+      const toTeam = document.getElementById('edit-tr-to').value.trim();
+      const titlesWon = parseInt(document.getElementById('edit-tr-titles').value || '0', 10) || 0;
+      const win = document.getElementById('edit-tr-window').value.trim();
+
+      if (!player) {
+        alert('⚠️ Informe o nome do jogador.');
+        return;
+      }
+
+      transferOverrides[editingTransferId] = {
+        player,
+        fromTeam,
+        fromLogo: getTeamLogoByName(fromTeam),
+        toTeam,
+        toLogo: getTeamLogoByName(toTeam),
+        titlesWon,
+        window: win
+      };
+
+      localStorage.setItem('gcr6_transfer_overrides', JSON.stringify(transferOverrides));
+      cancelEditTransfer();
+      updateTransferDatalistsAndFilters();
+      renderSectionTransferencias();
+    }
+
+    function deleteTransferRow(id) {
+      if (confirm('Deseja realmente remover esta transferência da lista?')) {
+        deletedTransferIds.add(id);
+        localStorage.setItem('gcr6_transfer_deleted', JSON.stringify(Array.from(deletedTransferIds)));
+        if (editingTransferId === id) cancelEditTransfer();
+        updateTransferDatalistsAndFilters();
+        renderSectionTransferencias();
+      }
+    }
+
+    function resetTransferLocalOverrides() {
+      if (confirm('Deseja restaurar todas as transferências exatamente como estão na planilha?')) {
+        transferOverrides = {};
+        deletedTransferIds.clear();
+        localStorage.removeItem('gcr6_transfer_overrides');
+        localStorage.removeItem('gcr6_transfer_deleted');
+        cancelEditTransfer();
+        updateTransferDatalistsAndFilters();
+        renderSectionTransferencias();
+      }
+    }
+
+    /* =========================================================================
+       ABA RANKING TIMES
+    ========================================================================= */
     function renderSectionTimes() {
       const container = document.getElementById('container-times');
       container.innerHTML = '';
@@ -758,19 +1514,16 @@
     }
 
     function resolveHistoricalEntityLogo(item) {
-      // 1. Se existe um time histórico registrado na conquista/MVP, usa sempre a logo desse time da época
       if (item.team && item.team.trim()) {
         const teamLogo = getTeamLogoByName(item.team);
         if (teamLogo) return teamLogo;
       }
 
-      // 2. Se a própria entidade é um time cadastrado, usa a logo desse time
       if (item.entity && item.entity.trim()) {
         const entityAsTeamLogo = getTeamLogoByName(item.entity);
         if (entityAsTeamLogo) return entityAsTeamLogo;
       }
 
-      // 3. Usa a logo fornecida na própria linha da planilha histórica (preservada da época)
       if (item.logo && item.logo.trim()) {
         return item.logo.trim();
       }
@@ -1652,7 +2405,6 @@
 
         return `
           <div class="bg-[#1f242d] border border-dark hover:border-gray-600 transition rounded-lg p-2.5 flex flex-col gap-2">
-            <!-- Linha Superior: Nome do Mapa + Quantidade de vezes jogado -->
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-1.5 min-w-0" title="${loc.location}">
                 <span class="text-xs shrink-0">🗺️</span>
@@ -1663,7 +2415,6 @@
               </span>
             </div>
 
-            <!-- Linha Inferior: Placar com Logos + Barra Proporcional -->
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-1.5 shrink-0">
                 ${createLogoHtml(team1.logo, "w-4 h-4")}
@@ -2621,6 +3372,71 @@
       });
     }
 
+    function parseTransferenciasCsv(csvText) {
+      const rows = parseCsvRows(csvText);
+      if (rows.length === 0) return [];
+
+      const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
+      const headerKeywords = ['jogador', 'player', 'nome', 'saiu', 'anterior', 'origem', 'de', 'entrou', 'novo', 'atual', 'destino', 'para', 'titulo', 'janela', 'momento', 'temporada'];
+      const hasHeader = headerRow.some(h => headerKeywords.some(k => h === k || h.includes(k)));
+
+      let idxPlayer = -1, idxFrom = -1, idxTo = -1, idxTitles = -1, idxWindow = -1, idxFromLogo = -1, idxToLogo = -1;
+
+      if (hasHeader) {
+        headerRow.forEach((h, i) => {
+          if (idxPlayer === -1 && (h.includes('jog') || h.includes('player') || h === 'nome')) idxPlayer = i;
+          else if (idxFromLogo === -1 && h.includes('logo') && (h.includes('sai') || h.includes('ant') || h.includes('de') || h.includes('orig'))) idxFromLogo = i;
+          else if (idxToLogo === -1 && h.includes('logo') && (h.includes('ent') || h.includes('nov') || h.includes('atu') || h.includes('para') || h.includes('dest'))) idxToLogo = i;
+          else if (idxFrom === -1 && (h.includes('sai') || h.includes('ant') || h.includes('orig') || h === 'de' || h.includes('ex-'))) idxFrom = i;
+          else if (idxTo === -1 && (h.includes('ent') || h.includes('nov') || h.includes('atu') || h.includes('dest') || h === 'para')) idxTo = i;
+          else if (idxTitles === -1 && h.includes('titul')) idxTitles = i;
+          else if (idxWindow === -1 && (h.includes('janel') || h.includes('moment') || h.includes('temp') || h.includes('data') || h.includes('edicao'))) idxWindow = i;
+        });
+      }
+
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+      const invalidNames = ['jogador', 'player', 'nome', 'transferencias', 'transferências'];
+
+      return dataRows.map((r, rowIdx) => {
+        let player = '', fromTeam = '', toTeam = '', titlesWon = 0, win = '', fromLogo = '', toLogo = '';
+
+        if (hasHeader) {
+          player = idxPlayer !== -1 ? (r[idxPlayer] || '') : (r[0] || '');
+          fromTeam = idxFrom !== -1 ? (r[idxFrom] || '') : (r[1] || '');
+          toTeam = idxTo !== -1 ? (r[idxTo] || '') : (r[2] || '');
+          titlesWon = idxTitles !== -1 ? (parseInt(r[idxTitles] || '0', 10) || 0) : (parseInt(r[3] || '0', 10) || 0);
+          win = idxWindow !== -1 ? (r[idxWindow] || '') : (r[4] || '');
+          fromLogo = idxFromLogo !== -1 ? (r[idxFromLogo] || '') : '';
+          toLogo = idxToLogo !== -1 ? (r[idxToLogo] || '') : '';
+        } else {
+          const nonUrlCols = r.filter(v => !/^https?:\/\//i.test(v));
+          const urlCols = r.filter(v => /^https?:\/\//i.test(v));
+          player = nonUrlCols[0] || '';
+          fromTeam = nonUrlCols[1] || '';
+          toTeam = nonUrlCols[2] || '';
+          titlesWon = parseInt(nonUrlCols[3] || '0', 10) || 0;
+          win = nonUrlCols[4] || '';
+          fromLogo = urlCols[0] || '';
+          toLogo = urlCols[1] || '';
+        }
+
+        return {
+          id: `tr_${rowIdx}_${player}_${fromTeam}_${toTeam}_${win}`.replace(/\s+/g, '_'),
+          rowIndex: rowIdx,
+          player: player.trim(),
+          fromTeam: fromTeam.trim(),
+          fromLogo: fromLogo.trim(),
+          toTeam: toTeam.trim(),
+          toLogo: toLogo.trim(),
+          titlesWon,
+          window: win.trim()
+        };
+      }).filter(item => {
+        if (!item.player) return false;
+        return !invalidNames.includes(item.player.toLowerCase());
+      });
+    }
+
     function isKnownTeamName(val) {
       if (!val) return false;
       const norm = val.toLowerCase().trim();
@@ -2831,6 +3647,7 @@
       dataHistCampeoes = await fetchCsvData(CSV_URL_HIST_CAMPEOES, parseHistoryEntityCsv);
       dataHistMvps = await fetchCsvData(CSV_URL_HIST_MVPS, parseHistoryEntityCsv);
       dataListaCamps = await fetchCsvData(CSV_URL_LISTA_CAMPS, parseListaCampsCsv);
+      dataTransferenciasRaw = await fetchCsvData(CSV_URL_TRANSFERENCIAS, parseTransferenciasCsv);
 
       label.textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
 
@@ -2844,6 +3661,8 @@
       }
 
       updateAvailableRegions();
+      setupComposicoesFilters();
+      updateTransferDatalistsAndFilters();
       renderAllSections();
       setupCompetitionOptions();
       setupConfrontoOptions();
