@@ -50,6 +50,12 @@
         <button id="nav-hist-competicoes" onclick="switchMainTab('hist-competicoes')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Histórico (Por Competição)
         </button>
+        <button id="nav-hist-campeoes" onclick="switchMainTab('hist-campeoes')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+          Histórico de Campeões
+        </button>
+        <button id="nav-hist-mvps" onclick="switchMainTab('hist-mvps')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+          Histórico de MVPs
+        </button>
         <button id="nav-jogadores-titulos" onclick="switchMainTab('jogadores-titulos')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Jogadores (Títulos)
         </button>
@@ -105,6 +111,22 @@
       </div>
       
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start w-full" id="container-hist-competicoes"></div>
+    </div>
+
+    <!-- PAINEL NOVA ABA 1: HISTÓRICO DE CAMPEÕES -->
+    <div id="section-hist-campeoes" class="space-y-3 w-full hidden">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+        <span>🏅</span> Histórico de Campeões (Geral + Regiões Selecionadas)
+      </h2>
+      <div class="flex flex-nowrap items-start gap-4 overflow-x-auto pb-3 custom-scroll w-full" id="container-hist-campeoes"></div>
+    </div>
+
+    <!-- PAINEL NOVA ABA 2: HISTÓRICO DE MVPS -->
+    <div id="section-hist-mvps" class="space-y-3 w-full hidden">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+        <span>🌟</span> Histórico de MVPs (Geral + Regiões Selecionadas)
+      </h2>
+      <div class="flex flex-nowrap items-start gap-4 overflow-x-auto pb-3 custom-scroll w-full" id="container-hist-mvps"></div>
     </div>
 
     <!-- PAINEL 4: JOGADORES POR TÍTULOS -->
@@ -316,6 +338,9 @@
     const CSV_URL_HISTORICO = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=195413319&single=true&output=csv';
     const CSV_URL_JOGADORES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1601155160&single=true&output=csv';
     const CSV_URL_LISTA_TIMES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=913455731&single=true&output=csv';
+    const CSV_URL_HIST_CAMPEOES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1867864365&single=true&output=csv';
+    const CSV_URL_HIST_MVPS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=177392940&single=true&output=csv';
+    const CSV_URL_LISTA_CAMPS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=186098930&single=true&output=csv';
 
     const DEFAULT_R6_MAPS = [
       'Banco', 'Fronteira', 'Chalé', 'Consulado', 'Café Dostoyevsky', 
@@ -328,6 +353,9 @@
     let dataHistorico = [];
     let dataJogadores = [];
     let dataListaTimes = [];
+    let dataHistCampeoes = [];
+    let dataHistMvps = [];
+    let dataListaCamps = [];
 
     let availableRegions = [];
     let activeRegions = new Set();
@@ -408,6 +436,37 @@
       return found ? (found.region || '').toUpperCase() : '';
     }
 
+    function getPlayerInfoByName(playerName) {
+      if (!playerName) return null;
+      const norm = playerName.toLowerCase().trim();
+      return dataJogadores.find(j => j.name.toLowerCase().trim() === norm) || null;
+    }
+
+    function getLeagueByTeamOrRegion(teamName, regionName) {
+      if (!dataListaCamps || dataListaCamps.length === 0) return '';
+      const tNorm = (teamName || '').toLowerCase().trim();
+      const rNorm = (regionName || '').toUpperCase().trim();
+
+      if (tNorm) {
+        const byTeam = dataListaCamps.find(c => c.team && c.team.toLowerCase().trim() === tNorm);
+        if (byTeam && byTeam.league) return byTeam.league;
+      }
+
+      if (rNorm) {
+        const regMatches = dataListaCamps.filter(c => (c.region || '').toUpperCase().trim() === rNorm && c.league);
+        if (regMatches.length > 0) {
+          const explicitLeague = regMatches.find(c =>
+            (c.type && c.type.toLowerCase().includes('liga')) ||
+            c.league.toLowerCase().includes('liga') ||
+            c.league.toLowerCase().includes('league')
+          );
+          return (explicitLeague || regMatches[0]).league;
+        }
+      }
+
+      return '';
+    }
+
     function escapeRegExp(string) {
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
@@ -471,10 +530,11 @@
     }
 
     function switchMainTab(tabId) {
-      const allTabs = ['times', 'hist-regioes', 'hist-competicoes', 'jogadores-titulos', 'jogadores-mvps', 'confronto', 'hist-confrontos'];
+      const allTabs = ['times', 'hist-regioes', 'hist-competicoes', 'hist-campeoes', 'hist-mvps', 'jogadores-titulos', 'jogadores-mvps', 'confronto', 'hist-confrontos'];
       allTabs.forEach(t => {
         const btn = document.getElementById(`nav-${t}`);
         const section = document.getElementById(`section-${t}`);
+        if (!btn || !section) return;
         if (t === tabId) {
           btn.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow";
           section.classList.remove('hidden');
@@ -506,9 +566,11 @@
       const regTimes = dataTimes.map(t => t.region);
       const regListaTimes = dataListaTimes.map(t => t.region);
       const regHist = dataHistorico.map(h => h.region);
+      const regHistCamp = dataHistCampeoes.map(h => h.region);
+      const regHistMvp = dataHistMvps.map(h => h.region);
       const regJog = dataJogadores.map(j => j.naturalidade);
 
-      availableRegions = sortRegionsBRFirst([...regTimes, ...regListaTimes, ...regHist, ...regJog]);
+      availableRegions = sortRegionsBRFirst([...regTimes, ...regListaTimes, ...regHist, ...regHistCamp, ...regHistMvp, ...regJog]);
       activeRegions = new Set(availableRegions);
       renderRegionFilterUI();
     }
@@ -560,6 +622,8 @@
     function renderAllSections() {
       renderSectionTimes();
       renderSectionHistRegioes();
+      renderSectionHistCampeoes();
+      renderSectionHistMvps();
       renderSectionJogadoresTitulos();
       renderSectionJogadoresMVPs();
       renderRegisteredMatchesTable();
@@ -690,6 +754,106 @@
           </div>
         `;
         container.appendChild(card);
+      });
+    }
+
+    function renderHistoryCardsGrid({ containerId, dataList, entityHeaderLabel, accentTextClass, badgeBgClass }) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '';
+
+      const selectedRegs = availableRegions.filter(r => activeRegions.has(r));
+
+      const groups = [
+        { title: 'Geral', list: dataList, isGeral: true },
+        ...selectedRegs.map(r => ({
+          title: `Região ${r}`,
+          list: dataList.filter(item => item.region === r),
+          isGeral: false
+        }))
+      ];
+
+      groups.forEach(group => {
+        const card = document.createElement('div');
+        card.className = group.isGeral
+          ? "sticky left-0 z-20 w-max min-w-[430px] shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col"
+          : "w-max min-w-[370px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+
+        const hasTeamCol = group.list.some(item => item.team && item.team.trim() !== '');
+        const hasTagCol = !hasTeamCol && group.list.some(item => item.tag && item.tag.trim() !== '');
+
+        let rowsHtml = group.list.map(item => {
+          const logoUrl = item.logo || getTeamLogoByName(item.team) || getTeamLogoByName(item.entity);
+          const logo = createLogoHtml(logoUrl, "w-6 h-6");
+          const teamCell = hasTeamCol
+            ? `<td class="px-3.5 py-2.5 text-xs font-semibold text-gray-300 whitespace-nowrap">${item.team || '-'}</td>`
+            : (hasTagCol ? `<td class="px-3.5 py-2.5 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>` : '');
+          const regionTd = group.isGeral
+            ? `<td class="px-3.5 py-2.5 text-xs font-bold text-blue-400 whitespace-nowrap">${item.region || '-'}</td>`
+            : '';
+
+          return `
+            <tr class="hover:bg-dark-hover/50">
+              <td class="px-3.5 py-2.5 font-bold text-white text-xs whitespace-nowrap">${item.comp || '-'}</td>
+              <td class="px-3.5 py-2.5 text-xs text-blue-400 font-mono font-bold whitespace-nowrap">${item.season || '-'}</td>
+              <td class="px-3.5 py-2.5 text-xs font-bold ${accentTextClass} whitespace-nowrap">
+                <div class="flex items-center gap-2">${logo}<span>${item.entity || '-'}</span></div>
+              </td>
+              ${teamCell}
+              ${regionTd}
+            </tr>
+          `;
+        }).join('');
+
+        const extraTh = hasTeamCol
+          ? `<th class="px-3.5 py-2.5 whitespace-nowrap">Time</th>`
+          : (hasTagCol ? `<th class="px-3.5 py-2.5 whitespace-nowrap">TAG</th>` : '');
+        const regionTh = group.isGeral ? `<th class="px-3.5 py-2.5 whitespace-nowrap">Região</th>` : '';
+        const colCount = 3 + (hasTeamCol || hasTagCol ? 1 : 0) + (group.isGeral ? 1 : 0);
+
+        card.innerHTML = `
+          <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center gap-4 shrink-0">
+            <h3 class="font-bold text-sm text-white whitespace-nowrap flex items-center gap-1.5">
+              ${group.isGeral ? '📌 ' : ''}${group.title}
+            </h3>
+            <span class="text-xs ${badgeBgClass} px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap">${group.list.length} registros</span>
+          </div>
+          <div class="w-full max-h-[680px] overflow-y-auto overflow-x-hidden custom-scroll">
+            <table class="w-full text-left whitespace-nowrap">
+              <thead class="sticky top-0 z-10 bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
+                <tr>
+                  <th class="px-3.5 py-2.5">Competição</th>
+                  <th class="px-3.5 py-2.5">Temp.</th>
+                  <th class="px-3.5 py-2.5">${entityHeaderLabel}</th>
+                  ${extraTh}
+                  ${regionTh}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dark text-gray-200">${rowsHtml || `<tr><td colspan="${colCount}" class="p-5 text-center text-xs text-gray-500">Sem dados</td></tr>`}</tbody>
+            </table>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderSectionHistCampeoes() {
+      renderHistoryCardsGrid({
+        containerId: 'container-hist-campeoes',
+        dataList: dataHistCampeoes,
+        entityHeaderLabel: 'Campeão',
+        accentTextClass: 'text-yellow-400',
+        badgeBgClass: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+      });
+    }
+
+    function renderSectionHistMvps() {
+      renderHistoryCardsGrid({
+        containerId: 'container-hist-mvps',
+        dataList: dataHistMvps,
+        entityHeaderLabel: 'MVP',
+        accentTextClass: 'text-purple-400',
+        badgeBgClass: 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
       });
     }
 
@@ -1010,15 +1174,17 @@
       listEl.innerHTML = filtered.map(t => {
         const logo = createLogoHtml(t.logo, "w-5 h-5");
         const safeName = t.name.replace(/'/g, "\\'");
+        const leagueName = getLeagueByTeamOrRegion(t.name, t.region);
         return `
-          <div onclick="selectTeamForConfronto(${teamNum}, '${safeName}')" class="px-3 py-2 hover:bg-dark-hover flex items-center justify-between cursor-pointer transition">
-            <div class="flex items-center gap-2">
+          <div onclick="selectTeamForConfronto(${teamNum}, '${safeName}')" class="px-3 py-2 hover:bg-dark-hover flex items-center justify-between cursor-pointer transition gap-2">
+            <div class="flex items-center gap-2 min-w-0">
               ${logo}
-              <span class="text-xs font-bold text-white">${t.name}</span>
+              <span class="text-xs font-bold text-white truncate">${t.name}</span>
             </div>
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 shrink-0">
               <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${t.tag || '-'}</span>
               <span class="text-[10px] font-bold text-blue-400">${t.region || '-'}</span>
+              ${leagueName ? `<span class="text-[10px] font-semibold text-emerald-300">• ${leagueName}</span>` : ''}
             </div>
           </div>
         `;
@@ -1214,6 +1380,7 @@
 
       function buildTeamCardHtml(team, players, accentColor, borderAccent) {
         const logo = createLogoHtml(team.logo, "w-9 h-9");
+        const leagueName = getLeagueByTeamOrRegion(team.name, team.region);
         
         let playerRows = players.map(p => `
           <tr class="hover:bg-dark-hover/50 transition">
@@ -1229,18 +1396,19 @@
 
         return `
           <div class="bg-dark-card border-2 ${borderAccent} rounded-xl overflow-hidden shadow-xl flex flex-col w-full min-h-[360px]">
-            <div class="bg-[#1f242d] p-4 border-b border-dark flex items-center justify-between">
-              <div class="flex items-center gap-3">
+            <div class="bg-[#1f242d] p-4 border-b border-dark flex items-center justify-between gap-2">
+              <div class="flex items-center gap-3 min-w-0">
                 ${logo}
-                <div>
-                  <h3 class="text-lg font-extrabold text-white">${team.name}</h3>
-                  <div class="flex items-center gap-1.5 mt-0.5">
+                <div class="min-w-0">
+                  <h3 class="text-lg font-extrabold text-white truncate">${team.name}</h3>
+                  <div class="flex flex-wrap items-center gap-1.5 mt-1">
                     <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag || '-'}</span>
                     <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${team.region || '-'}</span>
+                    ${leagueName ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">🏆 ${leagueName}</span>` : ''}
                   </div>
                 </div>
               </div>
-              <div class="text-right bg-[#161b22] px-3 py-1.5 rounded-lg border border-dark">
+              <div class="text-right bg-[#161b22] px-3 py-1.5 rounded-lg border border-dark shrink-0">
                 <span class="block text-[9px] uppercase font-bold text-gray-400">Títulos</span>
                 <span class="text-2xl font-black text-yellow-400">${team.titles}</span>
               </div>
@@ -2366,6 +2534,147 @@
       });
     }
 
+    function parseHistoryEntityCsv(csvText) {
+      const rows = parseCsvRows(csvText);
+      if (rows.length === 0) return [];
+
+      const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
+      const headerKeywords = ['regiao', 'competicao', 'torneio', 'temporada', 'edicao', 'campeao', 'jogador', 'mvp', 'player', 'time', 'equipe', 'logo', 'tag'];
+      const hasHeader = headerRow.some(h => headerKeywords.some(k => h === k || h.includes(k)));
+
+      let idxReg = -1, idxComp = -1, idxSeason = -1, idxEntity = -1, idxTeam = -1, idxLogo = -1, idxTag = -1;
+
+      if (hasHeader) {
+        headerRow.forEach((h, i) => {
+          if (idxReg === -1 && h.includes('regi')) idxReg = i;
+          else if (idxComp === -1 && (h.includes('comp') || h.includes('torneio') || h.includes('liga'))) idxComp = i;
+          else if (idxSeason === -1 && (h.includes('temp') || h.includes('edicao') || h.includes('ano'))) idxSeason = i;
+          else if (idxEntity === -1 && (h.includes('campe') || h.includes('mvp') || h.includes('jogador') || h.includes('player') || h.includes('vencedor'))) idxEntity = i;
+          else if (idxTeam === -1 && (h.includes('time') || h.includes('equipe') || h.includes('clube'))) idxTeam = i;
+          else if (idxLogo === -1 && (h.includes('logo') || h.includes('escudo') || h.includes('img'))) idxLogo = i;
+          else if (idxTag === -1 && h.includes('tag')) idxTag = i;
+        });
+      }
+
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+      const invalidWords = ['região', 'regiao', 'geral', 'competição', 'competicao', 'campeão', 'campeao', 'mvp', 'jogador'];
+
+      return dataRows.map(r => {
+        if (hasHeader) {
+          const entityVal = idxEntity !== -1 ? (r[idxEntity] || '') : (r[3] || r[0] || '');
+          const teamVal = idxTeam !== -1 ? (r[idxTeam] || '') : '';
+          const logoVal = idxLogo !== -1 ? (r[idxLogo] || '') : (r.find(v => /^https?:\/\//i.test(v)) || '');
+          const tagVal = idxTag !== -1 ? (r[idxTag] || '').toUpperCase() : '';
+          let regionVal = idxReg !== -1 ? (r[idxReg] || '').toUpperCase() : (r[0] || '').toUpperCase();
+          const compVal = idxComp !== -1 ? (r[idxComp] || '') : (r[1] || '');
+          const seasonVal = idxSeason !== -1 ? (r[idxSeason] || '') : (r[2] || '');
+
+          if (!regionVal && teamVal) regionVal = getTeamRegionByName(teamVal);
+          if (!regionVal && entityVal) {
+            const pInfo = getPlayerInfoByName(entityVal);
+            regionVal = pInfo ? (getTeamRegionByName(pInfo.team) || pInfo.naturalidade) : getTeamRegionByName(entityVal);
+          }
+
+          return {
+            region: regionVal,
+            comp: compVal,
+            season: seasonVal,
+            entity: entityVal,
+            team: teamVal,
+            logo: logoVal,
+            tag: tagVal
+          };
+        }
+
+        const logoIdx = r.findIndex(v => /^https?:\/\//i.test(v));
+        const logoVal = logoIdx !== -1 ? r[logoIdx] : '';
+        const regionVal = (r[0] || '').toUpperCase();
+        const compVal = r[1] || '';
+        const seasonVal = r[2] || '';
+        const entityVal = r[3] || '';
+        let teamVal = '';
+        let tagVal = '';
+
+        if (r[4] && r[4] !== logoVal) {
+          if (r[4].length <= 5 && r[4] === r[4].toUpperCase()) tagVal = r[4];
+          else teamVal = r[4];
+        }
+        if (r[5] && r[5] !== logoVal) {
+          if (r[5].length <= 5 && r[5] === r[5].toUpperCase() && !tagVal) tagVal = r[5];
+          else if (!teamVal) teamVal = r[5];
+        }
+
+        return {
+          region: regionVal,
+          comp: compVal,
+          season: seasonVal,
+          entity: entityVal,
+          team: teamVal,
+          logo: logoVal,
+          tag: tagVal
+        };
+      }).filter(item => {
+        if (!item.entity && !item.comp) return false;
+        const normEntity = (item.entity || '').toLowerCase().trim();
+        const normComp = (item.comp || '').toLowerCase().trim();
+        return !invalidWords.includes(normEntity) && !invalidWords.includes(normComp);
+      });
+    }
+
+    function parseListaCampsCsv(csvText) {
+      const rows = parseCsvRows(csvText);
+      if (rows.length === 0) return [];
+
+      const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
+      const headerKeywords = ['liga', 'camp', 'comp', 'nome', 'regi', 'tipo', 'time', 'equipe', 'logo'];
+      const hasHeader = headerRow.some(h => headerKeywords.some(k => h === k || h.includes(k)));
+
+      let idxRegion = -1, idxLeague = -1, idxType = -1, idxTeam = -1;
+
+      if (hasHeader) {
+        headerRow.forEach((h, i) => {
+          if (idxRegion === -1 && h.includes('regi')) idxRegion = i;
+          else if (idxLeague === -1 && (h.includes('liga') || h.includes('camp') || h.includes('comp') || h.includes('nome'))) idxLeague = i;
+          else if (idxType === -1 && (h.includes('tipo') || h.includes('categ') || h.includes('formato'))) idxType = i;
+          else if (idxTeam === -1 && (h.includes('time') || h.includes('equipe'))) idxTeam = i;
+        });
+      }
+
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+      const knownRegionCodes = new Set(['BR', 'NA', 'EMEA', 'EU', 'LATAM', 'APAC', 'JP', 'KR', 'CN', 'SEA', 'OCE', 'MENA', 'MUNDIAL', 'GLOBAL']);
+
+      return dataRows.map(r => {
+        if (hasHeader) {
+          return {
+            region: idxRegion !== -1 ? (r[idxRegion] || '').toUpperCase().trim() : '',
+            league: idxLeague !== -1 ? (r[idxLeague] || '').trim() : '',
+            type: idxType !== -1 ? (r[idxType] || '').trim() : '',
+            team: idxTeam !== -1 ? (r[idxTeam] || '').trim() : ''
+          };
+        }
+
+        const nonUrlCols = r.filter(v => v && !/^https?:\/\//i.test(v));
+        const regIdx = nonUrlCols.findIndex(v => knownRegionCodes.has(v.toUpperCase().trim()));
+        if (regIdx !== -1) {
+          const region = nonUrlCols[regIdx].toUpperCase().trim();
+          const otherCols = nonUrlCols.filter((_, i) => i !== regIdx);
+          return {
+            region,
+            league: otherCols[0] || '',
+            type: otherCols[1] || '',
+            team: ''
+          };
+        }
+
+        return {
+          region: (nonUrlCols[0] || '').toUpperCase().trim(),
+          league: nonUrlCols[1] || '',
+          type: nonUrlCols[2] || '',
+          team: ''
+        };
+      }).filter(item => item.league && (item.region || item.team));
+    }
+
     function parseJogadoresCsv(csvText) {
       const rows = parseCsvRows(csvText);
       const invalidNames = ['jogador', 'nome', 'player', 'time atual'];
@@ -2392,6 +2701,9 @@
       dataHistorico = await fetchCsvData(CSV_URL_HISTORICO, parseHistoricoCsv);
       dataJogadores = await fetchCsvData(CSV_URL_JOGADORES, parseJogadoresCsv);
       dataListaTimes = await fetchCsvData(CSV_URL_LISTA_TIMES, parseListaTimesCsv);
+      dataHistCampeoes = await fetchCsvData(CSV_URL_HIST_CAMPEOES, parseHistoryEntityCsv);
+      dataHistMvps = await fetchCsvData(CSV_URL_HIST_MVPS, parseHistoryEntityCsv);
+      dataListaCamps = await fetchCsvData(CSV_URL_LISTA_CAMPS, parseListaCampsCsv);
 
       label.textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
 
