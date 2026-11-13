@@ -113,7 +113,7 @@
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start w-full" id="container-hist-competicoes"></div>
     </div>
 
-    <!-- PAINEL NOVA ABA 1: HISTÓRICO DE CAMPEÕES -->
+    <!-- PAINEL HISTÓRICO DE CAMPEÕES -->
     <div id="section-hist-campeoes" class="space-y-3 w-full hidden">
       <h2 class="text-lg font-bold text-white flex items-center gap-2">
         <span>🏅</span> Histórico de Campeões (Geral + Regiões Selecionadas)
@@ -121,7 +121,7 @@
       <div class="flex flex-nowrap items-start gap-4 overflow-x-auto pb-3 custom-scroll w-full" id="container-hist-campeoes"></div>
     </div>
 
-    <!-- PAINEL NOVA ABA 2: HISTÓRICO DE MVPS -->
+    <!-- PAINEL HISTÓRICO DE MVPS -->
     <div id="section-hist-mvps" class="space-y-3 w-full hidden">
       <h2 class="text-lg font-bold text-white flex items-center gap-2">
         <span>🌟</span> Histórico de MVPs (Geral + Regiões Selecionadas)
@@ -423,16 +423,16 @@
     function getTeamLogoByName(teamName) {
       if (!teamName) return '';
       const norm = teamName.toLowerCase().trim();
-      const found = dataListaTimes.find(t => t.name.toLowerCase().trim() === norm) 
-                 || dataTimes.find(t => t.name.toLowerCase().trim() === norm);
+      const found = dataListaTimes.find(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm)) 
+                 || dataTimes.find(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm));
       return found ? found.logo : '';
     }
 
     function getTeamRegionByName(teamName) {
       if (!teamName) return '';
       const norm = teamName.toLowerCase().trim();
-      const found = dataListaTimes.find(t => t.name.toLowerCase().trim() === norm)
-                 || dataTimes.find(t => t.name.toLowerCase().trim() === norm);
+      const found = dataListaTimes.find(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm))
+                 || dataTimes.find(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm));
       return found ? (found.region || '').toUpperCase() : '';
     }
 
@@ -757,7 +757,28 @@
       });
     }
 
-    function renderHistoryCardsGrid({ containerId, dataList, entityHeaderLabel, accentTextClass, badgeBgClass }) {
+    function resolveHistoricalEntityLogo(item) {
+      // 1. Se existe um time histórico registrado na conquista/MVP, usa sempre a logo desse time da época
+      if (item.team && item.team.trim()) {
+        const teamLogo = getTeamLogoByName(item.team);
+        if (teamLogo) return teamLogo;
+      }
+
+      // 2. Se a própria entidade é um time cadastrado, usa a logo desse time
+      if (item.entity && item.entity.trim()) {
+        const entityAsTeamLogo = getTeamLogoByName(item.entity);
+        if (entityAsTeamLogo) return entityAsTeamLogo;
+      }
+
+      // 3. Usa a logo fornecida na própria linha da planilha histórica (preservada da época)
+      if (item.logo && item.logo.trim()) {
+        return item.logo.trim();
+      }
+
+      return '';
+    }
+
+    function renderHistoryCardsGrid({ containerId, dataList, entityHeaderLabel, accentTextClass, badgeBgClass, showPhaseCol = false, minWidthGeral = 'min-w-[440px]', minWidthReg = 'min-w-[380px]' }) {
       const container = document.getElementById(containerId);
       if (!container) return;
       container.innerHTML = '';
@@ -776,15 +797,19 @@
       groups.forEach(group => {
         const card = document.createElement('div');
         card.className = group.isGeral
-          ? "sticky left-0 z-20 w-max min-w-[430px] shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col"
-          : "w-max min-w-[370px] shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col";
+          ? `sticky left-0 z-20 w-max ${minWidthGeral} shrink-0 bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col`
+          : `w-max ${minWidthReg} shrink-0 bg-dark-card border border-dark rounded-xl overflow-hidden shadow-lg flex flex-col`;
 
         const hasTeamCol = group.list.some(item => item.team && item.team.trim() !== '');
         const hasTagCol = !hasTeamCol && group.list.some(item => item.tag && item.tag.trim() !== '');
+        const renderPhase = showPhaseCol || group.list.some(item => item.phase && item.phase.trim() !== '');
 
         let rowsHtml = group.list.map(item => {
-          const logoUrl = item.logo || getTeamLogoByName(item.team) || getTeamLogoByName(item.entity);
+          const logoUrl = resolveHistoricalEntityLogo(item);
           const logo = createLogoHtml(logoUrl, "w-6 h-6");
+          const phaseTd = renderPhase
+            ? `<td class="px-3.5 py-2.5 text-xs font-semibold text-gray-300 whitespace-nowrap">${item.phase || '-'}</td>`
+            : '';
           const teamCell = hasTeamCol
             ? `<td class="px-3.5 py-2.5 text-xs font-semibold text-gray-300 whitespace-nowrap">${item.team || '-'}</td>`
             : (hasTagCol ? `<td class="px-3.5 py-2.5 text-xs text-gray-400 font-mono font-semibold whitespace-nowrap">${item.tag || '-'}</td>` : '');
@@ -796,6 +821,7 @@
             <tr class="hover:bg-dark-hover/50">
               <td class="px-3.5 py-2.5 font-bold text-white text-xs whitespace-nowrap">${item.comp || '-'}</td>
               <td class="px-3.5 py-2.5 text-xs text-blue-400 font-mono font-bold whitespace-nowrap">${item.season || '-'}</td>
+              ${phaseTd}
               <td class="px-3.5 py-2.5 text-xs font-bold ${accentTextClass} whitespace-nowrap">
                 <div class="flex items-center gap-2">${logo}<span>${item.entity || '-'}</span></div>
               </td>
@@ -805,11 +831,12 @@
           `;
         }).join('');
 
+        const phaseTh = renderPhase ? `<th class="px-3.5 py-2.5 whitespace-nowrap">Fase</th>` : '';
         const extraTh = hasTeamCol
           ? `<th class="px-3.5 py-2.5 whitespace-nowrap">Time</th>`
           : (hasTagCol ? `<th class="px-3.5 py-2.5 whitespace-nowrap">TAG</th>` : '');
         const regionTh = group.isGeral ? `<th class="px-3.5 py-2.5 whitespace-nowrap">Região</th>` : '';
-        const colCount = 3 + (hasTeamCol || hasTagCol ? 1 : 0) + (group.isGeral ? 1 : 0);
+        const colCount = 3 + (renderPhase ? 1 : 0) + (hasTeamCol || hasTagCol ? 1 : 0) + (group.isGeral ? 1 : 0);
 
         card.innerHTML = `
           <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center gap-4 shrink-0">
@@ -824,6 +851,7 @@
                 <tr>
                   <th class="px-3.5 py-2.5">Competição</th>
                   <th class="px-3.5 py-2.5">Temp.</th>
+                  ${phaseTh}
                   <th class="px-3.5 py-2.5">${entityHeaderLabel}</th>
                   ${extraTh}
                   ${regionTh}
@@ -843,7 +871,10 @@
         dataList: dataHistCampeoes,
         entityHeaderLabel: 'Campeão',
         accentTextClass: 'text-yellow-400',
-        badgeBgClass: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+        badgeBgClass: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+        showPhaseCol: false,
+        minWidthGeral: 'min-w-[440px]',
+        minWidthReg: 'min-w-[380px]'
       });
     }
 
@@ -853,7 +884,10 @@
         dataList: dataHistMvps,
         entityHeaderLabel: 'MVP',
         accentTextClass: 'text-purple-400',
-        badgeBgClass: 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+        badgeBgClass: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+        showPhaseCol: true,
+        minWidthGeral: 'min-w-[530px]',
+        minWidthReg: 'min-w-[460px]'
       });
     }
 
@@ -1362,6 +1396,13 @@
       listContainer.innerHTML = html;
     }
 
+    function getShortTeamTag(team) {
+      if (team && team.tag && team.tag.trim() && team.tag.trim() !== '-') {
+        return team.tag.trim();
+      }
+      return (team && team.name ? team.name.trim().slice(0, 3).toUpperCase() : 'TIME');
+    }
+
     function renderConfronto() {
       const container = document.getElementById('container-confronto');
       const h2hContainer = document.getElementById('container-h2h-stats');
@@ -1374,6 +1415,9 @@
 
       const team1 = dataListaTimes.find(t => t.name.toLowerCase().trim() === (name1||'').toLowerCase().trim()) || { name: name1, logo: '', tag: '-', region: '-', titles: 0, starPlayer: '' };
       const team2 = dataListaTimes.find(t => t.name.toLowerCase().trim() === (name2||'').toLowerCase().trim()) || { name: name2, logo: '', tag: '-', region: '-', titles: 0, starPlayer: '' };
+
+      const shortTag1 = getShortTeamTag(team1);
+      const shortTag2 = getShortTeamTag(team2);
 
       const players1 = dataJogadores.filter(j => j.team.toLowerCase().trim() === (name1||'').toLowerCase().trim());
       const players2 = dataJogadores.filter(j => j.team.toLowerCase().trim() === (name2||'').toLowerCase().trim());
@@ -1493,12 +1537,15 @@
             const winDesc = (mp.winner || '').toLowerCase();
             const t1Norm = name1.toLowerCase();
             const t2Norm = name2.toLowerCase();
-            const tag1Norm = (team1.tag || '').toLowerCase();
-            const tag2Norm = (team2.tag || '').toLowerCase();
+            const tag1Norm = (team1.tag && team1.tag !== '-' ? team1.tag : '').toLowerCase();
+            const tag2Norm = (team2.tag && team2.tag !== '-' ? team2.tag : '').toLowerCase();
 
-            if (winDesc.includes(t1Norm) || (tag1Norm && tag1Norm.length >= 2 && winDesc.includes(tag1Norm))) {
+            const matchT1 = winDesc.includes(t1Norm) || (tag1Norm && new RegExp(`(?:^|\\b)${escapeRegExp(tag1Norm)}(?:$|\\b)`, 'i').test(mp.winner || ''));
+            const matchT2 = winDesc.includes(t2Norm) || (tag2Norm && new RegExp(`(?:^|\\b)${escapeRegExp(tag2Norm)}(?:$|\\b)`, 'i').test(mp.winner || ''));
+
+            if (matchT1 && !matchT2) {
               locationStats[locName].wins1 += 1;
-            } else if (winDesc.includes(t2Norm) || (tag2Norm && tag2Norm.length >= 2 && winDesc.includes(tag2Norm))) {
+            } else if (matchT2 && !matchT1) {
               locationStats[locName].wins2 += 1;
             } else {
               locationStats[locName].draws += 1;
@@ -1592,20 +1639,53 @@
         </div>
       `;
 
-      const locationList = Object.values(locationStats).sort((a, b) => b.total - a.total);
+      const locationList = Object.values(locationStats).sort((a, b) => b.total - a.total || a.location.localeCompare(b.location));
       
-      let locationGridHtml = locationList.map(loc => `
-        <div class="bg-[#1f242d] border border-dark rounded p-1.5 flex items-center justify-between text-[11px]">
-          <div class="font-bold text-gray-200 truncate flex items-center gap-1">
-            <span>🗺️</span>
-            <span class="truncate">${loc.location}</span>
+      let locationGridHtml = locationList.map(loc => {
+        const total = loc.total || 1;
+        const pct1 = Math.round((loc.wins1 / total) * 100);
+        const pctDraw = Math.round((loc.draws / total) * 100);
+        const pct2 = Math.max(0, 100 - pct1 - pctDraw);
+
+        const t1Highlight = loc.wins1 > loc.wins2 ? 'text-blue-300 font-black' : 'text-gray-400 font-bold';
+        const t2Highlight = loc.wins2 > loc.wins1 ? 'text-red-300 font-black' : 'text-gray-400 font-bold';
+
+        return `
+          <div class="bg-[#1f242d] border border-dark hover:border-gray-600 transition rounded-lg p-2.5 flex flex-col gap-2">
+            <!-- Linha Superior: Nome do Mapa + Quantidade de vezes jogado -->
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 min-w-0" title="${loc.location}">
+                <span class="text-xs shrink-0">🗺️</span>
+                <span class="text-xs font-extrabold text-white truncate">${loc.location}</span>
+              </div>
+              <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#161b22] text-emerald-300 border border-emerald-500/30 shrink-0">
+                ${loc.total}x jogado
+              </span>
+            </div>
+
+            <!-- Linha Inferior: Placar com Logos + Barra Proporcional -->
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 shrink-0">
+                ${createLogoHtml(team1.logo, "w-4 h-4")}
+                <span class="text-[10px] font-mono ${t1Highlight}">${shortTag1}</span>
+                <span class="text-xs font-black font-mono px-1.5 py-0.5 rounded bg-blue-500/15 border border-blue-500/30 text-blue-300">${loc.wins1}</span>
+              </div>
+
+              <div class="flex-1 h-2 bg-[#161b22] rounded-full overflow-hidden flex border border-dark/80 min-w-[40px]" title="${shortTag1}: ${loc.wins1} | Empates: ${loc.draws} | ${shortTag2}: ${loc.wins2}">
+                <div style="width: ${pct1}%" class="bg-blue-500 h-full transition-all"></div>
+                ${pctDraw > 0 ? `<div style="width: ${pctDraw}%" class="bg-amber-400 h-full transition-all"></div>` : ''}
+                <div style="width: ${pct2}%" class="bg-red-500 h-full transition-all"></div>
+              </div>
+
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-xs font-black font-mono px-1.5 py-0.5 rounded bg-red-500/15 border border-red-500/30 text-red-300">${loc.wins2}</span>
+                <span class="text-[10px] font-mono ${t2Highlight}">${shortTag2}</span>
+                ${createLogoHtml(team2.logo, "w-4 h-4")}
+              </div>
+            </div>
           </div>
-          <div class="flex items-center gap-1 font-mono font-bold shrink-0">
-            <span class="text-blue-400 bg-blue-500/10 border border-blue-500/30 px-1 py-0.5 rounded text-[10px]">${team1.tag || 'T1'}:${loc.wins1}</span>
-            <span class="text-red-400 bg-red-500/10 border border-red-500/30 px-1 py-0.5 rounded text-[10px]">${team2.tag || 'T2'}:${loc.wins2}</span>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
 
       if (locationList.length === 0) {
         locationGridHtml = `<div class="col-span-full p-2.5 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum mapa ou local específico detalhado para estes confrontos.</div>`;
@@ -1635,7 +1715,7 @@
               <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
                 <span>📊</span> Retrospectiva Direta
               </h3>
-              <p class="text-[11px] text-gray-400 font-semibold">${team1.name} (${team1.tag || '-'}) vs ${team2.name} (${team2.tag || '-'})</p>
+              <p class="text-[11px] text-gray-400 font-semibold">${team1.name} (${shortTag1}) vs ${team2.name} (${shortTag2})</p>
             </div>
             ${createLogoHtml(team2.logo, "w-6 h-6")}
           </div>
@@ -1652,7 +1732,7 @@
           <div class="bg-blue-500/10 border border-blue-500/30 p-2 rounded-lg">
             <div class="flex items-center justify-center gap-1">
               ${createLogoHtml(team1.logo, "w-4 h-4")}
-              <span class="text-[10px] font-bold text-blue-400 uppercase truncate">VITÓRIAS (${team1.tag || team1.name})</span>
+              <span class="text-[10px] font-bold text-blue-400 uppercase truncate">VITÓRIAS (${shortTag1})</span>
             </div>
             <span class="text-lg font-black text-white">${wins1}</span>
           </div>
@@ -1662,7 +1742,7 @@
           </div>
           <div class="bg-red-500/10 border border-red-500/30 p-2 rounded-lg">
             <div class="flex items-center justify-center gap-1">
-              <span class="text-[10px] font-bold text-red-400 uppercase truncate">VITÓRIAS (${team2.tag || team2.name})</span>
+              <span class="text-[10px] font-bold text-red-400 uppercase truncate">VITÓRIAS (${shortTag2})</span>
               ${createLogoHtml(team2.logo, "w-4 h-4")}
             </div>
             <span class="text-lg font-black text-white">${wins2}</span>
@@ -1671,12 +1751,19 @@
 
         ${goldenAndStarStripHtml}
 
-        <div class="space-y-1.5 pt-1">
-          <div class="flex items-center justify-between">
-            <h4 class="text-[11px] font-bold text-gray-300 uppercase tracking-wider">📍 Desempenho por Local / Mapa</h4>
-            <span class="text-[10px] font-mono text-gray-400">${locationList.length} locais</span>
+        <div class="space-y-2 pt-1">
+          <div class="flex items-center justify-between gap-2">
+            <h4 class="text-[11px] font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span>📍</span> Desempenho por Local / Mapa
+            </h4>
+            <div class="flex items-center gap-2">
+              <span class="hidden sm:inline-flex items-center gap-1 text-[10px] text-gray-400 font-semibold">
+                ${createLogoHtml(team1.logo, "w-3.5 h-3.5")} ${shortTag1} <span class="text-gray-600">vs</span> ${shortTag2} ${createLogoHtml(team2.logo, "w-3.5 h-3.5")}
+              </span>
+              <span class="text-[10px] font-mono bg-[#1f242d] border border-dark px-2 py-0.5 rounded text-gray-300 font-bold">${locationList.length} locais</span>
+            </div>
           </div>
-          <div class="grid grid-cols-2 lg:grid-cols-3 gap-1.5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
             ${locationGridHtml}
           </div>
         </div>
@@ -2534,21 +2621,35 @@
       });
     }
 
+    function isKnownTeamName(val) {
+      if (!val) return false;
+      const norm = val.toLowerCase().trim();
+      return dataListaTimes.some(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm))
+          || dataTimes.some(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm));
+    }
+
+    function isKnownPlayerName(val) {
+      if (!val) return false;
+      const norm = val.toLowerCase().trim();
+      return dataJogadores.some(j => j.name.toLowerCase().trim() === norm);
+    }
+
     function parseHistoryEntityCsv(csvText) {
       const rows = parseCsvRows(csvText);
       if (rows.length === 0) return [];
 
       const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
-      const headerKeywords = ['regiao', 'competicao', 'torneio', 'temporada', 'edicao', 'campeao', 'jogador', 'mvp', 'player', 'time', 'equipe', 'logo', 'tag'];
+      const headerKeywords = ['regiao', 'competicao', 'torneio', 'temporada', 'edicao', 'fase', 'etapa', 'stage', 'campeao', 'jogador', 'mvp', 'player', 'time', 'equipe', 'logo', 'tag'];
       const hasHeader = headerRow.some(h => headerKeywords.some(k => h === k || h.includes(k)));
 
-      let idxReg = -1, idxComp = -1, idxSeason = -1, idxEntity = -1, idxTeam = -1, idxLogo = -1, idxTag = -1;
+      let idxReg = -1, idxComp = -1, idxSeason = -1, idxPhase = -1, idxEntity = -1, idxTeam = -1, idxLogo = -1, idxTag = -1;
 
       if (hasHeader) {
         headerRow.forEach((h, i) => {
           if (idxReg === -1 && h.includes('regi')) idxReg = i;
           else if (idxComp === -1 && (h.includes('comp') || h.includes('torneio') || h.includes('liga'))) idxComp = i;
           else if (idxSeason === -1 && (h.includes('temp') || h.includes('edicao') || h.includes('ano'))) idxSeason = i;
+          else if (idxPhase === -1 && (h.includes('fase') || h.includes('etapa') || h.includes('stage') || h.includes('rodada'))) idxPhase = i;
           else if (idxEntity === -1 && (h.includes('campe') || h.includes('mvp') || h.includes('jogador') || h.includes('player') || h.includes('vencedor'))) idxEntity = i;
           else if (idxTeam === -1 && (h.includes('time') || h.includes('equipe') || h.includes('clube'))) idxTeam = i;
           else if (idxLogo === -1 && (h.includes('logo') || h.includes('escudo') || h.includes('img'))) idxLogo = i;
@@ -2563,6 +2664,7 @@
         if (hasHeader) {
           const entityVal = idxEntity !== -1 ? (r[idxEntity] || '') : (r[3] || r[0] || '');
           const teamVal = idxTeam !== -1 ? (r[idxTeam] || '') : '';
+          const phaseVal = idxPhase !== -1 ? (r[idxPhase] || '') : '';
           const logoVal = idxLogo !== -1 ? (r[idxLogo] || '') : (r.find(v => /^https?:\/\//i.test(v)) || '');
           const tagVal = idxTag !== -1 ? (r[idxTag] || '').toUpperCase() : '';
           let regionVal = idxReg !== -1 ? (r[idxReg] || '').toUpperCase() : (r[0] || '').toUpperCase();
@@ -2579,6 +2681,7 @@
             region: regionVal,
             comp: compVal,
             season: seasonVal,
+            phase: phaseVal,
             entity: entityVal,
             team: teamVal,
             logo: logoVal,
@@ -2591,23 +2694,47 @@
         const regionVal = (r[0] || '').toUpperCase();
         const compVal = r[1] || '';
         const seasonVal = r[2] || '';
-        const entityVal = r[3] || '';
+
+        const extraCols = r.slice(3).filter((v, idx) => (idx + 3) !== logoIdx && v !== '');
+        let phaseVal = '';
+        let entityVal = '';
         let teamVal = '';
         let tagVal = '';
 
-        if (r[4] && r[4] !== logoVal) {
-          if (r[4].length <= 5 && r[4] === r[4].toUpperCase()) tagVal = r[4];
-          else teamVal = r[4];
-        }
-        if (r[5] && r[5] !== logoVal) {
-          if (r[5].length <= 5 && r[5] === r[5].toUpperCase() && !tagVal) tagVal = r[5];
-          else if (!teamVal) teamVal = r[5];
+        if (extraCols.length >= 3) {
+          const teamColIdx = extraCols.findIndex(v => isKnownTeamName(v));
+          const playerColIdx = extraCols.findIndex(v => isKnownPlayerName(v));
+
+          if (teamColIdx !== -1 && playerColIdx !== -1 && teamColIdx !== playerColIdx) {
+            teamVal = extraCols[teamColIdx];
+            entityVal = extraCols[playerColIdx];
+            const remIdx = extraCols.findIndex((_, i) => i !== teamColIdx && i !== playerColIdx);
+            if (remIdx !== -1) phaseVal = extraCols[remIdx];
+          } else if (teamColIdx === 2) {
+            phaseVal = extraCols[0];
+            entityVal = extraCols[1];
+            teamVal = extraCols[2];
+          } else {
+            entityVal = extraCols[0];
+            teamVal = extraCols[1];
+            phaseVal = extraCols[2];
+          }
+        } else if (extraCols.length === 2) {
+          entityVal = extraCols[0];
+          if (extraCols[1].length <= 5 && extraCols[1] === extraCols[1].toUpperCase() && !isKnownTeamName(extraCols[1])) {
+            tagVal = extraCols[1];
+          } else {
+            teamVal = extraCols[1];
+          }
+        } else if (extraCols.length === 1) {
+          entityVal = extraCols[0];
         }
 
         return {
           region: regionVal,
           comp: compVal,
           season: seasonVal,
+          phase: phaseVal,
           entity: entityVal,
           team: teamVal,
           logo: logoVal,
