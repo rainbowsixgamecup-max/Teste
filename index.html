@@ -143,7 +143,7 @@
     <!-- PAINEL TRANSFERÊNCIAS -->
     <div id="section-transferencias" class="space-y-4 w-full hidden">
       
-      <!-- Painel de Edição Rápida de Transferência (aparece ao clicar em Editar) -->
+      <!-- Painel de Edição Rápida de Transferência -->
       <div id="edit-transfer-panel" class="hidden bg-dark-card border-2 border-blue-500/60 rounded-xl p-4 shadow-2xl space-y-3">
         <div class="flex items-center justify-between border-b border-dark pb-2">
           <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
@@ -189,7 +189,7 @@
             <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
               <span>🔄</span> Histórico de Transferências
             </h2>
-            <p class="text-xs text-gray-400">Movimentações ordenadas da mais recente (última linha da planilha) para a mais antiga.</p>
+            <p class="text-xs text-gray-400">Movimentações extraídas do Histórico de Alteração, ordenadas da mais recente para a mais antiga.</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
@@ -912,7 +912,6 @@
 
       const query = (document.getElementById('comp-roster-search')?.value || '').toLowerCase().trim();
 
-      // Agrupar jogadores por Time
       const teamsMap = new Map();
 
       dataJogadores.forEach(j => {
@@ -943,14 +942,12 @@
       const filteredTeams = [];
 
       teamsMap.forEach(team => {
-        // Filtro por Região do Time
         if (!compActiveTeamRegions.has(team.region)) return;
 
         const teamMatchesQuery = !query ||
           team.name.toLowerCase().includes(query) ||
           (team.tag && team.tag.toLowerCase().includes(query));
 
-        // Filtrar jogadores pela Naturalidade selecionada e pela busca (se a busca não bateu no time)
         const matchingPlayers = team.players.filter(p => {
           const natOk = compActivePlayerNats.has(p.naturalidade);
           if (!natOk) return false;
@@ -1028,18 +1025,122 @@
     }
 
     /* =========================================================================
-       ABA TRANSFERÊNCIAS (ORDEM CRONOLÓGICA, FILTROS SEPARADOS, EDIÇÃO/REMOÇÃO)
+       ABA TRANSFERÊNCIAS (INTERPRETAÇÃO DO HISTÓRICO DE ALTERAÇÃO + LOGOS)
     ========================================================================= */
+    function resolveCanonicalTeam(rawTeamName) {
+      const cleaned = (rawTeamName || '').replace(/[.!?;,]+$/g, '').trim();
+      if (!cleaned) return { name: 'Sem Time', logo: '' };
+      if (/^sem\s*time$/i.test(cleaned)) return { name: 'Sem Time', logo: '' };
+
+      const info = getTeamInfoByName(cleaned);
+      if (info) {
+        return {
+          name: info.name,
+          logo: info.logo || ''
+        };
+      }
+      return {
+        name: cleaned,
+        logo: ''
+      };
+    }
+
+    function parseTransferHistoryComment(commentText, fallbackPlayer = '') {
+      const cleanComment = (commentText || '').replace(/\s+/g, ' ').trim();
+      if (!cleanComment) {
+        return {
+          player: fallbackPlayer,
+          fromTeam: 'Sem Time',
+          fromLogo: '',
+          toTeam: 'Sem Time',
+          toLogo: ''
+        };
+      }
+
+      let extractedPlayer = fallbackPlayer;
+      let rawFrom = '';
+      let rawTo = '';
+
+      // Padrão principal: "Yan Takato mudou-se de time de Furia para Loud."
+      const regexMudouDeTime = /^(.*?)\s+mudou-se\s+de\s+time\s+de\s+(.+?)\s+para\s+(.+?)[.!?;]*$/i;
+      // Padrões alternativos: "Yan Takato mudou-se de Furia para Loud." / "saiu de X para Y" / "de X para Y"
+      const regexGenerico = /^(.*?)\s+(?:mudou-se|saiu|transferido|foi)\s+(?:do\s+time\s+|da\s+equipe\s+|de\s+|do\s+|da\s+)(.+?)\s+(?:para\s+o\s+time\s+|para\s+a\s+equipe\s+|para\s+|pro\s+|pra\s+)(.+?)[.!?;]*$/i;
+      const regexDePara = /\bde\s+(.+?)\s+para\s+(.+?)[.!?;]*$/i;
+
+      let m = cleanComment.match(regexMudouDeTime);
+      if (m) {
+        if (!extractedPlayer) extractedPlayer = m[1].trim();
+        rawFrom = m[2].trim();
+        rawTo = m[3].trim();
+      } else {
+        m = cleanComment.match(regexGenerico);
+        if (m) {
+          if (!extractedPlayer) extractedPlayer = m[1].trim();
+          rawFrom = m[2].trim();
+          rawTo = m[3].trim();
+        } else {
+          m = cleanComment.match(regexDePara);
+          if (m) {
+            rawFrom = m[1].trim();
+            rawTo = m[2].trim();
+          }
+        }
+      }
+
+      const fromResolved = resolveCanonicalTeam(rawFrom);
+      const toResolved = resolveCanonicalTeam(rawTo);
+
+      return {
+        player: extractedPlayer,
+        fromTeam: fromResolved.name,
+        fromLogo: fromResolved.logo,
+        toTeam: toResolved.name,
+        toLogo: toResolved.logo
+      };
+    }
+
     function getEffectiveTransfersList() {
       const list = [];
 
       dataTransferenciasRaw.forEach(item => {
         if (deletedTransferIds.has(item.id)) return;
+
+        // Re-interpreta o comentário usando a base completa de times já carregada
+        let resolvedItem = { ...item };
+        if (item.historyComment) {
+          const parsed = parseTransferHistoryComment(item.historyComment, item.player);
+          resolvedItem.player = parsed.player || item.player;
+          resolvedItem.fromTeam = parsed.fromTeam;
+          resolvedItem.fromLogo = item.fromLogo || parsed.fromLogo;
+          resolvedItem.toTeam = parsed.toTeam;
+          resolvedItem.toLogo = item.toLogo || parsed.toLogo;
+        } else {
+          const fromRes = resolveCanonicalTeam(item.fromTeam);
+          const toRes = resolveCanonicalTeam(item.toTeam);
+          resolvedItem.fromTeam = fromRes.name;
+          resolvedItem.fromLogo = item.fromLogo || fromRes.logo;
+          resolvedItem.toTeam = toRes.name;
+          resolvedItem.toLogo = item.toLogo || toRes.logo;
+        }
+
         const override = transferOverrides[item.id];
-        list.push(override ? { ...item, ...override } : item);
+        if (override && !(override.toTeam && /mudou-se\s+de\s+time/i.test(override.toTeam))) {
+          const fromOv = resolveCanonicalTeam(override.fromTeam);
+          const toOv = resolveCanonicalTeam(override.toTeam);
+          resolvedItem = {
+            ...resolvedItem,
+            ...override,
+            fromTeam: fromOv.name,
+            fromLogo: override.fromLogo || fromOv.logo,
+            toTeam: toOv.name,
+            toLogo: override.toLogo || toOv.logo
+          };
+        }
+
+        list.push(resolvedItem);
       });
 
-      // Ordena da linha mais recente (maior rowIndex = última linha da planilha) para a mais antiga
+      // Ordena da linha mais recente (última linha da planilha) para a mais antiga
       return list.sort((a, b) => b.rowIndex - a.rowIndex);
     }
 
@@ -1047,6 +1148,7 @@
       const teamsDatalist = document.getElementById('transfer-teams-datalist');
       if (teamsDatalist) {
         const allTeamNames = Array.from(new Set([
+          'Sem Time',
           ...dataListaTimes.map(t => t.name),
           ...dataTimes.map(t => t.name)
         ].filter(Boolean))).sort();
@@ -1055,7 +1157,8 @@
 
       const resetBtn = document.getElementById('btn-reset-transfer-overrides');
       if (resetBtn) {
-        const hasLocalChanges = Object.keys(transferOverrides).length > 0 || deletedTransferIds.size > 0;
+        const validOverridesCount = Object.values(transferOverrides).filter(ov => !(ov.toTeam && /mudou-se\s+de\s+time/i.test(ov.toTeam))).length;
+        const hasLocalChanges = validOverridesCount > 0 || deletedTransferIds.size > 0;
         resetBtn.classList.toggle('hidden', !hasLocalChanges);
       }
 
@@ -1228,7 +1331,6 @@
       const isAllWindows = selectedTransferWindows.has('ALL');
 
       const filtered = list.filter(tr => {
-        // Filtro por Nome
         if (query) {
           const matchPlayer = (tr.player || '').toLowerCase().includes(query);
           const matchFrom = (tr.fromTeam || '').toLowerCase().includes(query);
@@ -1236,14 +1338,12 @@
           if (!matchPlayer && !matchFrom && !matchTo) return false;
         }
 
-        // Filtro por Time (1 ou mais - verifica time que saiu ou time que entrou)
         if (!isAllTeams) {
           const hasFrom = selectedTransferTeams.has(tr.fromTeam);
           const hasTo = selectedTransferTeams.has(tr.toTeam);
           if (!hasFrom && !hasTo) return false;
         }
 
-        // Filtro por Janela (1 ou mais)
         if (!isAllWindows) {
           if (!selectedTransferWindows.has(tr.window)) return false;
         }
@@ -1257,11 +1357,22 @@
       }
 
       body.innerHTML = filtered.map((tr, idx) => {
-        const fromLogoUrl = tr.fromLogo || getTeamLogoByName(tr.fromTeam);
-        const toLogoUrl = tr.toLogo || getTeamLogoByName(tr.toTeam);
+        const isFromSemTime = /^sem\s*time$/i.test(tr.fromTeam || '');
+        const isToSemTime = /^sem\s*time$/i.test(tr.toTeam || '');
 
-        const fromLogoHtml = createLogoHtml(fromLogoUrl, "w-6 h-6");
-        const toLogoHtml = createLogoHtml(toLogoUrl, "w-6 h-6");
+        const fromLogoUrl = isFromSemTime ? '' : (tr.fromLogo || getTeamLogoByName(tr.fromTeam));
+        const toLogoUrl = isToSemTime ? '' : (tr.toLogo || getTeamLogoByName(tr.toTeam));
+
+        const fromLogoHtml = fromLogoUrl
+          ? createLogoHtml(fromLogoUrl, "w-6 h-6")
+          : (isFromSemTime ? `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-800 border border-gray-700 text-[11px] text-gray-400">🚫</span>` : '');
+
+        const toLogoHtml = toLogoUrl
+          ? createLogoHtml(toLogoUrl, "w-6 h-6")
+          : (isToSemTime ? `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-800 border border-gray-700 text-[11px] text-gray-400">🚫</span>` : '');
+
+        const fromTextClass = isFromSemTime ? 'text-gray-400 italic' : 'text-red-300';
+        const toTextClass = isToSemTime ? 'text-gray-400 italic' : 'text-emerald-300';
 
         const isLatestBadge = idx === 0 && !query && isAllTeams && isAllWindows
           ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Mais Recente</span>`
@@ -1273,14 +1384,15 @@
           : `<span class="text-gray-500 font-mono text-xs">0</span>`;
 
         const safeId = tr.id.replace(/'/g, "\\'");
+        const tooltipAttr = tr.historyComment ? `title="${tr.historyComment.replace(/"/g, '&quot;')}"` : '';
 
         return `
-          <tr class="hover:bg-dark-hover/50 transition">
+          <tr class="hover:bg-dark-hover/50 transition" ${tooltipAttr}>
             <td class="px-3.5 py-2.5 text-center font-mono text-gray-500 font-bold">${filtered.length - idx}º</td>
             <td class="px-3.5 py-2.5 font-extrabold text-white text-xs">
               <span>${tr.player}</span>${isLatestBadge}
             </td>
-            <td class="px-3.5 py-2.5 text-right font-bold text-red-300 text-xs">
+            <td class="px-3.5 py-2.5 text-right font-bold ${fromTextClass} text-xs">
               <div class="flex items-center justify-end gap-2">
                 <span>${tr.fromTeam || 'Sem Time'}</span>
                 ${fromLogoHtml}
@@ -1289,7 +1401,7 @@
             <td class="px-2 py-2.5 text-center">
               <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 font-black text-xs">➔</span>
             </td>
-            <td class="px-3.5 py-2.5 font-bold text-emerald-300 text-xs">
+            <td class="px-3.5 py-2.5 font-bold ${toTextClass} text-xs">
               <div class="flex items-center gap-2">
                 ${toLogoHtml}
                 <span>${tr.toTeam || 'Sem Time'}</span>
@@ -1334,8 +1446,8 @@
       if (!editingTransferId) return;
 
       const player = document.getElementById('edit-tr-player').value.trim();
-      const fromTeam = document.getElementById('edit-tr-from').value.trim();
-      const toTeam = document.getElementById('edit-tr-to').value.trim();
+      const fromTeamRaw = document.getElementById('edit-tr-from').value.trim();
+      const toTeamRaw = document.getElementById('edit-tr-to').value.trim();
       const titlesWon = parseInt(document.getElementById('edit-tr-titles').value || '0', 10) || 0;
       const win = document.getElementById('edit-tr-window').value.trim();
 
@@ -1344,12 +1456,15 @@
         return;
       }
 
+      const fromRes = resolveCanonicalTeam(fromTeamRaw);
+      const toRes = resolveCanonicalTeam(toTeamRaw);
+
       transferOverrides[editingTransferId] = {
         player,
-        fromTeam,
-        fromLogo: getTeamLogoByName(fromTeam),
-        toTeam,
-        toLogo: getTeamLogoByName(toTeam),
+        fromTeam: fromRes.name,
+        fromLogo: fromRes.logo,
+        toTeam: toRes.name,
+        toLogo: toRes.logo,
         titlesWon,
         window: win
       };
@@ -3377,62 +3492,88 @@
       if (rows.length === 0) return [];
 
       const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
-      const headerKeywords = ['jogador', 'player', 'nome', 'saiu', 'anterior', 'origem', 'de', 'entrou', 'novo', 'atual', 'destino', 'para', 'titulo', 'janela', 'momento', 'temporada'];
+      const headerKeywords = ['jogador', 'player', 'nome', 'historico', 'alterac', 'coment', 'descri', 'moviment', 'titulo', 'janela', 'momento', 'temporada'];
       const hasHeader = headerRow.some(h => headerKeywords.some(k => h === k || h.includes(k)));
 
-      let idxPlayer = -1, idxFrom = -1, idxTo = -1, idxTitles = -1, idxWindow = -1, idxFromLogo = -1, idxToLogo = -1;
+      let idxPlayer = -1, idxHistory = -1, idxFrom = -1, idxTo = -1, idxTitles = -1, idxWindow = -1, idxFromLogo = -1, idxToLogo = -1;
 
       if (hasHeader) {
         headerRow.forEach((h, i) => {
           if (idxPlayer === -1 && (h.includes('jog') || h.includes('player') || h === 'nome')) idxPlayer = i;
+          else if (idxHistory === -1 && (h.includes('histor') || h.includes('alterac') || h.includes('coment') || h.includes('descri') || h.includes('moviment') || h.includes('mudanc'))) idxHistory = i;
           else if (idxFromLogo === -1 && h.includes('logo') && (h.includes('sai') || h.includes('ant') || h.includes('de') || h.includes('orig'))) idxFromLogo = i;
           else if (idxToLogo === -1 && h.includes('logo') && (h.includes('ent') || h.includes('nov') || h.includes('atu') || h.includes('para') || h.includes('dest'))) idxToLogo = i;
           else if (idxFrom === -1 && (h.includes('sai') || h.includes('ant') || h.includes('orig') || h === 'de' || h.includes('ex-'))) idxFrom = i;
           else if (idxTo === -1 && (h.includes('ent') || h.includes('nov') || h.includes('atu') || h.includes('dest') || h === 'para')) idxTo = i;
           else if (idxTitles === -1 && h.includes('titul')) idxTitles = i;
-          else if (idxWindow === -1 && (h.includes('janel') || h.includes('moment') || h.includes('temp') || h.includes('data') || h.includes('edicao'))) idxWindow = i;
+          else if (idxWindow === -1 && (h.includes('janel') || h.includes('moment') || h.includes('temp') || h.includes('edicao'))) idxWindow = i;
         });
       }
 
       const dataRows = hasHeader ? rows.slice(1) : rows;
-      const invalidNames = ['jogador', 'player', 'nome', 'transferencias', 'transferências'];
+      const invalidNames = ['jogador', 'player', 'nome', 'transferencias', 'transferências', 'historico de alteracao', 'histórico de alteração'];
 
       return dataRows.map((r, rowIdx) => {
-        let player = '', fromTeam = '', toTeam = '', titlesWon = 0, win = '', fromLogo = '', toLogo = '';
+        const urlCols = r.filter(v => /^https?:\/\//i.test(v));
+        const nonUrlCols = r.filter(v => !/^https?:\/\//i.test(v));
 
-        if (hasHeader) {
-          player = idxPlayer !== -1 ? (r[idxPlayer] || '') : (r[0] || '');
-          fromTeam = idxFrom !== -1 ? (r[idxFrom] || '') : (r[1] || '');
-          toTeam = idxTo !== -1 ? (r[idxTo] || '') : (r[2] || '');
-          titlesWon = idxTitles !== -1 ? (parseInt(r[idxTitles] || '0', 10) || 0) : (parseInt(r[3] || '0', 10) || 0);
-          win = idxWindow !== -1 ? (r[idxWindow] || '') : (r[4] || '');
-          fromLogo = idxFromLogo !== -1 ? (r[idxFromLogo] || '') : '';
-          toLogo = idxToLogo !== -1 ? (r[idxToLogo] || '') : '';
-        } else {
-          const nonUrlCols = r.filter(v => !/^https?:\/\//i.test(v));
-          const urlCols = r.filter(v => /^https?:\/\//i.test(v));
+        // Detecta automaticamente qualquer célula contendo a frase de movimentação
+        const detectedHistoryColIdx = r.findIndex(v => /mudou-se\s+de\s+time|\bde\s+.+?\s+para\s+.+/i.test(v || ''));
+        const effectiveHistoryIdx = idxHistory !== -1 ? idxHistory : detectedHistoryColIdx;
+
+        let historyComment = effectiveHistoryIdx !== -1 ? (r[effectiveHistoryIdx] || '').trim() : '';
+        let player = idxPlayer !== -1 ? (r[idxPlayer] || '').trim() : '';
+        let titlesWon = idxTitles !== -1 ? (parseInt(r[idxTitles] || '0', 10) || 0) : 0;
+        let win = idxWindow !== -1 ? (r[idxWindow] || '').trim() : '';
+        let fromTeam = idxFrom !== -1 ? (r[idxFrom] || '').trim() : '';
+        let toTeam = idxTo !== -1 ? (r[idxTo] || '').trim() : '';
+        let fromLogo = idxFromLogo !== -1 ? (r[idxFromLogo] || '').trim() : (urlCols[0] || '');
+        let toLogo = idxToLogo !== -1 ? (r[idxToLogo] || '').trim() : (urlCols[1] || '');
+
+        if (historyComment) {
+          const parsedComment = parseTransferHistoryComment(historyComment, player);
+          if (!player) player = parsedComment.player;
+          if (!fromTeam) fromTeam = parsedComment.fromTeam;
+          if (!toTeam) toTeam = parsedComment.toTeam;
+
+          // Preenche títulos e janela a partir das colunas restantes caso o cabeçalho tenha nomes diferentes
+          const remainingCols = r.filter((v, idx) => {
+            if (!v || /^https?:\/\//i.test(v)) return false;
+            if (idx === idxPlayer || idx === effectiveHistoryIdx) return false;
+            if (v.trim() === player) return false;
+            return true;
+          });
+
+          if (idxTitles === -1) {
+            const numCol = remainingCols.find(v => /^\d+$/.test(v.trim()));
+            if (numCol !== undefined) titlesWon = parseInt(numCol.trim(), 10) || 0;
+          }
+          if (idxWindow === -1) {
+            const winCol = remainingCols.find(v => !/^\d+$/.test(v.trim()) && v.trim() !== fromTeam && v.trim() !== toTeam);
+            if (winCol !== undefined) win = winCol.trim();
+          }
+        } else if (!hasHeader) {
           player = nonUrlCols[0] || '';
           fromTeam = nonUrlCols[1] || '';
           toTeam = nonUrlCols[2] || '';
           titlesWon = parseInt(nonUrlCols[3] || '0', 10) || 0;
           win = nonUrlCols[4] || '';
-          fromLogo = urlCols[0] || '';
-          toLogo = urlCols[1] || '';
         }
 
         return {
-          id: `tr_${rowIdx}_${player}_${fromTeam}_${toTeam}_${win}`.replace(/\s+/g, '_'),
+          id: `tr_${rowIdx}_${player}_${historyComment || (fromTeam + '_' + toTeam)}_${win}`.replace(/\s+/g, '_'),
           rowIndex: rowIdx,
           player: player.trim(),
+          historyComment,
           fromTeam: fromTeam.trim(),
-          fromLogo: fromLogo.trim(),
+          fromLogo,
           toTeam: toTeam.trim(),
-          toLogo: toLogo.trim(),
+          toLogo,
           titlesWon,
           window: win.trim()
         };
       }).filter(item => {
-        if (!item.player) return false;
+        if (!item.player && !item.historyComment) return false;
         return !invalidNames.includes(item.player.toLowerCase());
       });
     }
