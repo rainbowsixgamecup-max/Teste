@@ -161,7 +161,7 @@
                 id="career-search-input"
                 oninput="onCareerSearchInput()"
                 onfocus="onCareerSearchInput()"
-                placeholder="Digite o nome do jogador, time ou TAG (ex: Furia, LLL)..."
+                placeholder="Digite o nome do jogador, time ou TAG (ex: Ghost, LLL)..."
                 autocomplete="off"
                 class="w-full bg-[#21262d] border border-dark rounded-lg pl-3.5 pr-9 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
               >
@@ -235,7 +235,7 @@
             <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
               <span>🔄</span> Histórico de Transferências
             </h2>
-            <p class="text-xs text-gray-400">Movimentações extraídas do Histórico de Alteração, ordenadas da mais recente para a mais antiga.</p>
+            <p class="text-xs text-gray-400">Movimentações extraídas do Histórico de Alteração e Detalhe de Títulos, ordenadas da mais recente para a mais antiga.</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
@@ -1088,6 +1088,15 @@
         transfersByPlayer.get(key).push(tr);
       });
 
+      // Registros das páginas Jogadores Campeões (dataHistCampeoes) e Jogadores MVPs (dataHistMvps)
+      const titlesRecordsByPlayer = new Map();
+      dataHistCampeoes.forEach(c => {
+        const pKey = (c.entity || '').toLowerCase().trim();
+        if (!pKey) return;
+        if (!titlesRecordsByPlayer.has(pKey)) titlesRecordsByPlayer.set(pKey, []);
+        titlesRecordsByPlayer.get(pKey).push(c);
+      });
+
       const mvpsByPlayer = new Map();
       dataHistMvps.forEach(m => {
         const pKey = (m.entity || '').toLowerCase().trim();
@@ -1109,6 +1118,9 @@
         const currentTeamTag = currentTeamInfo && currentTeamInfo.tag ? currentTeamInfo.tag.toUpperCase() : '';
         const totalTitles = parseInt(j.titles || '0', 10) || 0;
         const totalMvps = parseInt(j.mvps || '0', 10) || 0;
+
+        const playerTitleRecords = titlesRecordsByPlayer.get(pKey) || [];
+        const playerMvpRecords = mvpsByPlayer.get(pKey) || [];
 
         const stints = [];
         let titlesAccountedInPast = 0;
@@ -1164,7 +1176,6 @@
           });
         }
 
-        const playerMvpRecords = mvpsByPlayer.get(pKey) || [];
         stints.forEach(stint => {
           const teamNorm = stint.team.toLowerCase().trim();
           stint.mvps = playerMvpRecords.filter(rec => {
@@ -1188,7 +1199,9 @@
           totalTitles,
           totalMvps,
           transfersCount: playerTransfers.length,
-          stints
+          stints,
+          championHistory: playerTitleRecords,
+          mvpHistory: playerMvpRecords
         });
       });
 
@@ -1409,58 +1422,173 @@
         `;
       }).join('');
 
+      // Lista de Competições em que foi Campeão (Jogadores Campeões)
+      const champListHtml = p.championHistory.length > 0
+        ? p.championHistory.map(c => {
+            const teamObj = c.team ? resolveCanonicalTeam(c.team) : null;
+            const logoUrl = (teamObj && teamObj.logo) ? teamObj.logo : (c.logo || '');
+            const logoHtml = logoUrl ? createLogoHtml(logoUrl, "w-5 h-5") : '';
+            const teamLabel = teamObj ? teamObj.name : (c.team || '');
+            return `
+              <tr class="hover:bg-dark-hover/50 transition">
+                <td class="px-3.5 py-2.5 text-xs font-extrabold text-yellow-300">${c.comp || '-'}</td>
+                <td class="px-3.5 py-2.5 text-xs font-mono font-bold text-blue-400 whitespace-nowrap">${c.season || '-'}</td>
+                <td class="px-3.5 py-2.5 text-xs font-semibold text-gray-200">
+                  <div class="flex items-center gap-2">
+                    ${logoHtml}
+                    <span>${teamLabel || '-'}</span>
+                  </div>
+                </td>
+                <td class="px-3.5 py-2.5 text-center">
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">${c.region || '-'}</span>
+                </td>
+              </tr>
+            `;
+          }).join('')
+        : `<tr><td colspan="4" class="px-4 py-6 text-center text-xs text-gray-500 font-semibold">Nenhum título registrado na aba Jogadores Campeões.</td></tr>`;
+
+      // Lista de Competições em que foi MVP (Jogadores MVPs)
+      const mvpListHtml = p.mvpHistory.length > 0
+        ? p.mvpHistory.map(m => {
+            const teamObj = m.team ? resolveCanonicalTeam(m.team) : null;
+            const logoUrl = (teamObj && teamObj.logo) ? teamObj.logo : (m.logo || '');
+            const logoHtml = logoUrl ? createLogoHtml(logoUrl, "w-5 h-5") : '';
+            const teamLabel = teamObj ? teamObj.name : (m.team || '');
+            return `
+              <tr class="hover:bg-dark-hover/50 transition">
+                <td class="px-3.5 py-2.5 text-xs font-extrabold text-purple-300">
+                  <span>${m.comp || '-'}</span>
+                  ${m.phase ? `<span class="block text-[10px] font-semibold text-gray-400">${m.phase}</span>` : ''}
+                </td>
+                <td class="px-3.5 py-2.5 text-xs font-mono font-bold text-blue-400 whitespace-nowrap">${m.season || '-'}</td>
+                <td class="px-3.5 py-2.5 text-xs font-semibold text-gray-200">
+                  <div class="flex items-center gap-2">
+                    ${logoHtml}
+                    <span>${teamLabel || '-'}</span>
+                  </div>
+                </td>
+                <td class="px-3.5 py-2.5 text-center">
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">${m.region || '-'}</span>
+                </td>
+              </tr>
+            `;
+          }).join('')
+        : `<tr><td colspan="4" class="px-4 py-6 text-center text-xs text-gray-500 font-semibold">Nenhum prêmio MVP registrado na aba Jogadores MVPs.</td></tr>`;
+
       container.innerHTML = `
-        <div class="max-w-4xl mx-auto bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col">
-          <!-- Cabeçalho da Ficha do Jogador -->
-          <div class="bg-[#1f242d] px-5 py-4 border-b border-dark flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div class="flex items-center gap-3.5">
-              ${currentLogoHtml}
-              <div>
-                <h3 class="text-lg font-extrabold text-white">${p.name}</h3>
-                <div class="flex flex-wrap items-center gap-2 mt-1">
-                  <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${p.naturalidade}</span>
-                  <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${p.currentTeam}${p.currentTeamTag ? ' (' + p.currentTeamTag + ')' : ''}</span>
-                  <span class="text-[11px] font-mono font-semibold text-gray-400">${p.stints.length} ${p.stints.length === 1 ? 'clube na carreira' : 'clubes na carreira'}</span>
+        <div class="max-w-5xl mx-auto space-y-4">
+          <!-- Card Principal: Resumo e Passagens por Clubes -->
+          <div class="bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col">
+            <!-- Cabeçalho da Ficha do Jogador -->
+            <div class="bg-[#1f242d] px-5 py-4 border-b border-dark flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3.5">
+                ${currentLogoHtml}
+                <div>
+                  <h3 class="text-lg font-extrabold text-white">${p.name}</h3>
+                  <div class="flex flex-wrap items-center gap-2 mt-1">
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${p.naturalidade}</span>
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${p.currentTeam}${p.currentTeamTag ? ' (' + p.currentTeamTag + ')' : ''}</span>
+                    <span class="text-[11px] font-mono font-semibold text-gray-400">${p.stints.length} ${p.stints.length === 1 ? 'clube na carreira' : 'clubes na carreira'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Totais na Carreira -->
+              <div class="flex items-center gap-2 shrink-0">
+                <div class="bg-[#161b22] border border-yellow-500/30 px-3.5 py-1.5 rounded-lg text-center">
+                  <span class="block text-[10px] uppercase font-bold text-gray-400">Total Títulos</span>
+                  <span class="text-lg font-black text-yellow-400 font-mono">${p.totalTitles}</span>
+                </div>
+                <div class="bg-[#161b22] border border-purple-500/30 px-3.5 py-1.5 rounded-lg text-center">
+                  <span class="block text-[10px] uppercase font-bold text-gray-400">Total MVPs</span>
+                  <span class="text-lg font-black text-purple-400 font-mono">${p.totalMvps}</span>
                 </div>
               </div>
             </div>
 
-            <!-- Totais na Carreira -->
-            <div class="flex items-center gap-2 shrink-0">
-              <div class="bg-[#161b22] border border-yellow-500/30 px-3.5 py-1.5 rounded-lg text-center">
-                <span class="block text-[10px] uppercase font-bold text-gray-400">Total Títulos</span>
-                <span class="text-lg font-black text-yellow-400 font-mono">${p.totalTitles}</span>
-              </div>
-              <div class="bg-[#161b22] border border-purple-500/30 px-3.5 py-1.5 rounded-lg text-center">
-                <span class="block text-[10px] uppercase font-bold text-gray-400">Total MVPs</span>
-                <span class="text-lg font-black text-purple-400 font-mono">${p.totalMvps}</span>
-              </div>
+            <!-- Tabela de Trajetória / Passagens por Times -->
+            <div class="w-full overflow-x-auto custom-scroll">
+              <table class="w-full text-left">
+                <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
+                  <tr>
+                    <th class="px-4 py-2.5 w-12 text-center">#</th>
+                    <th class="px-4 py-2.5">Time</th>
+                    <th class="px-4 py-2.5">Período / Janela</th>
+                    <th class="px-4 py-2.5 text-center">Títulos pelo Time</th>
+                    <th class="px-4 py-2.5 text-center">MVPs pelo Time</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-dark text-gray-200">
+                  ${stintsHtml}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <!-- Tabela de Trajetória / Passagens por Times -->
-          <div class="w-full overflow-x-auto custom-scroll">
-            <table class="w-full text-left">
-              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
-                <tr>
-                  <th class="px-4 py-2.5 w-12 text-center">#</th>
-                  <th class="px-4 py-2.5">Time</th>
-                  <th class="px-4 py-2.5">Período / Janela</th>
-                  <th class="px-4 py-2.5 text-center">Títulos pelo Time</th>
-                  <th class="px-4 py-2.5 text-center">MVPs pelo Time</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-dark text-gray-200">
-                ${stintsHtml}
-              </tbody>
-            </table>
+          <!-- Painéis de Competições Conquistadas (Campeão e MVP) -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            
+            <!-- Coluna 1: Competições como Campeão -->
+            <div class="bg-dark-card border border-yellow-500/40 rounded-xl overflow-hidden shadow-xl flex flex-col">
+              <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex items-center justify-between gap-2">
+                <h4 class="text-sm font-extrabold text-white flex items-center gap-2">
+                  <span>🏆</span> Competições Campeão
+                </h4>
+                <span class="text-xs bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 px-2.5 py-0.5 rounded-full font-bold font-mono">
+                  ${p.championHistory.length} ${p.championHistory.length === 1 ? 'título' : 'títulos'}
+                </span>
+              </div>
+              <div class="w-full max-h-[360px] overflow-y-auto overflow-x-auto custom-scroll">
+                <table class="w-full text-left">
+                  <thead class="sticky top-0 z-10 bg-[#161b22] border-b border-dark text-gray-400 text-[10px] uppercase font-bold">
+                    <tr>
+                      <th class="px-3.5 py-2">Competição</th>
+                      <th class="px-3.5 py-2">Temp.</th>
+                      <th class="px-3.5 py-2">Time</th>
+                      <th class="px-3.5 py-2 text-center">Região</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-dark text-gray-200">
+                    ${champListHtml}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Coluna 2: Competições como MVP -->
+            <div class="bg-dark-card border border-purple-500/40 rounded-xl overflow-hidden shadow-xl flex flex-col">
+              <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex items-center justify-between gap-2">
+                <h4 class="text-sm font-extrabold text-white flex items-center gap-2">
+                  <span>⭐</span> Competições MVP
+                </h4>
+                <span class="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-bold font-mono">
+                  ${p.mvpHistory.length} ${p.mvpHistory.length === 1 ? 'MVP' : 'MVPs'}
+                </span>
+              </div>
+              <div class="w-full max-h-[360px] overflow-y-auto overflow-x-auto custom-scroll">
+                <table class="w-full text-left">
+                  <thead class="sticky top-0 z-10 bg-[#161b22] border-b border-dark text-gray-400 text-[10px] uppercase font-bold">
+                    <tr>
+                      <th class="px-3.5 py-2">Competição / Fase</th>
+                      <th class="px-3.5 py-2">Temp.</th>
+                      <th class="px-3.5 py-2">Time</th>
+                      <th class="px-3.5 py-2 text-center">Região</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-dark text-gray-200">
+                    ${mvpListHtml}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         </div>
       `;
     }
 
     /* =========================================================================
-       ABA TRANSFERÊNCIAS (INTERPRETAÇÃO DO HISTÓRICO DE ALTERAÇÃO + LOGOS)
+       ABA TRANSFERÊNCIAS (HISTÓRICO DE ALTERAÇÃO + DETALHE DE TÍTULOS + LOGOS)
     ========================================================================= */
     function resolveCanonicalTeam(rawTeamName) {
       const cleaned = (rawTeamName || '').replace(/[.!?;,]+$/g, '').trim();
@@ -1478,6 +1606,19 @@
         name: cleaned,
         logo: ''
       };
+    }
+
+    // Extrai a quantidade de títulos a partir da coluna "Detalhe de Títulos"
+    // Ex.: "Na Loud, Ghost conquistou 1 título." -> 1 | "Na Furia, Yan Takato não conquistou títulos." -> 0
+    function parseTitlesDetailValue(rawVal) {
+      if (rawVal === null || rawVal === undefined) return 0;
+      const str = String(rawVal).trim();
+      if (!str) return 0;
+      if (/^\d+$/.test(str)) return parseInt(str, 10) || 0;
+      if (/n[ãa]o\s+conquistou|nenhum\s+t[íi]tulo|zero\s+t[íi]tulo/i.test(str)) return 0;
+      const match = str.match(/conquistou\s+(\d+)\s*t[íi]tulo/i) || str.match(/(\d+)\s*t[íi]tulo/i);
+      if (match) return parseInt(match[1], 10) || 0;
+      return 0;
     }
 
     function parseTransferHistoryComment(commentText, fallbackPlayer = '') {
@@ -1811,11 +1952,12 @@
 
         const titlesCount = parseInt(tr.titlesWon || '0', 10) || 0;
         const titlesBadge = titlesCount > 0
-          ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 font-extrabold text-xs font-mono">🏆 ${titlesCount}</span>`
-          : `<span class="text-gray-500 font-mono text-xs">0</span>`;
+          ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 font-extrabold text-xs font-mono" title="${(tr.titlesDetail || '').replace(/"/g, '&quot;')}">🏆 ${titlesCount}</span>`
+          : `<span class="text-gray-500 font-mono text-xs" title="${(tr.titlesDetail || '').replace(/"/g, '&quot;')}">0</span>`;
 
         const safeId = tr.id.replace(/'/g, "\\'");
-        const tooltipAttr = tr.historyComment ? `title="${tr.historyComment.replace(/"/g, '&quot;')}"` : '';
+        const tooltipParts = [tr.historyComment, tr.titlesDetail].filter(Boolean);
+        const tooltipAttr = tooltipParts.length > 0 ? `title="${tooltipParts.join(' • ').replace(/"/g, '&quot;')}"` : '';
 
         return `
           <tr class="hover:bg-dark-hover/50 transition" ${tooltipAttr}>
@@ -3926,7 +4068,7 @@
       if (rows.length === 0) return [];
 
       const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
-      const headerKeywords = ['jogador', 'player', 'nome', 'historico', 'alterac', 'coment', 'descri', 'moviment', 'titulo', 'janela', 'momento', 'temporada'];
+      const headerKeywords = ['jogador', 'player', 'nome', 'historico', 'alterac', 'coment', 'descri', 'moviment', 'detalhe', 'titulo', 'janela', 'momento', 'temporada'];
       const hasHeader = headerRow.some(h => headerKeywords.some(k => h === k || h.includes(k)));
 
       let idxPlayer = -1, idxHistory = -1, idxFrom = -1, idxTo = -1, idxTitles = -1, idxWindow = -1, idxFromLogo = -1, idxToLogo = -1;
@@ -3939,7 +4081,7 @@
           else if (idxToLogo === -1 && h.includes('logo') && (h.includes('ent') || h.includes('nov') || h.includes('atu') || h.includes('para') || h.includes('dest'))) idxToLogo = i;
           else if (idxFrom === -1 && (h.includes('sai') || h.includes('ant') || h.includes('orig') || h === 'de' || h.includes('ex-'))) idxFrom = i;
           else if (idxTo === -1 && (h.includes('ent') || h.includes('nov') || h.includes('atu') || h.includes('dest') || h === 'para')) idxTo = i;
-          else if (idxTitles === -1 && h.includes('titul')) idxTitles = i;
+          else if (idxTitles === -1 && (h.includes('detalhe') || h.includes('titul'))) idxTitles = i;
           else if (idxWindow === -1 && (h.includes('janel') || h.includes('moment') || h.includes('temp') || h.includes('edicao'))) idxWindow = i;
         });
       }
@@ -3954,9 +4096,14 @@
         const detectedHistoryColIdx = r.findIndex(v => /mudou-se\s+de\s+time|\bde\s+.+?\s+para\s+.+/i.test(v || ''));
         const effectiveHistoryIdx = idxHistory !== -1 ? idxHistory : detectedHistoryColIdx;
 
+        // Detecta a coluna "Detalhe de Títulos" (ex: "Na Loud, Ghost conquistou 1 título." ou "Na Furia, Yan Takato não conquistou títulos.")
+        const detectedDetailColIdx = r.findIndex((v, i) => i !== effectiveHistoryIdx && /conquistou\s+\d+\s*t[íi]tulo|n[ãa]o\s+conquistou\s+t[íi]tulo/i.test(v || ''));
+        const effectiveTitlesIdx = idxTitles !== -1 ? idxTitles : detectedDetailColIdx;
+
         let historyComment = effectiveHistoryIdx !== -1 ? (r[effectiveHistoryIdx] || '').trim() : '';
+        let titlesDetail = effectiveTitlesIdx !== -1 ? (r[effectiveTitlesIdx] || '').trim() : '';
         let player = idxPlayer !== -1 ? (r[idxPlayer] || '').trim() : '';
-        let titlesWon = idxTitles !== -1 ? (parseInt(r[idxTitles] || '0', 10) || 0) : 0;
+        let titlesWon = effectiveTitlesIdx !== -1 ? parseTitlesDetailValue(titlesDetail) : 0;
         let win = idxWindow !== -1 ? (r[idxWindow] || '').trim() : '';
         let fromTeam = idxFrom !== -1 ? (r[idxFrom] || '').trim() : '';
         let toTeam = idxTo !== -1 ? (r[idxTo] || '').trim() : '';
@@ -3971,24 +4118,33 @@
 
           const remainingCols = r.filter((v, idx) => {
             if (!v || /^https?:\/\//i.test(v)) return false;
-            if (idx === idxPlayer || idx === effectiveHistoryIdx) return false;
+            if (idx === idxPlayer || idx === effectiveHistoryIdx || idx === effectiveTitlesIdx) return false;
             if (v.trim() === player) return false;
             return true;
           });
 
-          if (idxTitles === -1) {
-            const numCol = remainingCols.find(v => /^\d+$/.test(v.trim()));
-            if (numCol !== undefined) titlesWon = parseInt(numCol.trim(), 10) || 0;
+          if (effectiveTitlesIdx === -1) {
+            const detailOrNumCol = remainingCols.find(v => /^\d+$/.test(v.trim()) || /conquistou|t[íi]tulo/i.test(v.trim()));
+            if (detailOrNumCol !== undefined) {
+              titlesDetail = detailOrNumCol.trim();
+              titlesWon = parseTitlesDetailValue(titlesDetail);
+            }
           }
           if (idxWindow === -1) {
-            const winCol = remainingCols.find(v => !/^\d+$/.test(v.trim()) && v.trim() !== fromTeam && v.trim() !== toTeam);
+            const winCol = remainingCols.find(v =>
+              !/^\d+$/.test(v.trim()) &&
+              !/conquistou|t[íi]tulo/i.test(v.trim()) &&
+              v.trim() !== fromTeam &&
+              v.trim() !== toTeam
+            );
             if (winCol !== undefined) win = winCol.trim();
           }
         } else if (!hasHeader) {
           player = nonUrlCols[0] || '';
           fromTeam = nonUrlCols[1] || '';
           toTeam = nonUrlCols[2] || '';
-          titlesWon = parseInt(nonUrlCols[3] || '0', 10) || 0;
+          titlesDetail = nonUrlCols[3] || '';
+          titlesWon = parseTitlesDetailValue(titlesDetail);
           win = nonUrlCols[4] || '';
         }
 
@@ -3997,6 +4153,7 @@
           rowIndex: rowIdx,
           player: player.trim(),
           historyComment,
+          titlesDetail,
           fromTeam: fromTeam.trim(),
           fromLogo,
           toTeam: toTeam.trim(),
