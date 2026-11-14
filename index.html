@@ -143,60 +143,47 @@
       <div id="container-composicoes" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 items-start w-full"></div>
     </div>
 
-    <!-- PAINEL CARREIRA DOS JOGADORES -->
+    <!-- PAINEL CARREIRA DOS JOGADORES (BUSCA SOB DEMANDA) -->
     <div id="section-carreira" class="space-y-4 w-full hidden">
       <div class="bg-dark-card border border-dark rounded-xl p-4 shadow-xl space-y-3">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-dark pb-3">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div>
             <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
               <span>🎖️</span> Carreira dos Jogadores
             </h2>
-            <p class="text-xs text-gray-400">Histórico completo de passagens por equipes, títulos conquistados em cada clube e premiações de MVP.</p>
+            <p class="text-xs text-gray-400">Pesquise pelo nome do jogador, nome do time ou TAG para listar os integrantes e visualizar a trajetória completa.</p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <div class="relative">
-              <input type="text" id="career-search-input" oninput="renderSectionCarreira()" placeholder="Pesquisar jogador ou time..." class="w-60 sm:w-64 bg-[#21262d] border border-dark rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
-              <span class="absolute right-2.5 top-1.5 text-xs text-gray-400 pointer-events-none">🔍</span>
+          <div class="flex items-center gap-2 w-full lg:w-auto">
+            <div class="relative flex-1 lg:w-96">
+              <input
+                type="text"
+                id="career-search-input"
+                oninput="onCareerSearchInput()"
+                onfocus="onCareerSearchInput()"
+                placeholder="Digite o nome do jogador, time ou TAG (ex: Furia, LLL)..."
+                autocomplete="off"
+                class="w-full bg-[#21262d] border border-dark rounded-lg pl-3.5 pr-9 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
+              >
+              <span class="absolute right-3 top-2 text-xs text-gray-400 pointer-events-none">🔍</span>
             </div>
-
-            <select id="career-sort-select" onchange="renderSectionCarreira()" class="bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
-              <option value="titles">Ordenar: Mais Títulos</option>
-              <option value="mvps">Ordenar: Mais MVPs</option>
-              <option value="teams">Ordenar: Mais Times na Carreira</option>
-              <option value="name">Ordenar: Ordem Alfabética (A-Z)</option>
-            </select>
-
-            <span id="carreira-counter" class="text-xs bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2.5 py-1.5 rounded-lg font-bold">0 jogadores</span>
+            <button
+              type="button"
+              id="btn-clear-career-search"
+              onclick="clearCareerSearch()"
+              class="hidden px-3 py-2 bg-gray-700/70 hover:bg-gray-600 text-gray-200 text-xs font-bold rounded-lg transition shrink-0"
+            >
+              Limpar
+            </button>
           </div>
         </div>
 
-        <!-- Filtros rápidos de Naturalidade e Região Atual -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div class="bg-[#1f242d]/60 border border-dark rounded-lg p-2.5 space-y-1.5">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
-                <span>🌍</span> Região do Time Atual
-              </span>
-              <button type="button" onclick="toggleCareerTeamRegion('ALL')" class="text-[10px] font-bold text-gray-400 hover:text-white underline">Alternar Todas</button>
-            </div>
-            <div id="career-team-regions-bar" class="flex flex-wrap items-center gap-1.5"></div>
-          </div>
-
-          <div class="bg-[#1f242d]/60 border border-dark rounded-lg p-2.5 space-y-1.5">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-                <span>🏳️</span> Naturalidade
-              </span>
-              <button type="button" onclick="toggleCareerPlayerNat('ALL')" class="text-[10px] font-bold text-gray-400 hover:text-white underline">Alternar Todas</button>
-            </div>
-            <div id="career-player-nats-bar" class="flex flex-wrap items-center gap-1.5"></div>
-          </div>
-        </div>
+        <!-- Resultados da Pesquisa (Jogadores ou Elenco do Time/TAG pesquisado) -->
+        <div id="career-search-results" class="hidden pt-2 border-t border-dark space-y-3"></div>
       </div>
 
-      <!-- Grade de Cards de Carreira -->
-      <div id="container-carreira" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 items-start w-full"></div>
+      <!-- Área Exclusiva do Jogador Selecionado (inicia vazia até selecionar) -->
+      <div id="container-carreira" class="w-full"></div>
     </div>
 
     <!-- PAINEL TRANSFERÊNCIAS -->
@@ -594,11 +581,8 @@
     let compAvailablePlayerNats = [];
     let compActivePlayerNats = new Set();
 
-    // Estado da Aba Carreira
-    let careerAvailableTeamRegions = [];
-    let careerActiveTeamRegions = new Set();
-    let careerAvailablePlayerNats = [];
-    let careerActivePlayerNats = new Set();
+    // Estado da Aba Carreira (Jogador selecionado sob demanda)
+    let selectedCareerPlayerName = '';
 
     // Estado da Aba Transferências
     let selectedTransferTeams = new Set(['ALL']);
@@ -1059,7 +1043,7 @@
               <div class="flex items-center gap-2.5 min-w-0">
                 ${logoHtml}
                 <div class="min-w-0">
-                  <h3 class="text-sm font-extrabold text-white truncate" title="${team.name}">${team.name}</h3>
+                  <h3 class="text-sm font-extrabold text-white break-words leading-snug">${team.name}</h3>
                   <div class="flex items-center gap-1.5 mt-1">
                     <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag || '-'}</span>
                     <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${team.region}</span>
@@ -1091,81 +1075,9 @@
     }
 
     /* =========================================================================
-       ABA CARREIRA DOS JOGADORES (PASSAGENS POR TIMES + TÍTULOS POR CLUBE + MVPS)
+       ABA CARREIRA DOS JOGADORES (INICIA VAZIA • PESQUISA POR JOGADOR / TIME / TAG)
     ========================================================================= */
-    function setupCarreiraFilters() {
-      const teamRegs = dataJogadores.map(j => getTeamRegionByName(j.team) || 'SEM REGIÃO');
-      const playerNats = dataJogadores.map(j => (j.naturalidade || 'N/I').toUpperCase());
-
-      careerAvailableTeamRegions = sortRegionsBRFirst(teamRegs);
-      careerAvailablePlayerNats = sortRegionsBRFirst(playerNats);
-
-      careerActiveTeamRegions = new Set(careerAvailableTeamRegions);
-      careerActivePlayerNats = new Set(careerAvailablePlayerNats);
-
-      renderCarreiraFilterBars();
-    }
-
-    function toggleCareerTeamRegion(reg) {
-      if (reg === 'ALL') {
-        if (careerActiveTeamRegions.size === careerAvailableTeamRegions.length) {
-          careerActiveTeamRegions.clear();
-        } else {
-          careerActiveTeamRegions = new Set(careerAvailableTeamRegions);
-        }
-      } else {
-        if (careerActiveTeamRegions.has(reg)) careerActiveTeamRegions.delete(reg);
-        else careerActiveTeamRegions.add(reg);
-      }
-      renderCarreiraFilterBars();
-      renderSectionCarreira();
-    }
-
-    function toggleCareerPlayerNat(nat) {
-      if (nat === 'ALL') {
-        if (careerActivePlayerNats.size === careerAvailablePlayerNats.length) {
-          careerActivePlayerNats.clear();
-        } else {
-          careerActivePlayerNats = new Set(careerAvailablePlayerNats);
-        }
-      } else {
-        if (careerActivePlayerNats.has(nat)) careerActivePlayerNats.delete(nat);
-        else careerActivePlayerNats.add(nat);
-      }
-      renderCarreiraFilterBars();
-      renderSectionCarreira();
-    }
-
-    function renderCarreiraFilterBars() {
-      const regBar = document.getElementById('career-team-regions-bar');
-      const natBar = document.getElementById('career-player-nats-bar');
-      if (!regBar || !natBar) return;
-
-      const isAllReg = careerActiveTeamRegions.size === careerAvailableTeamRegions.length;
-      regBar.innerHTML = `
-        <button type="button" onclick="toggleCareerTeamRegion('ALL')" class="px-2 py-0.5 text-[11px] font-bold rounded transition ${isAllReg ? 'bg-blue-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'}">
-          Todas
-        </button>
-        ${careerAvailableTeamRegions.map(r => {
-          const active = careerActiveTeamRegions.has(r);
-          return `<button type="button" onclick="toggleCareerTeamRegion('${r.replace(/'/g, "\\'")}')" class="px-2 py-0.5 text-[11px] font-bold rounded transition flex items-center gap-1 ${active ? 'bg-blue-600/30 border border-blue-500 text-blue-300' : 'bg-[#21262d] border border-dark text-gray-400 hover:text-white'}"><span>${active ? '✓' : '+'}</span><span>${r}</span></button>`;
-        }).join('')}
-      `;
-
-      const isAllNat = careerActivePlayerNats.size === careerAvailablePlayerNats.length;
-      natBar.innerHTML = `
-        <button type="button" onclick="toggleCareerPlayerNat('ALL')" class="px-2 py-0.5 text-[11px] font-bold rounded transition ${isAllNat ? 'bg-emerald-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'}">
-          Todas
-        </button>
-        ${careerAvailablePlayerNats.map(n => {
-          const active = careerActivePlayerNats.has(n);
-          return `<button type="button" onclick="toggleCareerPlayerNat('${n.replace(/'/g, "\\'")}')" class="px-2 py-0.5 text-[11px] font-bold rounded transition flex items-center gap-1 ${active ? 'bg-emerald-600/30 border border-emerald-500 text-emerald-300' : 'bg-[#21262d] border border-dark text-gray-400 hover:text-white'}"><span>${active ? '✓' : '+'}</span><span>${n}</span></button>`;
-        }).join('')}
-      `;
-    }
-
     function buildPlayersCareerProfiles() {
-      // Ordena transferências da mais antiga para a mais recente (ordem cronológica de rowIndex)
       const chronologicalTransfers = getEffectiveTransfersList().slice().sort((a, b) => a.rowIndex - b.rowIndex);
       const transfersByPlayer = new Map();
 
@@ -1176,7 +1088,6 @@
         transfersByPlayer.get(key).push(tr);
       });
 
-      // Mapeia MVPs históricos por jogador + time na época
       const mvpsByPlayer = new Map();
       dataHistMvps.forEach(m => {
         const pKey = (m.entity || '').toLowerCase().trim();
@@ -1186,20 +1097,19 @@
       });
 
       const profiles = [];
-      const processedKeys = new Set();
 
       dataJogadores.forEach(j => {
         const pKey = (j.name || '').toLowerCase().trim();
         if (!pKey) return;
-        processedKeys.add(pKey);
 
         const playerTransfers = transfersByPlayer.get(pKey) || [];
         const currentTeamRes = resolveCanonicalTeam(j.team || 'Sem Time');
+        const currentTeamInfo = getTeamInfoByName(currentTeamRes.name);
         const currentTeamRegion = getTeamRegionByName(currentTeamRes.name) || 'SEM REGIÃO';
+        const currentTeamTag = currentTeamInfo && currentTeamInfo.tag ? currentTeamInfo.tag.toUpperCase() : '';
         const totalTitles = parseInt(j.titles || '0', 10) || 0;
         const totalMvps = parseInt(j.mvps || '0', 10) || 0;
 
-        // Reconstrói as passagens por times (stints) em ordem cronológica
         const stints = [];
         let titlesAccountedInPast = 0;
 
@@ -1210,7 +1120,6 @@
             const titlesInStint = parseInt(tr.titlesWon || '0', 10) || 0;
 
             if (!isFromSemTime) {
-              // Se o stint anterior já era o mesmo clube consecutivamente, acumula
               const prev = stints[stints.length - 1];
               if (prev && prev.team.toLowerCase() === fromRes.name.toLowerCase()) {
                 prev.titles += titlesInStint;
@@ -1230,7 +1139,6 @@
           });
         }
 
-        // Calcula títulos no clube atual subtraindo os conquistados nas passagens anteriores (com piso 0)
         const titlesInCurrentTeam = Math.max(0, totalTitles - titlesAccountedInPast);
 
         const lastTr = playerTransfers.length > 0 ? playerTransfers[playerTransfers.length - 1] : null;
@@ -1256,7 +1164,6 @@
           });
         }
 
-        // Conta MVPs por equipe na aba Histórico de MVPs (se houver registro detalhado)
         const playerMvpRecords = mvpsByPlayer.get(pKey) || [];
         stints.forEach(stint => {
           const teamNorm = stint.team.toLowerCase().trim();
@@ -1266,7 +1173,6 @@
           }).length;
         });
 
-        // Se o jogador nunca saiu do time atual e não há detalhamento individual na aba MVPs, atribui o total ao clube atual
         const summedStintMvps = stints.reduce((acc, s) => acc + (s.mvps || 0), 0);
         if (summedStintMvps === 0 && totalMvps > 0 && stints.length > 0) {
           stints[stints.length - 1].mvps = totalMvps;
@@ -1276,6 +1182,7 @@
           name: j.name,
           naturalidade: (j.naturalidade || 'N/I').toUpperCase(),
           currentTeam: currentTeamRes.name,
+          currentTeamTag,
           currentTeamLogo: currentTeamRes.logo || j.logo || '',
           currentTeamRegion,
           totalTitles,
@@ -1288,134 +1195,268 @@
       return profiles;
     }
 
-    function renderSectionCarreira() {
-      const container = document.getElementById('container-carreira');
-      const counter = document.getElementById('carreira-counter');
-      if (!container) return;
+    function onCareerSearchInput() {
+      const input = document.getElementById('career-search-input');
+      const resultsBox = document.getElementById('career-search-results');
+      const clearBtn = document.getElementById('btn-clear-career-search');
+      if (!input || !resultsBox) return;
 
-      const query = (document.getElementById('career-search-input')?.value || '').toLowerCase().trim();
-      const sortBy = document.getElementById('career-sort-select')?.value || 'titles';
+      const rawQuery = input.value || '';
+      const query = rawQuery.toLowerCase().trim();
 
-      let profiles = buildPlayersCareerProfiles();
-
-      // Filtra por região atual, naturalidade e texto de busca (nome do jogador ou qualquer time da carreira)
-      profiles = profiles.filter(p => {
-        if (!careerActiveTeamRegions.has(p.currentTeamRegion)) return false;
-        if (!careerActivePlayerNats.has(p.naturalidade)) return false;
-
-        if (!query) return true;
-        const matchName = p.name.toLowerCase().includes(query);
-        const matchCurrent = p.currentTeam.toLowerCase().includes(query);
-        const matchAnyStint = p.stints.some(s => s.team.toLowerCase().includes(query));
-        return matchName || matchCurrent || matchAnyStint;
-      });
-
-      // Ordenação selecionada
-      profiles.sort((a, b) => {
-        if (sortBy === 'mvps') return b.totalMvps - a.totalMvps || b.totalTitles - a.totalTitles || a.name.localeCompare(b.name);
-        if (sortBy === 'teams') return b.stints.length - a.stints.length || b.totalTitles - a.totalTitles || a.name.localeCompare(b.name);
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        return b.totalTitles - a.totalTitles || b.totalMvps - a.totalMvps || a.name.localeCompare(b.name);
-      });
-
-      if (counter) {
-        counter.textContent = `${profiles.length} jogadores`;
+      if (clearBtn) {
+        clearBtn.classList.toggle('hidden', !query && !selectedCareerPlayerName);
       }
 
-      if (profiles.length === 0) {
-        container.innerHTML = `<div class="col-span-full bg-dark-card border border-dark rounded-xl p-8 text-center text-xs text-gray-500 font-bold">Nenhum jogador encontrado com os filtros selecionados.</div>`;
+      if (!query) {
+        resultsBox.classList.add('hidden');
+        resultsBox.innerHTML = '';
         return;
       }
 
-      container.innerHTML = profiles.map(p => {
-        const currentLogoHtml = p.currentTeamLogo
-          ? createLogoHtml(p.currentTeamLogo, "w-9 h-9")
-          : `<span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-800 border border-gray-700 text-sm text-gray-400">🎮</span>`;
+      const profiles = buildPlayersCareerProfiles();
 
-        const stintsHtml = p.stints.map((st, idx) => {
-          const isSemTime = /^sem\s*time$/i.test(st.team);
-          const logoHtml = st.logo
-            ? createLogoHtml(st.logo, "w-5 h-5")
-            : (isSemTime ? `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-800 border border-gray-700 text-[10px] text-gray-400">🚫</span>` : '');
+      // 1. Verifica se a pesquisa corresponde a algum time (por nome ou TAG)
+      const allKnownTeams = [...dataListaTimes, ...dataTimes];
+      const uniqueTeamsMap = new Map();
+      allKnownTeams.forEach(t => {
+        if (t && t.name && !uniqueTeamsMap.has(t.name.toLowerCase().trim())) {
+          uniqueTeamsMap.set(t.name.toLowerCase().trim(), t);
+        }
+      });
 
-          const periodLabel = st.isCurrent
-            ? (st.entryWindow && st.entryWindow !== 'Elenco Base' ? `Desde ${st.entryWindow} • Atual` : 'Elenco Atual')
-            : `${st.entryWindow !== 'Início' ? st.entryWindow + ' ➔ ' : 'Saiu em '}${st.exitWindow}`;
+      const matchingTeams = Array.from(uniqueTeamsMap.values()).filter(t => {
+        const nameMatch = (t.name || '').toLowerCase().includes(query);
+        const tagMatch = (t.tag || '').toLowerCase().includes(query);
+        return nameMatch || tagMatch;
+      });
 
-          const titlesBadge = st.titles > 0
-            ? `<span class="px-2 py-0.5 rounded bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 font-extrabold text-[11px] font-mono">🏆 ${st.titles}</span>`
-            : `<span class="text-gray-500 font-mono text-[11px]">0</span>`;
+      // 2. Verifica jogadores cujo nome bate diretamente com a pesquisa
+      const matchingPlayersByName = profiles.filter(p => p.name.toLowerCase().includes(query));
 
-          const mvpsBadge = (st.mvps || 0) > 0
-            ? `<span class="px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-extrabold text-[11px] font-mono">⭐ ${st.mvps}</span>`
-            : `<span class="text-gray-500 font-mono text-[11px]">0</span>`;
+      let html = '';
 
-          return `
-            <tr class="${st.isCurrent ? 'bg-blue-500/5' : 'hover:bg-dark-hover/50'} transition">
-              <td class="px-3 py-2 text-center font-mono text-[11px] text-gray-500 font-bold">${idx + 1}º</td>
-              <td class="px-3 py-2 text-xs font-bold ${st.isCurrent ? 'text-white' : 'text-gray-300'}">
+      // Se encontrou times correspondentes (por nome ou TAG), lista os jogadores de cada time encontrado
+      if (matchingTeams.length > 0) {
+        matchingTeams.forEach(team => {
+          const teamRoster = profiles.filter(p => p.currentTeam.toLowerCase().trim() === team.name.toLowerCase().trim());
+          if (teamRoster.length === 0) return;
+
+          const teamLogoHtml = createLogoHtml(team.logo, "w-5 h-5");
+          const safeTag = team.tag ? `<span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag}</span>` : '';
+
+          html += `
+            <div class="bg-[#1f242d]/70 border border-dark rounded-xl p-3 space-y-2">
+              <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
-                  ${logoHtml}
-                  <span class="truncate">${st.team}</span>
-                  ${st.isCurrent ? `<span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">Atual</span>` : ''}
+                  ${teamLogoHtml}
+                  <span class="text-xs font-extrabold text-white">Elenco: ${team.name}</span>
+                  ${safeTag}
                 </div>
-              </td>
-              <td class="px-3 py-2 text-[10px] font-mono text-gray-400 whitespace-nowrap">${periodLabel}</td>
-              <td class="px-3 py-2 text-center">${titlesBadge}</td>
-              <td class="px-3 py-2 text-center">${mvpsBadge}</td>
-            </tr>
-          `;
-        }).join('');
-
-        return `
-          <div class="bg-dark-card border border-dark hover:border-blue-500/50 transition rounded-xl overflow-hidden shadow-lg flex flex-col">
-            <!-- Cabeçalho da Ficha do Jogador -->
-            <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex items-center justify-between gap-2">
-              <div class="flex items-center gap-3 min-w-0">
-                ${currentLogoHtml}
-                <div class="min-w-0">
-                  <h3 class="text-sm font-extrabold text-white truncate" title="${p.name}">${p.name}</h3>
-                  <div class="flex flex-wrap items-center gap-1.5 mt-1">
-                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${p.naturalidade}</span>
-                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${p.currentTeam}</span>
-                    <span class="text-[10px] font-mono font-semibold text-gray-400">${p.stints.length} ${p.stints.length === 1 ? 'clube' : 'clubes'}</span>
-                  </div>
-                </div>
+                <span class="text-[10px] font-bold text-gray-400">Clique no jogador para ver a carreira</span>
               </div>
-
-              <!-- Totais na Carreira -->
-              <div class="flex items-center gap-1.5 shrink-0">
-                <div class="bg-[#161b22] border border-yellow-500/30 px-2.5 py-1 rounded-lg text-center">
-                  <span class="block text-[9px] uppercase font-bold text-gray-400">Títulos</span>
-                  <span class="text-sm font-black text-yellow-400 font-mono">${p.totalTitles}</span>
-                </div>
-                <div class="bg-[#161b22] border border-purple-500/30 px-2.5 py-1 rounded-lg text-center">
-                  <span class="block text-[9px] uppercase font-bold text-gray-400">MVPs</span>
-                  <span class="text-sm font-black text-purple-400 font-mono">${p.totalMvps}</span>
-                </div>
+              <div class="flex flex-wrap gap-2">
+                ${teamRoster.map(p => {
+                  const isSelected = selectedCareerPlayerName.toLowerCase() === p.name.toLowerCase();
+                  const safeName = p.name.replace(/'/g, "\\'");
+                  return `
+                    <button
+                      type="button"
+                      onclick="selectCareerPlayer('${safeName}')"
+                      class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 border ${
+                        isSelected
+                          ? 'bg-blue-600 text-white border-blue-400 shadow'
+                          : 'bg-[#161b22] hover:bg-dark-hover text-gray-200 border-dark hover:border-blue-500/60'
+                      }"
+                    >
+                      <span>🎮 ${p.name}</span>
+                      <span class="text-[10px] font-mono text-yellow-400 font-extrabold">🏆 ${p.totalTitles}</span>
+                    </button>
+                  `;
+                }).join('')}
               </div>
             </div>
+          `;
+        });
+      }
 
-            <!-- Tabela de Trajetória / Passagens por Times -->
-            <div class="w-full overflow-x-auto custom-scroll">
-              <table class="w-full text-left">
-                <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[10px] uppercase font-bold">
-                  <tr>
-                    <th class="px-3 py-2 w-8 text-center">#</th>
-                    <th class="px-3 py-2">Time</th>
-                    <th class="px-3 py-2">Período / Janela</th>
-                    <th class="px-3 py-2 text-center">Títulos</th>
-                    <th class="px-3 py-2 text-center">MVPs</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-dark text-gray-200">
-                  ${stintsHtml}
-                </tbody>
-              </table>
+      // Lista jogadores encontrados pelo próprio nome
+      if (matchingPlayersByName.length > 0) {
+        html += `
+          <div class="space-y-1.5">
+            <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider block">Jogadores Encontrados (${matchingPlayersByName.length})</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              ${matchingPlayersByName.map(p => {
+                const isSelected = selectedCareerPlayerName.toLowerCase() === p.name.toLowerCase();
+                const logoHtml = p.currentTeamLogo ? createLogoHtml(p.currentTeamLogo, "w-5 h-5") : '';
+                const safeName = p.name.replace(/'/g, "\\'");
+                return `
+                  <button
+                    type="button"
+                    onclick="selectCareerPlayer('${safeName}')"
+                    class="px-3 py-2 rounded-lg text-left transition flex items-center justify-between gap-2 border ${
+                      isSelected
+                        ? 'bg-blue-600/30 border-blue-500 text-white'
+                        : 'bg-[#1f242d] hover:bg-dark-hover border-dark text-gray-200'
+                    }"
+                  >
+                    <div class="flex items-center gap-2 min-w-0">
+                      ${logoHtml}
+                      <div class="min-w-0">
+                        <span class="text-xs font-extrabold text-white block truncate">${p.name}</span>
+                        <span class="text-[10px] text-gray-400 font-semibold block truncate">${p.currentTeam} ${p.currentTeamTag ? '(' + p.currentTeamTag + ')' : ''}</span>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0 text-[10px] font-mono font-bold">
+                      <span class="text-yellow-400">🏆 ${p.totalTitles}</span>
+                      <span class="text-purple-400">⭐ ${p.totalMvps}</span>
+                    </div>
+                  </button>
+                `;
+              }).join('')}
             </div>
           </div>
         `;
+      }
+
+      if (!html) {
+        html = `<div class="text-xs text-gray-500 font-bold py-2 text-center">Nenhum jogador, time ou TAG encontrado para "${rawQuery}".</div>`;
+      }
+
+      resultsBox.innerHTML = html;
+      resultsBox.classList.remove('hidden');
+    }
+
+    function selectCareerPlayer(playerName) {
+      selectedCareerPlayerName = playerName;
+      const clearBtn = document.getElementById('btn-clear-career-search');
+      if (clearBtn) clearBtn.classList.remove('hidden');
+
+      onCareerSearchInput();
+      renderSectionCarreira();
+    }
+
+    function clearCareerSearch() {
+      selectedCareerPlayerName = '';
+      const input = document.getElementById('career-search-input');
+      const resultsBox = document.getElementById('career-search-results');
+      const clearBtn = document.getElementById('btn-clear-career-search');
+
+      if (input) input.value = '';
+      if (resultsBox) {
+        resultsBox.innerHTML = '';
+        resultsBox.classList.add('hidden');
+      }
+      if (clearBtn) clearBtn.classList.add('hidden');
+
+      renderSectionCarreira();
+    }
+
+    function renderSectionCarreira() {
+      const container = document.getElementById('container-carreira');
+      if (!container) return;
+
+      // Se nenhum jogador foi pesquisado/selecionado ainda, a aba permanece vazia
+      if (!selectedCareerPlayerName) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const profiles = buildPlayersCareerProfiles();
+      const p = profiles.find(item => item.name.toLowerCase().trim() === selectedCareerPlayerName.toLowerCase().trim());
+
+      if (!p) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const currentLogoHtml = p.currentTeamLogo
+        ? createLogoHtml(p.currentTeamLogo, "w-11 h-11")
+        : `<span class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gray-800 border border-gray-700 text-base text-gray-400">🎮</span>`;
+
+      const stintsHtml = p.stints.map((st, idx) => {
+        const isSemTime = /^sem\s*time$/i.test(st.team);
+        const logoHtml = st.logo
+          ? createLogoHtml(st.logo, "w-6 h-6")
+          : (isSemTime ? `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-800 border border-gray-700 text-[11px] text-gray-400">🚫</span>` : '');
+
+        const periodLabel = st.isCurrent
+          ? (st.entryWindow && st.entryWindow !== 'Elenco Base' ? `Desde ${st.entryWindow} • Atual` : 'Elenco Atual')
+          : `${st.entryWindow !== 'Início' ? st.entryWindow + ' ➔ ' : 'Saiu em '}${st.exitWindow}`;
+
+        const titlesBadge = st.titles > 0
+          ? `<span class="px-2.5 py-0.5 rounded bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 font-extrabold text-xs font-mono">🏆 ${st.titles}</span>`
+          : `<span class="text-gray-500 font-mono text-xs">0</span>`;
+
+        const mvpsBadge = (st.mvps || 0) > 0
+          ? `<span class="px-2.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-extrabold text-xs font-mono">⭐ ${st.mvps}</span>`
+          : `<span class="text-gray-500 font-mono text-xs">0</span>`;
+
+        return `
+          <tr class="${st.isCurrent ? 'bg-blue-500/5' : 'hover:bg-dark-hover/50'} transition">
+            <td class="px-4 py-3 text-center font-mono text-xs text-gray-500 font-bold">${idx + 1}º</td>
+            <td class="px-4 py-3 text-xs font-bold ${st.isCurrent ? 'text-white' : 'text-gray-300'}">
+              <div class="flex items-center gap-2.5">
+                ${logoHtml}
+                <span>${st.team}</span>
+                ${st.isCurrent ? `<span class="text-[10px] uppercase font-black px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">Atual</span>` : ''}
+              </div>
+            </td>
+            <td class="px-4 py-3 text-xs font-mono text-gray-400 whitespace-nowrap">${periodLabel}</td>
+            <td class="px-4 py-3 text-center">${titlesBadge}</td>
+            <td class="px-4 py-3 text-center">${mvpsBadge}</td>
+          </tr>
+        `;
       }).join('');
+
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col">
+          <!-- Cabeçalho da Ficha do Jogador -->
+          <div class="bg-[#1f242d] px-5 py-4 border-b border-dark flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3.5">
+              ${currentLogoHtml}
+              <div>
+                <h3 class="text-lg font-extrabold text-white">${p.name}</h3>
+                <div class="flex flex-wrap items-center gap-2 mt-1">
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${p.naturalidade}</span>
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${p.currentTeam}${p.currentTeamTag ? ' (' + p.currentTeamTag + ')' : ''}</span>
+                  <span class="text-[11px] font-mono font-semibold text-gray-400">${p.stints.length} ${p.stints.length === 1 ? 'clube na carreira' : 'clubes na carreira'}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Totais na Carreira -->
+            <div class="flex items-center gap-2 shrink-0">
+              <div class="bg-[#161b22] border border-yellow-500/30 px-3.5 py-1.5 rounded-lg text-center">
+                <span class="block text-[10px] uppercase font-bold text-gray-400">Total Títulos</span>
+                <span class="text-lg font-black text-yellow-400 font-mono">${p.totalTitles}</span>
+              </div>
+              <div class="bg-[#161b22] border border-purple-500/30 px-3.5 py-1.5 rounded-lg text-center">
+                <span class="block text-[10px] uppercase font-bold text-gray-400">Total MVPs</span>
+                <span class="text-lg font-black text-purple-400 font-mono">${p.totalMvps}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabela de Trajetória / Passagens por Times -->
+          <div class="w-full overflow-x-auto custom-scroll">
+            <table class="w-full text-left">
+              <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
+                <tr>
+                  <th class="px-4 py-2.5 w-12 text-center">#</th>
+                  <th class="px-4 py-2.5">Time</th>
+                  <th class="px-4 py-2.5">Período / Janela</th>
+                  <th class="px-4 py-2.5 text-center">Títulos pelo Time</th>
+                  <th class="px-4 py-2.5 text-center">MVPs pelo Time</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-dark text-gray-200">
+                ${stintsHtml}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
     }
 
     /* =========================================================================
@@ -1455,9 +1496,7 @@
       let rawFrom = '';
       let rawTo = '';
 
-      // Padrão principal: "Yan Takato mudou-se de time de Furia para Loud."
       const regexMudouDeTime = /^(.*?)\s+mudou-se\s+de\s+time\s+de\s+(.+?)\s+para\s+(.+?)[.!?;]*$/i;
-      // Padrões alternativos: "Yan Takato mudou-se de Furia para Loud." / "saiu de X para Y" / "de X para Y"
       const regexGenerico = /^(.*?)\s+(?:mudou-se|saiu|transferido|foi)\s+(?:do\s+time\s+|da\s+equipe\s+|de\s+|do\s+|da\s+)(.+?)\s+(?:para\s+o\s+time\s+|para\s+a\s+equipe\s+|para\s+|pro\s+|pra\s+)(.+?)[.!?;]*$/i;
       const regexDePara = /\bde\s+(.+?)\s+para\s+(.+?)[.!?;]*$/i;
 
@@ -1499,7 +1538,6 @@
       dataTransferenciasRaw.forEach(item => {
         if (deletedTransferIds.has(item.id)) return;
 
-        // Re-interpreta o comentário usando a base completa de times já carregada
         let resolvedItem = { ...item };
         if (item.historyComment) {
           const parsed = parseTransferHistoryComment(item.historyComment, item.player);
@@ -1534,7 +1572,6 @@
         list.push(resolvedItem);
       });
 
-      // Ordena da linha mais recente (última linha da planilha) para a mais antiga
       return list.sort((a, b) => b.rowIndex - a.rowIndex);
     }
 
@@ -2204,7 +2241,7 @@
 
       cardHistory.innerHTML = `
         <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
-          <h3 class="font-bold text-sm text-white truncate">📌 Histórico de Edições - ${selectedComp}</h3>
+          <h3 class="font-bold text-sm text-white">📌 Histórico de Edições - ${selectedComp}</h3>
           <span class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${filteredList.length} edições</span>
         </div>
         <div class="w-full max-h-[680px] overflow-y-auto overflow-x-hidden custom-scroll">
@@ -2243,7 +2280,7 @@
 
       cardRank.innerHTML = `
         <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex justify-between items-center shrink-0">
-          <h3 class="font-bold text-sm text-white truncate">Maiores Campeões - ${selectedComp}</h3>
+          <h3 class="font-bold text-sm text-white">Maiores Campeões - ${selectedComp}</h3>
           <span class="text-xs bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2.5 py-0.5 rounded-full font-bold shrink-0 ml-1">${topChampions.length} equipes</span>
         </div>
         <div class="w-full max-h-[680px] overflow-y-auto overflow-x-hidden custom-scroll">
@@ -2478,7 +2515,7 @@
           <div onclick="selectTeamForConfronto(${teamNum}, '${safeName}')" class="px-3 py-2 hover:bg-dark-hover flex items-center justify-between cursor-pointer transition gap-2">
             <div class="flex items-center gap-2 min-w-0">
               ${logo}
-              <span class="text-xs font-bold text-white truncate">${t.name}</span>
+              <span class="text-xs font-bold text-white">${t.name}</span>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
               <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${t.tag || '-'}</span>
@@ -2705,21 +2742,21 @@
 
         return `
           <div class="bg-dark-card border-2 ${borderAccent} rounded-xl overflow-hidden shadow-xl flex flex-col w-full min-h-[360px]">
-            <div class="bg-[#1f242d] p-4 border-b border-dark flex items-center justify-between gap-2">
-              <div class="flex items-center gap-3 min-w-0">
+            <div class="bg-[#1f242d] p-4 border-b border-dark flex items-start justify-between gap-2.5">
+              <div class="flex items-start gap-2.5 min-w-0 flex-1">
                 ${logo}
-                <div class="min-w-0">
-                  <h3 class="text-lg font-extrabold text-white truncate">${team.name}</h3>
-                  <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                <div class="min-w-0 flex-1">
+                  <h3 class="text-base sm:text-lg font-extrabold text-white leading-snug break-words">${team.name}</h3>
+                  <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
                     <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag || '-'}</span>
                     <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${team.region || '-'}</span>
                     ${leagueName ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">🏆 ${leagueName}</span>` : ''}
                   </div>
                 </div>
               </div>
-              <div class="text-right bg-[#161b22] px-3 py-1.5 rounded-lg border border-dark shrink-0">
+              <div class="text-right bg-[#161b22] px-2.5 py-1.5 rounded-lg border border-dark shrink-0">
                 <span class="block text-[9px] uppercase font-bold text-gray-400">Títulos</span>
-                <span class="text-2xl font-black text-yellow-400">${team.titles}</span>
+                <span class="text-xl font-black text-yellow-400">${team.titles}</span>
               </div>
             </div>
 
@@ -2983,7 +3020,7 @@
             ${createLogoHtml(team2.logo, "w-6 h-6")}
           </div>
 
-          <div class="bg-blue-500/10 border border-blue-500/30 px-2.5 py-1 rounded-lg text-right">
+          <div class="bg-blue-500/10 border border-blue-500/30 px-2.5 py-1 rounded-lg text-right shrink-0">
             <span class="block text-[9px] font-bold text-blue-400 uppercase">Total de Confrontos</span>
             <span class="text-sm font-black text-white font-mono">${filteredMatches.length} partidas</span>
           </div>
@@ -3914,7 +3951,6 @@
         const urlCols = r.filter(v => /^https?:\/\//i.test(v));
         const nonUrlCols = r.filter(v => !/^https?:\/\//i.test(v));
 
-        // Detecta automaticamente qualquer célula contendo a frase de movimentação
         const detectedHistoryColIdx = r.findIndex(v => /mudou-se\s+de\s+time|\bde\s+.+?\s+para\s+.+/i.test(v || ''));
         const effectiveHistoryIdx = idxHistory !== -1 ? idxHistory : detectedHistoryColIdx;
 
@@ -3933,7 +3969,6 @@
           if (!fromTeam) fromTeam = parsedComment.fromTeam;
           if (!toTeam) toTeam = parsedComment.toTeam;
 
-          // Preenche títulos e janela a partir das colunas restantes caso o cabeçalho tenha nomes diferentes
           const remainingCols = r.filter((v, idx) => {
             if (!v || /^https?:\/\//i.test(v)) return false;
             if (idx === idxPlayer || idx === effectiveHistoryIdx) return false;
@@ -4200,7 +4235,6 @@
 
       updateAvailableRegions();
       setupComposicoesFilters();
-      setupCarreiraFilters();
       updateTransferDatalistsAndFilters();
       renderAllSections();
       setupCompetitionOptions();
