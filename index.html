@@ -357,45 +357,53 @@
       <div class="flex flex-nowrap items-start gap-4 overflow-x-auto pb-3 custom-scroll w-full" id="container-jogadores-mvps"></div>
     </div>
 
-    <!-- PAINEL 6: CONFRONTO DIRETO + RETROSPECTIVA H2H -->
-    <div id="section-confronto" class="space-y-4 w-full hidden">
-      
-      <div class="bg-dark-card border border-dark rounded-xl px-4 py-2.5 shadow-md">
-        <div class="flex items-center justify-center gap-2 mb-2">
-          <span class="text-sm">⚔️</span>
-          <span class="text-sm font-extrabold text-white">Simulação de Confronto Direto</span>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-11 gap-3 items-center">
-          <div class="md:col-span-5 relative" id="dropdown-container-1">
-            <div class="relative">
-              <span class="absolute left-3 top-2 text-[10px] font-bold text-blue-400 uppercase pointer-events-none">Time 1 (Esquerda)</span>
-              <input type="text" id="input-team-1" oninput="onTeamSearchInput(1)" onfocus="openTeamDropdown(1)" placeholder="Buscar Nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg pl-3 pr-8 pt-5 pb-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
-              <span class="absolute right-2.5 top-3 text-xs text-gray-400 pointer-events-none">🔍</span>
-            </div>
-            <div id="list-team-1" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
-          </div>
-
-          <div class="md:col-span-1 flex justify-center items-center">
-            <span class="bg-gradient-to-r from-red-600 to-yellow-500 text-white font-black text-xs px-3 py-1 rounded-lg shadow border border-yellow-400/30">
-              VS
-            </span>
-          </div>
-
-          <div class="md:col-span-5 relative" id="dropdown-container-2">
-            <div class="relative">
-              <span class="absolute left-3 top-2 text-[10px] font-bold text-red-400 uppercase pointer-events-none">Time 2 (Direita)</span>
-              <input type="text" id="input-team-2" oninput="onTeamSearchInput(2)" onfocus="openTeamDropdown(2)" placeholder="Buscar Nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg pl-3 pr-8 pt-5 pb-1 text-xs font-bold text-white focus:outline-none focus:border-red-500">
-              <span class="absolute right-2.5 top-3 text-xs text-gray-400 pointer-events-none">🔍</span>
-            </div>
-            <div id="list-team-2" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
-          </div>
-        </div>
-      </div>
-
+    <!-- PAINEL 6: CONFRONTO DIRETO (2 PAINÉIS INDEPENDENTES: COMPOSIÇÕES & INFOS | ESTATÍSTICAS DO CONFRONTO) -->
+    <div id="section-confronto" class="w-full hidden">
       <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
-        <div class="xl:col-span-6 grid grid-cols-1 lg:grid-cols-11 gap-3 items-center" id="container-confronto"></div>
-        <div class="xl:col-span-6 w-full bg-dark-card border border-dark rounded-xl p-4 shadow-xl space-y-3" id="container-h2h-stats"></div>
+        
+        <!-- PAINEL INDEPENDENTE 1: COMPOSIÇÕES DOS TIMES E INFOS -->
+        <div class="xl:col-span-5 bg-dark-card border border-dark rounded-xl p-3.5 shadow-xl space-y-3">
+          <div class="flex items-center justify-between border-b border-dark pb-2">
+            <h2 class="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <span>🛡️</span> Composições dos Times e Infos
+            </h2>
+            <span class="text-[10px] text-gray-400 font-semibold">Selecione os oponentes</span>
+          </div>
+
+          <!-- Seletores Compactos dos 2 Times -->
+          <div class="grid grid-cols-1 sm:grid-cols-11 gap-2 items-center">
+            <div class="sm:col-span-5 relative" id="dropdown-container-1">
+              <div class="relative">
+                <span class="absolute left-2.5 top-1 text-[9px] font-bold text-blue-400 uppercase pointer-events-none">Time 1</span>
+                <input type="text" id="input-team-1" oninput="onTeamSearchInput(1)" onfocus="openTeamDropdown(1)" placeholder="Nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg pl-2.5 pr-6 pt-4 pb-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+                <span class="absolute right-2 top-2.5 text-[10px] text-gray-400 pointer-events-none">🔍</span>
+              </div>
+              <div id="list-team-1" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
+            </div>
+
+            <div class="sm:col-span-1 flex justify-center items-center">
+              <span class="bg-gradient-to-r from-red-600 to-yellow-500 text-white font-black text-[10px] px-2 py-0.5 rounded shadow border border-yellow-400/30">
+                VS
+              </span>
+            </div>
+
+            <div class="sm:col-span-5 relative" id="dropdown-container-2">
+              <div class="relative">
+                <span class="absolute left-2.5 top-1 text-[9px] font-bold text-red-400 uppercase pointer-events-none">Time 2</span>
+                <input type="text" id="input-team-2" oninput="onTeamSearchInput(2)" onfocus="openTeamDropdown(2)" placeholder="Nome ou TAG..." class="w-full bg-[#21262d] border border-dark rounded-lg pl-2.5 pr-6 pt-4 pb-1 text-xs font-bold text-white focus:outline-none focus:border-red-500">
+                <span class="absolute right-2 top-2.5 text-[10px] text-gray-400 pointer-events-none">🔍</span>
+              </div>
+              <div id="list-team-2" class="hidden absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scroll z-50 divide-y divide-dark"></div>
+            </div>
+          </div>
+
+          <!-- Cards das Equipes (Com Naturalidade dos Jogadores) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-3 items-start" id="container-confronto"></div>
+        </div>
+
+        <!-- PAINEL INDEPENDENTE 2: ESTATÍSTICAS DO CONFRONTO (RETROSPECTIVA DIRETA + ATÉ 25 MAPAS) -->
+        <div class="xl:col-span-7 bg-dark-card border border-dark rounded-xl p-3.5 shadow-xl space-y-2.5" id="container-h2h-stats"></div>
+
       </div>
     </div>
 
@@ -1088,7 +1096,6 @@
         transfersByPlayer.get(key).push(tr);
       });
 
-      // Registros das páginas Jogadores Campeões (dataHistCampeoes) e Jogadores MVPs (dataHistMvps)
       const titlesRecordsByPlayer = new Map();
       dataHistCampeoes.forEach(c => {
         const pKey = (c.entity || '').toLowerCase().trim();
@@ -1229,7 +1236,6 @@
 
       const profiles = buildPlayersCareerProfiles();
 
-      // 1. Verifica se a pesquisa corresponde a algum time (por nome ou TAG)
       const allKnownTeams = [...dataListaTimes, ...dataTimes];
       const uniqueTeamsMap = new Map();
       allKnownTeams.forEach(t => {
@@ -1244,12 +1250,10 @@
         return nameMatch || tagMatch;
       });
 
-      // 2. Verifica jogadores cujo nome bate diretamente com a pesquisa
       const matchingPlayersByName = profiles.filter(p => p.name.toLowerCase().includes(query));
 
       let html = '';
 
-      // Se encontrou times correspondentes (por nome ou TAG), lista os jogadores de cada time encontrado
       if (matchingTeams.length > 0) {
         matchingTeams.forEach(team => {
           const teamRoster = profiles.filter(p => p.currentTeam.toLowerCase().trim() === team.name.toLowerCase().trim());
@@ -1293,7 +1297,6 @@
         });
       }
 
-      // Lista jogadores encontrados pelo próprio nome
       if (matchingPlayersByName.length > 0) {
         html += `
           <div class="space-y-1.5">
@@ -1369,7 +1372,6 @@
       const container = document.getElementById('container-carreira');
       if (!container) return;
 
-      // Se nenhum jogador foi pesquisado/selecionado ainda, a aba permanece vazia
       if (!selectedCareerPlayerName) {
         container.innerHTML = '';
         return;
@@ -1422,7 +1424,6 @@
         `;
       }).join('');
 
-      // Lista de Competições em que foi Campeão (Jogadores Campeões)
       const champListHtml = p.championHistory.length > 0
         ? p.championHistory.map(c => {
             const teamObj = c.team ? resolveCanonicalTeam(c.team) : null;
@@ -1447,7 +1448,6 @@
           }).join('')
         : `<tr><td colspan="4" class="px-4 py-6 text-center text-xs text-gray-500 font-semibold">Nenhum título registrado na aba Jogadores Campeões.</td></tr>`;
 
-      // Lista de Competições em que foi MVP (Jogadores MVPs)
       const mvpListHtml = p.mvpHistory.length > 0
         ? p.mvpHistory.map(m => {
             const teamObj = m.team ? resolveCanonicalTeam(m.team) : null;
@@ -1477,9 +1477,7 @@
 
       container.innerHTML = `
         <div class="max-w-5xl mx-auto space-y-4">
-          <!-- Card Principal: Resumo e Passagens por Clubes -->
           <div class="bg-dark-card border-2 border-blue-500/60 rounded-xl overflow-hidden shadow-2xl flex flex-col">
-            <!-- Cabeçalho da Ficha do Jogador -->
             <div class="bg-[#1f242d] px-5 py-4 border-b border-dark flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div class="flex items-center gap-3.5">
                 ${currentLogoHtml}
@@ -1493,7 +1491,6 @@
                 </div>
               </div>
 
-              <!-- Totais na Carreira -->
               <div class="flex items-center gap-2 shrink-0">
                 <div class="bg-[#161b22] border border-yellow-500/30 px-3.5 py-1.5 rounded-lg text-center">
                   <span class="block text-[10px] uppercase font-bold text-gray-400">Total Títulos</span>
@@ -1506,7 +1503,6 @@
               </div>
             </div>
 
-            <!-- Tabela de Trajetória / Passagens por Times -->
             <div class="w-full overflow-x-auto custom-scroll">
               <table class="w-full text-left">
                 <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[11px] uppercase font-bold">
@@ -1525,10 +1521,7 @@
             </div>
           </div>
 
-          <!-- Painéis de Competições Conquistadas (Campeão e MVP) -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-            
-            <!-- Coluna 1: Competições como Campeão -->
             <div class="bg-dark-card border border-yellow-500/40 rounded-xl overflow-hidden shadow-xl flex flex-col">
               <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex items-center justify-between gap-2">
                 <h4 class="text-sm font-extrabold text-white flex items-center gap-2">
@@ -1555,7 +1548,6 @@
               </div>
             </div>
 
-            <!-- Coluna 2: Competições como MVP -->
             <div class="bg-dark-card border border-purple-500/40 rounded-xl overflow-hidden shadow-xl flex flex-col">
               <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex items-center justify-between gap-2">
                 <h4 class="text-sm font-extrabold text-white flex items-center gap-2">
@@ -1581,7 +1573,6 @@
                 </table>
               </div>
             </div>
-
           </div>
         </div>
       `;
@@ -1608,8 +1599,6 @@
       };
     }
 
-    // Extrai a quantidade de títulos a partir da coluna "Detalhe de Títulos"
-    // Ex.: "Na Loud, Ghost conquistou 1 título." -> 1 | "Na Furia, Yan Takato não conquistou títulos." -> 0
     function parseTitlesDetailValue(rawVal) {
       if (rawVal === null || rawVal === undefined) return 0;
       const str = String(rawVal).trim();
@@ -2606,7 +2595,7 @@
     }
 
     /* =========================================================================
-       CONFRONTO DIRETO (SIMULAÇÃO + RETROSPECTIVA H2H COM PESQUISA DE TORNEIOS)
+       CONFRONTO DIRETO (2 PAINÉIS INDEPENDENTES: COMPOSIÇÕES & INFOS | ESTATÍSTICAS)
     ========================================================================= */
     function setupConfrontoOptions() {
       const teamNames = Array.from(new Set(dataListaTimes.map(t => t.name))).sort();
@@ -2867,59 +2856,64 @@
       const players2 = dataJogadores.filter(j => j.team.toLowerCase().trim() === (name2||'').toLowerCase().trim());
 
       function buildTeamCardHtml(team, players, accentColor, borderAccent) {
-        const logo = createLogoHtml(team.logo, "w-9 h-9");
+        const logo = createLogoHtml(team.logo, "w-8 h-8");
         const leagueName = getLeagueByTeamOrRegion(team.name, team.region);
         
-        let playerRows = players.map(p => `
-          <tr class="hover:bg-dark-hover/50 transition">
-            <td class="px-3.5 py-2 font-bold text-white text-xs">${p.name}</td>
-            <td class="px-3.5 py-2 text-right font-extrabold text-yellow-400 text-xs">${p.titles}</td>
-            <td class="px-3.5 py-2 text-right font-extrabold text-purple-400 text-xs">${p.mvps}</td>
-          </tr>
-        `).join('');
+        let playerRows = players.map(p => {
+          const nat = (p.naturalidade || 'N/I').toUpperCase();
+          return `
+            <tr class="hover:bg-dark-hover/50 transition">
+              <td class="px-2.5 py-1.5 font-bold text-white text-xs truncate max-w-[115px]" title="${p.name}">${p.name}</td>
+              <td class="px-1.5 py-1.5 text-center">
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${nat}</span>
+              </td>
+              <td class="px-2 py-1.5 text-right font-extrabold text-yellow-400 text-xs font-mono">${p.titles}</td>
+              <td class="px-2.5 py-1.5 text-right font-extrabold text-purple-400 text-xs font-mono">${p.mvps}</td>
+            </tr>
+          `;
+        }).join('');
 
         if (players.length === 0) {
-          playerRows = `<tr><td colspan="3" class="p-4 text-center text-xs text-gray-500">Nenhum jogador cadastrado nesta equipe</td></tr>`;
+          playerRows = `<tr><td colspan="4" class="p-3 text-center text-xs text-gray-500">Nenhum jogador cadastrado</td></tr>`;
         }
 
         return `
-          <div class="bg-dark-card border-2 ${borderAccent} rounded-xl overflow-hidden shadow-xl flex flex-col w-full min-h-[360px]">
-            <div class="bg-[#1f242d] p-4 border-b border-dark flex items-start justify-between gap-2.5">
-              <div class="flex items-start gap-2.5 min-w-0 flex-1">
+          <div class="bg-[#1f242d]/50 border-2 ${borderAccent} rounded-xl overflow-hidden shadow-md flex flex-col w-full">
+            <div class="bg-[#1f242d] px-3 py-2.5 border-b border-dark flex items-start justify-between gap-2">
+              <div class="flex items-start gap-2 min-w-0 flex-1">
                 ${logo}
                 <div class="min-w-0 flex-1">
-                  <h3 class="text-base sm:text-lg font-extrabold text-white leading-snug break-words">${team.name}</h3>
-                  <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag || '-'}</span>
-                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${team.region || '-'}</span>
-                    ${leagueName ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">🏆 ${leagueName}</span>` : ''}
+                  <h3 class="text-sm font-extrabold text-white leading-tight break-words">${team.name}</h3>
+                  <div class="flex flex-wrap items-center gap-1 mt-1">
+                    <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${team.tag || '-'}</span>
+                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${team.region || '-'}</span>
+                    ${leagueName ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 truncate max-w-[130px]" title="${leagueName}">🏆 ${leagueName}</span>` : ''}
                   </div>
                 </div>
               </div>
-              <div class="text-right bg-[#161b22] px-2.5 py-1.5 rounded-lg border border-dark shrink-0">
-                <span class="block text-[9px] uppercase font-bold text-gray-400">Títulos</span>
-                <span class="text-xl font-black text-yellow-400">${team.titles}</span>
+              <div class="text-right bg-[#161b22] px-2 py-1 rounded-lg border border-dark shrink-0">
+                <span class="block text-[8px] uppercase font-bold text-gray-400 leading-none">Títulos</span>
+                <span class="text-base font-black text-yellow-400 font-mono leading-tight">${team.titles}</span>
               </div>
             </div>
 
-            <div class="p-4 space-y-2.5 flex-1 flex flex-col justify-between">
-              <div>
-                <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between mb-2">
-                  <span>👥 Elenco Oficial</span>
-                  <span class="${accentColor} font-extrabold">${players.length} inscritos</span>
-                </h4>
-                <div class="overflow-hidden border border-dark rounded-xl">
-                  <table class="w-full text-left">
-                    <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[10px] uppercase font-bold">
-                      <tr>
-                        <th class="px-3.5 py-2">Jogador</th>
-                        <th class="px-3.5 py-2 text-right">Títulos</th>
-                        <th class="px-3.5 py-2 text-right">MVPs</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-dark text-gray-200">${playerRows}</tbody>
-                  </table>
-                </div>
+            <div class="p-2.5 space-y-1.5">
+              <div class="flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-wider px-0.5">
+                <span>👥 Elenco Oficial</span>
+                <span class="${accentColor} font-extrabold">${players.length} jog.</span>
+              </div>
+              <div class="overflow-hidden border border-dark rounded-lg bg-[#161b22]">
+                <table class="w-full text-left">
+                  <thead class="bg-[#1f242d] border-b border-dark text-gray-400 text-[9px] uppercase font-bold">
+                    <tr>
+                      <th class="px-2.5 py-1.5">Jogador</th>
+                      <th class="px-1.5 py-1.5 text-center">Nat.</th>
+                      <th class="px-2 py-1.5 text-right">Tít.</th>
+                      <th class="px-2.5 py-1.5 text-right">MVPs</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-dark text-gray-200">${playerRows}</tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -2929,20 +2923,12 @@
       const card1Html = buildTeamCardHtml(team1, players1, "text-blue-400", "border-blue-500/60");
       const card2Html = buildTeamCardHtml(team2, players2, "text-red-400", "border-red-500/60");
 
-      const vsElementHtml = `
-        <div class="flex flex-col items-center justify-center py-2 lg:py-8 gap-1">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-red-600 to-yellow-400 flex items-center justify-center shadow-lg border border-yellow-300">
-            <span class="text-base font-black italic text-white tracking-tighter">VS</span>
-          </div>
-        </div>
-      `;
-
       container.innerHTML = `
-        <div class="lg:col-span-5">${card1Html}</div>
-        <div class="lg:col-span-1">${vsElementHtml}</div>
-        <div class="lg:col-span-5">${card2Html}</div>
+        <div>${card1Html}</div>
+        <div>${card2Html}</div>
       `;
 
+      // Cálculo das Estatísticas do Confronto (Painel Independente 2)
       const { allDirectMatches } = getCurrentH2HCompPhaseMap();
       const isAllSelected = selectedH2HKeys.has('ALL');
 
@@ -3024,25 +3010,25 @@
 
       const goldenPlayer = eligibleGoldenPlayers.length > 0 && eligibleGoldenPlayers[0].count > 0 ? eligibleGoldenPlayers[0] : null;
 
-      let goldenPlayerDisplayHtml = 'Nenhum';
-      let goldenPlayerLogoHtml = '<span class="text-base">⭐</span>';
+      let goldenPlayerDisplayHtml = '<span class="text-xs font-extrabold text-gray-300">Nenhum</span>';
+      let goldenPlayerLogoHtml = '<span class="text-sm">⭐</span>';
 
       if (goldenPlayer) {
         const matchLogoUrl = goldenPlayer.matchTeamLogo || getTeamLogoByName(goldenPlayer.matchTeam);
-        goldenPlayerLogoHtml = matchLogoUrl ? createLogoHtml(matchLogoUrl, "w-5 h-5") : '<span class="text-base">⭐</span>';
+        goldenPlayerLogoHtml = matchLogoUrl ? createLogoHtml(matchLogoUrl, "w-4 h-4") : '<span class="text-sm">⭐</span>';
 
         const pObjCurrent = dataJogadores.find(j => j.name.toLowerCase().trim() === goldenPlayer.name.toLowerCase().trim());
         const currentTeamName = pObjCurrent ? pObjCurrent.team : goldenPlayer.currentTeam;
         const currentLogoUrl = getTeamLogoByName(currentTeamName);
-        const currentLogoHtml = currentLogoUrl ? createLogoHtml(currentLogoUrl, "w-4 h-4") : '';
+        const currentLogoHtml = currentLogoUrl ? createLogoHtml(currentLogoUrl, "w-3.5 h-3.5") : '';
 
         const hasChangedTeam = currentTeamName && goldenPlayer.matchTeam && currentTeamName.toLowerCase().trim() !== goldenPlayer.matchTeam.toLowerCase().trim();
 
         if (hasChangedTeam) {
           goldenPlayerDisplayHtml = `
-            <div class="flex items-center gap-1.5 truncate">
+            <div class="flex items-center gap-1 truncate">
               <span class="text-xs font-extrabold text-white truncate">${goldenPlayer.name}</span>
-              <span class="flex items-center gap-1 text-[10px] text-gray-400 font-semibold border-l border-dark pl-1.5" title="Time Atual: ${currentTeamName}">
+              <span class="flex items-center border-l border-dark pl-1 shrink-0" title="Time Atual: ${currentTeamName}">
                 ${currentLogoHtml}
               </span>
             </div>
@@ -3052,37 +3038,39 @@
         }
       }
 
+      // Faixa Compacta: Jogadores Estrela + Jogador de Ouro
       const goldenAndStarStripHtml = `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 bg-gradient-to-r from-yellow-500/10 via-amber-500/20 to-yellow-500/10 border border-yellow-500/40 p-2 rounded-xl items-center">
-          <div class="flex items-center gap-2 bg-[#1f242d]/80 border border-dark p-2 rounded-lg">
-            ${createLogoHtml(team1.logo, "w-6 h-6")}
-            <div class="truncate">
-              <span class="text-[9px] uppercase font-black text-blue-400 block tracking-wider">Jogador Estrela</span>
-              <span class="text-xs font-extrabold text-white truncate block">${team1.starPlayer || 'Não informado'}</span>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 bg-gradient-to-r from-yellow-500/10 via-amber-500/15 to-yellow-500/10 border border-yellow-500/35 p-1.5 rounded-lg items-center">
+          <div class="flex items-center gap-2 bg-[#1f242d]/90 border border-dark px-2.5 py-1.5 rounded-md min-w-0">
+            ${createLogoHtml(team1.logo, "w-5 h-5")}
+            <div class="min-w-0">
+              <span class="text-[8px] uppercase font-black text-blue-400 block leading-none tracking-wider">Estrela (${shortTag1})</span>
+              <span class="text-xs font-extrabold text-white truncate block mt-0.5">${team1.starPlayer || 'Não informado'}</span>
             </div>
           </div>
 
-          <div class="flex items-center justify-between bg-yellow-500/20 border border-yellow-500/50 p-2 rounded-lg">
-            <div class="flex items-center gap-2 truncate">
+          <div class="flex items-center justify-between gap-1.5 bg-yellow-500/20 border border-yellow-500/50 px-2.5 py-1.5 rounded-md min-w-0">
+            <div class="flex items-center gap-1.5 min-w-0">
               ${goldenPlayerLogoHtml}
-              <div class="truncate">
-                <span class="text-[9px] uppercase font-black text-yellow-400 block tracking-wider">Jogador de Ouro</span>
-                ${goldenPlayerDisplayHtml}
+              <div class="min-w-0">
+                <span class="text-[8px] uppercase font-black text-yellow-400 block leading-none tracking-wider">Jogador de Ouro</span>
+                <div class="mt-0.5">${goldenPlayerDisplayHtml}</div>
               </div>
             </div>
-            <span class="text-xs font-black text-yellow-400 font-mono shrink-0">${goldenPlayer ? goldenPlayer.count + 'x' : '0x'}</span>
+            <span class="text-[11px] font-black text-yellow-300 font-mono bg-black/30 px-1.5 py-0.5 rounded shrink-0">${goldenPlayer ? goldenPlayer.count + 'x' : '0x'}</span>
           </div>
 
-          <div class="flex items-center gap-2 bg-[#1f242d]/80 border border-dark p-2 rounded-lg">
-            ${createLogoHtml(team2.logo, "w-6 h-6")}
-            <div class="truncate">
-              <span class="text-[9px] uppercase font-black text-red-400 block tracking-wider">Jogador Estrela</span>
-              <span class="text-xs font-extrabold text-white truncate block">${team2.starPlayer || 'Não informado'}</span>
+          <div class="flex items-center gap-2 bg-[#1f242d]/90 border border-dark px-2.5 py-1.5 rounded-md min-w-0">
+            ${createLogoHtml(team2.logo, "w-5 h-5")}
+            <div class="min-w-0">
+              <span class="text-[8px] uppercase font-black text-red-400 block leading-none tracking-wider">Estrela (${shortTag2})</span>
+              <span class="text-xs font-extrabold text-white truncate block mt-0.5">${team2.starPlayer || 'Não informado'}</span>
             </div>
           </div>
         </div>
       `;
 
+      // Grade Ultra-Compacta de até 25 Locais / Mapas (Totalmente visível sem estourar limites)
       const locationList = Object.values(locationStats).sort((a, b) => b.total - a.total || a.location.localeCompare(b.location));
       
       let locationGridHtml = locationList.map(loc => {
@@ -3091,121 +3079,122 @@
         const pctDraw = Math.round((loc.draws / total) * 100);
         const pct2 = Math.max(0, 100 - pct1 - pctDraw);
 
-        const t1Highlight = loc.wins1 > loc.wins2 ? 'text-blue-300 font-black' : 'text-gray-400 font-bold';
-        const t2Highlight = loc.wins2 > loc.wins1 ? 'text-red-300 font-black' : 'text-gray-400 font-bold';
+        const c1 = loc.wins1 > loc.wins2 ? 'text-blue-300 font-black' : 'text-gray-400 font-bold';
+        const c2 = loc.wins2 > loc.wins1 ? 'text-red-300 font-black' : 'text-gray-400 font-bold';
 
         return `
-          <div class="bg-[#1f242d] border border-dark hover:border-gray-600 transition rounded-lg p-2.5 flex flex-col gap-2">
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-1.5 min-w-0" title="${loc.location}">
-                <span class="text-xs shrink-0">🗺️</span>
-                <span class="text-xs font-extrabold text-white truncate">${loc.location}</span>
-              </div>
-              <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#161b22] text-emerald-300 border border-emerald-500/30 shrink-0">
-                ${loc.total}x jogado
-              </span>
+          <div class="bg-[#1f242d] border border-dark hover:border-gray-600 transition rounded-lg px-2.5 py-1.5 flex flex-col gap-1" title="${loc.location} • ${shortTag1}: ${loc.wins1}V | ${loc.draws}E | ${shortTag2}: ${loc.wins2}V (${loc.total}x)">
+            <div class="flex items-center justify-between gap-1.5">
+              <span class="text-[11px] font-extrabold text-white truncate">${loc.location}</span>
+              <span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-[#161b22] text-emerald-300 border border-emerald-500/30 shrink-0">${loc.total}x</span>
             </div>
-
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-1.5 shrink-0">
-                ${createLogoHtml(team1.logo, "w-4 h-4")}
-                <span class="text-[10px] font-mono ${t1Highlight}">${shortTag1}</span>
-                <span class="text-xs font-black font-mono px-1.5 py-0.5 rounded bg-blue-500/15 border border-blue-500/30 text-blue-300">${loc.wins1}</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] font-mono ${c1} w-4 text-left shrink-0">${loc.wins1}</span>
+              <div class="flex-1 h-1.5 bg-[#161b22] rounded-full overflow-hidden flex border border-dark/80">
+                <div style="width: ${pct1}%" class="bg-blue-500 h-full"></div>
+                ${pctDraw > 0 ? `<div style="width: ${pctDraw}%" class="bg-amber-400 h-full"></div>` : ''}
+                <div style="width: ${pct2}%" class="bg-red-500 h-full"></div>
               </div>
-
-              <div class="flex-1 h-2 bg-[#161b22] rounded-full overflow-hidden flex border border-dark/80 min-w-[40px]" title="${shortTag1}: ${loc.wins1} | Empates: ${loc.draws} | ${shortTag2}: ${loc.wins2}">
-                <div style="width: ${pct1}%" class="bg-blue-500 h-full transition-all"></div>
-                ${pctDraw > 0 ? `<div style="width: ${pctDraw}%" class="bg-amber-400 h-full transition-all"></div>` : ''}
-                <div style="width: ${pct2}%" class="bg-red-500 h-full transition-all"></div>
-              </div>
-
-              <div class="flex items-center gap-1.5 shrink-0">
-                <span class="text-xs font-black font-mono px-1.5 py-0.5 rounded bg-red-500/15 border border-red-500/30 text-red-300">${loc.wins2}</span>
-                <span class="text-[10px] font-mono ${t2Highlight}">${shortTag2}</span>
-                ${createLogoHtml(team2.logo, "w-4 h-4")}
-              </div>
+              <span class="text-[11px] font-mono ${c2} w-4 text-right shrink-0">${loc.wins2}</span>
             </div>
           </div>
         `;
       }).join('');
 
       if (locationList.length === 0) {
-        locationGridHtml = `<div class="col-span-full p-2.5 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum mapa ou local específico detalhado para estes confrontos.</div>`;
+        locationGridHtml = `<div class="col-span-full py-3 px-2 text-center text-xs text-gray-500 font-medium bg-[#1f242d]/40 border border-dark rounded-lg">Nenhum mapa ou local específico detalhado para estes confrontos.</div>`;
       }
 
       const compSearchFilterHtml = `
         <div class="relative w-full" id="h2h-comp-filter-wrapper">
-          <button type="button" onclick="toggleH2HDropdown()" class="w-full bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center justify-between shadow-sm">
+          <button type="button" onclick="toggleH2HDropdown()" class="w-full bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-2.5 py-1.5 text-xs font-bold text-white flex items-center justify-between shadow-sm">
             <span class="flex items-center gap-1.5 truncate">
               <span>🎯</span> Competições / Fases (${isAllSelected ? 'Todas Selecionadas' : selectedH2HKeys.size + ' Selecionadas'})
             </span>
-            <span class="text-xs text-gray-400">▼</span>
+            <span class="text-[10px] text-gray-400">▼</span>
           </button>
 
-          <div id="comp-dropdown-menu" class="${isH2HDropdownOpen ? '' : 'hidden'} absolute left-0 right-0 top-full mt-1.5 bg-[#161b22] border border-dark rounded-xl shadow-2xl p-3 z-50 space-y-2.5 max-h-72 overflow-y-auto custom-scroll">
-            <input type="text" id="input-search-comp" oninput="onH2HCompSearchInput(this.value)" placeholder="Pesquisar competição ou fase (ex: Wor)..." value="${compSearchQuery.replace(/"/g, '&quot;')}" class="w-full bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
-            <div id="h2h-comp-list-container" class="space-y-2"></div>
+          <div id="comp-dropdown-menu" class="${isH2HDropdownOpen ? '' : 'hidden'} absolute left-0 right-0 top-full mt-1 bg-[#161b22] border border-dark rounded-xl shadow-2xl p-2.5 z-50 space-y-2 max-h-72 overflow-y-auto custom-scroll">
+            <input type="text" id="input-search-comp" oninput="onH2HCompSearchInput(this.value)" placeholder="Pesquisar competição ou fase (ex: Wor)..." value="${compSearchQuery.replace(/"/g, '&quot;')}" class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+            <div id="h2h-comp-list-container" class="space-y-1.5"></div>
           </div>
         </div>
       `;
 
+      const totalH2H = wins1 + draws + wins2;
+      const barPct1 = totalH2H > 0 ? Math.round((wins1 / totalH2H) * 100) : 33.3;
+      const barPctDraw = totalH2H > 0 ? Math.round((draws / totalH2H) * 100) : 33.4;
+      const barPct2 = totalH2H > 0 ? Math.max(0, 100 - barPct1 - barPctDraw) : 33.3;
+
       h2hContainer.innerHTML = `
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark pb-2.5">
-          <div class="flex items-center gap-2">
-            ${createLogoHtml(team1.logo, "w-6 h-6")}
-            <div>
-              <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
-                <span>📊</span> Retrospectiva Direta
+        <!-- Cabeçalho Compacto do Painel de Estatísticas -->
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-dark pb-2">
+          <div class="flex items-center gap-2 min-w-0">
+            ${createLogoHtml(team1.logo, "w-5 h-5")}
+            <div class="min-w-0">
+              <h3 class="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <span>📊</span> Estatísticas do Confronto
               </h3>
-              <p class="text-[11px] text-gray-400 font-semibold">${team1.name} (${shortTag1}) vs ${team2.name} (${shortTag2})</p>
+              <p class="text-[11px] text-gray-400 font-semibold truncate">${team1.name} (${shortTag1}) vs ${team2.name} (${shortTag2})</p>
             </div>
-            ${createLogoHtml(team2.logo, "w-6 h-6")}
+            ${createLogoHtml(team2.logo, "w-5 h-5")}
           </div>
 
-          <div class="bg-blue-500/10 border border-blue-500/30 px-2.5 py-1 rounded-lg text-right shrink-0">
-            <span class="block text-[9px] font-bold text-blue-400 uppercase">Total de Confrontos</span>
-            <span class="text-sm font-black text-white font-mono">${filteredMatches.length} partidas</span>
+          <div class="flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/30 px-2.5 py-1 rounded-lg shrink-0">
+            <span class="text-[9px] font-bold text-blue-400 uppercase">Total:</span>
+            <span class="text-xs font-black text-white font-mono">${filteredMatches.length} ${filteredMatches.length === 1 ? 'partida' : 'partidas'}</span>
           </div>
         </div>
 
+        <!-- Filtro de Competições / Fases -->
         ${compSearchFilterHtml}
 
-        <div class="grid grid-cols-3 gap-2 text-center">
-          <div class="bg-blue-500/10 border border-blue-500/30 p-2 rounded-lg">
-            <div class="flex items-center justify-center gap-1">
-              ${createLogoHtml(team1.logo, "w-4 h-4")}
-              <span class="text-[10px] font-bold text-blue-400 uppercase truncate">VITÓRIAS (${shortTag1})</span>
+        <!-- Placar Geral Compacto + Barra de Proporção -->
+        <div class="bg-[#1f242d]/60 border border-dark rounded-lg p-2 space-y-1.5">
+          <div class="grid grid-cols-3 gap-1.5 text-center">
+            <div class="bg-blue-500/10 border border-blue-500/30 px-2 py-1 rounded-md flex items-center justify-between">
+              <div class="flex items-center gap-1 min-w-0">
+                ${createLogoHtml(team1.logo, "w-4 h-4")}
+                <span class="text-[10px] font-bold text-blue-400 uppercase truncate">Vitórias (${shortTag1})</span>
+              </div>
+              <span class="text-base font-black text-white font-mono">${wins1}</span>
             </div>
-            <span class="text-lg font-black text-white">${wins1}</span>
-          </div>
-          <div class="bg-amber-500/10 border border-amber-500/30 p-2 rounded-lg">
-            <span class="block text-[10px] font-bold text-amber-400 uppercase">EMPATES</span>
-            <span class="text-lg font-black text-white">${draws}</span>
-          </div>
-          <div class="bg-red-500/10 border border-red-500/30 p-2 rounded-lg">
-            <div class="flex items-center justify-center gap-1">
-              <span class="text-[10px] font-bold text-red-400 uppercase truncate">VITÓRIAS (${shortTag2})</span>
-              ${createLogoHtml(team2.logo, "w-4 h-4")}
+            <div class="bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-md flex items-center justify-between">
+              <span class="text-[10px] font-bold text-amber-400 uppercase">Empates</span>
+              <span class="text-base font-black text-white font-mono">${draws}</span>
             </div>
-            <span class="text-lg font-black text-white">${wins2}</span>
+            <div class="bg-red-500/10 border border-red-500/30 px-2 py-1 rounded-md flex items-center justify-between">
+              <span class="text-base font-black text-white font-mono">${wins2}</span>
+              <div class="flex items-center gap-1 min-w-0">
+                <span class="text-[10px] font-bold text-red-400 uppercase truncate">Vitórias (${shortTag2})</span>
+                ${createLogoHtml(team2.logo, "w-4 h-4")}
+              </div>
+            </div>
+          </div>
+          <div class="w-full h-1.5 bg-[#161b22] rounded-full overflow-hidden flex border border-dark/80">
+            <div style="width: ${barPct1}%" class="bg-blue-500 h-full transition-all"></div>
+            <div style="width: ${barPctDraw}%" class="bg-amber-400 h-full transition-all"></div>
+            <div style="width: ${barPct2}%" class="bg-red-500 h-full transition-all"></div>
           </div>
         </div>
 
+        <!-- Destaques Individuais Compactos -->
         ${goldenAndStarStripHtml}
 
-        <div class="space-y-2 pt-1">
+        <!-- Desempenho por Local / Mapa (Grade Compacta para exibir até 25 mapas integralmente) -->
+        <div class="space-y-1.5 pt-0.5">
           <div class="flex items-center justify-between gap-2">
             <h4 class="text-[11px] font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
               <span>📍</span> Desempenho por Local / Mapa
             </h4>
             <div class="flex items-center gap-2">
-              <span class="hidden sm:inline-flex items-center gap-1 text-[10px] text-gray-400 font-semibold">
-                ${createLogoHtml(team1.logo, "w-3.5 h-3.5")} ${shortTag1} <span class="text-gray-600">vs</span> ${shortTag2} ${createLogoHtml(team2.logo, "w-3.5 h-3.5")}
+              <span class="inline-flex items-center gap-1 text-[10px] text-gray-400 font-semibold">
+                ${createLogoHtml(team1.logo, "w-3.5 h-3.5")} <span class="text-blue-400 font-bold">${shortTag1}</span> <span class="text-gray-600">vs</span> <span class="text-red-400 font-bold">${shortTag2}</span> ${createLogoHtml(team2.logo, "w-3.5 h-3.5")}
               </span>
-              <span class="text-[10px] font-mono bg-[#1f242d] border border-dark px-2 py-0.5 rounded text-gray-300 font-bold">${locationList.length} locais</span>
+              <span class="text-[10px] font-mono bg-[#1f242d] border border-dark px-2 py-0.5 rounded text-gray-300 font-bold">${locationList.length} ${locationList.length === 1 ? 'local' : 'locais'}</span>
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
             ${locationGridHtml}
           </div>
         </div>
@@ -4096,7 +4085,6 @@
         const detectedHistoryColIdx = r.findIndex(v => /mudou-se\s+de\s+time|\bde\s+.+?\s+para\s+.+/i.test(v || ''));
         const effectiveHistoryIdx = idxHistory !== -1 ? idxHistory : detectedHistoryColIdx;
 
-        // Detecta a coluna "Detalhe de Títulos" (ex: "Na Loud, Ghost conquistou 1 título." ou "Na Furia, Yan Takato não conquistou títulos.")
         const detectedDetailColIdx = r.findIndex((v, i) => i !== effectiveHistoryIdx && /conquistou\s+\d+\s*t[íi]tulo|n[ãa]o\s+conquistou\s+t[íi]tulo/i.test(v || ''));
         const effectiveTitlesIdx = idxTitles !== -1 ? idxTitles : detectedDetailColIdx;
 
