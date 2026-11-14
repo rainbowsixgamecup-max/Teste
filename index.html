@@ -47,6 +47,9 @@
         <button id="nav-composicoes" onclick="switchMainTab('composicoes')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Composições
         </button>
+        <button id="nav-carreira" onclick="switchMainTab('carreira')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+          🎖️ Carreira
+        </button>
         <button id="nav-transferencias" onclick="switchMainTab('transferencias')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Transferências
         </button>
@@ -138,6 +141,62 @@
       </div>
 
       <div id="container-composicoes" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 items-start w-full"></div>
+    </div>
+
+    <!-- PAINEL CARREIRA DOS JOGADORES -->
+    <div id="section-carreira" class="space-y-4 w-full hidden">
+      <div class="bg-dark-card border border-dark rounded-xl p-4 shadow-xl space-y-3">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-dark pb-3">
+          <div>
+            <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+              <span>🎖️</span> Carreira dos Jogadores
+            </h2>
+            <p class="text-xs text-gray-400">Histórico completo de passagens por equipes, títulos conquistados em cada clube e premiações de MVP.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="relative">
+              <input type="text" id="career-search-input" oninput="renderSectionCarreira()" placeholder="Pesquisar jogador ou time..." class="w-60 sm:w-64 bg-[#21262d] border border-dark rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              <span class="absolute right-2.5 top-1.5 text-xs text-gray-400 pointer-events-none">🔍</span>
+            </div>
+
+            <select id="career-sort-select" onchange="renderSectionCarreira()" class="bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+              <option value="titles">Ordenar: Mais Títulos</option>
+              <option value="mvps">Ordenar: Mais MVPs</option>
+              <option value="teams">Ordenar: Mais Times na Carreira</option>
+              <option value="name">Ordenar: Ordem Alfabética (A-Z)</option>
+            </select>
+
+            <span id="carreira-counter" class="text-xs bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2.5 py-1.5 rounded-lg font-bold">0 jogadores</span>
+          </div>
+        </div>
+
+        <!-- Filtros rápidos de Naturalidade e Região Atual -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div class="bg-[#1f242d]/60 border border-dark rounded-lg p-2.5 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                <span>🌍</span> Região do Time Atual
+              </span>
+              <button type="button" onclick="toggleCareerTeamRegion('ALL')" class="text-[10px] font-bold text-gray-400 hover:text-white underline">Alternar Todas</button>
+            </div>
+            <div id="career-team-regions-bar" class="flex flex-wrap items-center gap-1.5"></div>
+          </div>
+
+          <div class="bg-[#1f242d]/60 border border-dark rounded-lg p-2.5 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                <span>🏳️</span> Naturalidade
+              </span>
+              <button type="button" onclick="toggleCareerPlayerNat('ALL')" class="text-[10px] font-bold text-gray-400 hover:text-white underline">Alternar Todas</button>
+            </div>
+            <div id="career-player-nats-bar" class="flex flex-wrap items-center gap-1.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grade de Cards de Carreira -->
+      <div id="container-carreira" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 items-start w-full"></div>
     </div>
 
     <!-- PAINEL TRANSFERÊNCIAS -->
@@ -535,6 +594,12 @@
     let compAvailablePlayerNats = [];
     let compActivePlayerNats = new Set();
 
+    // Estado da Aba Carreira
+    let careerAvailableTeamRegions = [];
+    let careerActiveTeamRegions = new Set();
+    let careerAvailablePlayerNats = [];
+    let careerActivePlayerNats = new Set();
+
     // Estado da Aba Transferências
     let selectedTransferTeams = new Set(['ALL']);
     let selectedTransferWindows = new Set(['ALL']);
@@ -729,7 +794,7 @@
     }
 
     function switchMainTab(tabId) {
-      const allTabs = ['times', 'composicoes', 'transferencias', 'hist-regioes', 'hist-competicoes', 'hist-campeoes', 'hist-mvps', 'jogadores-titulos', 'jogadores-mvps', 'confronto', 'hist-confrontos'];
+      const allTabs = ['times', 'composicoes', 'carreira', 'transferencias', 'hist-regioes', 'hist-competicoes', 'hist-campeoes', 'hist-mvps', 'jogadores-titulos', 'jogadores-mvps', 'confronto', 'hist-confrontos'];
       allTabs.forEach(t => {
         const btn = document.getElementById(`nav-${t}`);
         const section = document.getElementById(`section-${t}`);
@@ -742,7 +807,7 @@
           section.classList.add('hidden');
         }
       });
-      const hideGlobalRegionBar = ['composicoes', 'transferencias', 'hist-competicoes', 'confronto', 'hist-confrontos'].includes(tabId);
+      const hideGlobalRegionBar = ['composicoes', 'carreira', 'transferencias', 'hist-competicoes', 'confronto', 'hist-confrontos'].includes(tabId);
       document.getElementById('region-filter-bar').style.display = hideGlobalRegionBar ? 'none' : 'flex';
     }
 
@@ -822,6 +887,7 @@
     function renderAllSections() {
       renderSectionTimes();
       renderSectionComposicoes();
+      renderSectionCarreira();
       renderSectionTransferencias();
       renderSectionHistRegioes();
       renderSectionHistCampeoes();
@@ -1016,6 +1082,334 @@
                 </thead>
                 <tbody class="divide-y divide-dark text-gray-200">
                   ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* =========================================================================
+       ABA CARREIRA DOS JOGADORES (PASSAGENS POR TIMES + TÍTULOS POR CLUBE + MVPS)
+    ========================================================================= */
+    function setupCarreiraFilters() {
+      const teamRegs = dataJogadores.map(j => getTeamRegionByName(j.team) || 'SEM REGIÃO');
+      const playerNats = dataJogadores.map(j => (j.naturalidade || 'N/I').toUpperCase());
+
+      careerAvailableTeamRegions = sortRegionsBRFirst(teamRegs);
+      careerAvailablePlayerNats = sortRegionsBRFirst(playerNats);
+
+      careerActiveTeamRegions = new Set(careerAvailableTeamRegions);
+      careerActivePlayerNats = new Set(careerAvailablePlayerNats);
+
+      renderCarreiraFilterBars();
+    }
+
+    function toggleCareerTeamRegion(reg) {
+      if (reg === 'ALL') {
+        if (careerActiveTeamRegions.size === careerAvailableTeamRegions.length) {
+          careerActiveTeamRegions.clear();
+        } else {
+          careerActiveTeamRegions = new Set(careerAvailableTeamRegions);
+        }
+      } else {
+        if (careerActiveTeamRegions.has(reg)) careerActiveTeamRegions.delete(reg);
+        else careerActiveTeamRegions.add(reg);
+      }
+      renderCarreiraFilterBars();
+      renderSectionCarreira();
+    }
+
+    function toggleCareerPlayerNat(nat) {
+      if (nat === 'ALL') {
+        if (careerActivePlayerNats.size === careerAvailablePlayerNats.length) {
+          careerActivePlayerNats.clear();
+        } else {
+          careerActivePlayerNats = new Set(careerAvailablePlayerNats);
+        }
+      } else {
+        if (careerActivePlayerNats.has(nat)) careerActivePlayerNats.delete(nat);
+        else careerActivePlayerNats.add(nat);
+      }
+      renderCarreiraFilterBars();
+      renderSectionCarreira();
+    }
+
+    function renderCarreiraFilterBars() {
+      const regBar = document.getElementById('career-team-regions-bar');
+      const natBar = document.getElementById('career-player-nats-bar');
+      if (!regBar || !natBar) return;
+
+      const isAllReg = careerActiveTeamRegions.size === careerAvailableTeamRegions.length;
+      regBar.innerHTML = `
+        <button type="button" onclick="toggleCareerTeamRegion('ALL')" class="px-2 py-0.5 text-[11px] font-bold rounded transition ${isAllReg ? 'bg-blue-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'}">
+          Todas
+        </button>
+        ${careerAvailableTeamRegions.map(r => {
+          const active = careerActiveTeamRegions.has(r);
+          return `<button type="button" onclick="toggleCareerTeamRegion('${r.replace(/'/g, "\\'")}')" class="px-2 py-0.5 text-[11px] font-bold rounded transition flex items-center gap-1 ${active ? 'bg-blue-600/30 border border-blue-500 text-blue-300' : 'bg-[#21262d] border border-dark text-gray-400 hover:text-white'}"><span>${active ? '✓' : '+'}</span><span>${r}</span></button>`;
+        }).join('')}
+      `;
+
+      const isAllNat = careerActivePlayerNats.size === careerAvailablePlayerNats.length;
+      natBar.innerHTML = `
+        <button type="button" onclick="toggleCareerPlayerNat('ALL')" class="px-2 py-0.5 text-[11px] font-bold rounded transition ${isAllNat ? 'bg-emerald-600 text-white' : 'bg-[#21262d] text-gray-400 hover:text-white border border-dark'}">
+          Todas
+        </button>
+        ${careerAvailablePlayerNats.map(n => {
+          const active = careerActivePlayerNats.has(n);
+          return `<button type="button" onclick="toggleCareerPlayerNat('${n.replace(/'/g, "\\'")}')" class="px-2 py-0.5 text-[11px] font-bold rounded transition flex items-center gap-1 ${active ? 'bg-emerald-600/30 border border-emerald-500 text-emerald-300' : 'bg-[#21262d] border border-dark text-gray-400 hover:text-white'}"><span>${active ? '✓' : '+'}</span><span>${n}</span></button>`;
+        }).join('')}
+      `;
+    }
+
+    function buildPlayersCareerProfiles() {
+      // Ordena transferências da mais antiga para a mais recente (ordem cronológica de rowIndex)
+      const chronologicalTransfers = getEffectiveTransfersList().slice().sort((a, b) => a.rowIndex - b.rowIndex);
+      const transfersByPlayer = new Map();
+
+      chronologicalTransfers.forEach(tr => {
+        const key = (tr.player || '').toLowerCase().trim();
+        if (!key) return;
+        if (!transfersByPlayer.has(key)) transfersByPlayer.set(key, []);
+        transfersByPlayer.get(key).push(tr);
+      });
+
+      // Mapeia MVPs históricos por jogador + time na época
+      const mvpsByPlayer = new Map();
+      dataHistMvps.forEach(m => {
+        const pKey = (m.entity || '').toLowerCase().trim();
+        if (!pKey) return;
+        if (!mvpsByPlayer.has(pKey)) mvpsByPlayer.set(pKey, []);
+        mvpsByPlayer.get(pKey).push(m);
+      });
+
+      const profiles = [];
+      const processedKeys = new Set();
+
+      dataJogadores.forEach(j => {
+        const pKey = (j.name || '').toLowerCase().trim();
+        if (!pKey) return;
+        processedKeys.add(pKey);
+
+        const playerTransfers = transfersByPlayer.get(pKey) || [];
+        const currentTeamRes = resolveCanonicalTeam(j.team || 'Sem Time');
+        const currentTeamRegion = getTeamRegionByName(currentTeamRes.name) || 'SEM REGIÃO';
+        const totalTitles = parseInt(j.titles || '0', 10) || 0;
+        const totalMvps = parseInt(j.mvps || '0', 10) || 0;
+
+        // Reconstrói as passagens por times (stints) em ordem cronológica
+        const stints = [];
+        let titlesAccountedInPast = 0;
+
+        if (playerTransfers.length > 0) {
+          playerTransfers.forEach((tr, idx) => {
+            const fromRes = resolveCanonicalTeam(tr.fromTeam);
+            const isFromSemTime = /^sem\s*time$/i.test(fromRes.name);
+            const titlesInStint = parseInt(tr.titlesWon || '0', 10) || 0;
+
+            if (!isFromSemTime) {
+              // Se o stint anterior já era o mesmo clube consecutivamente, acumula
+              const prev = stints[stints.length - 1];
+              if (prev && prev.team.toLowerCase() === fromRes.name.toLowerCase()) {
+                prev.titles += titlesInStint;
+                prev.exitWindow = tr.window || prev.exitWindow;
+              } else {
+                stints.push({
+                  team: fromRes.name,
+                  logo: fromRes.logo || tr.fromLogo || '',
+                  titles: titlesInStint,
+                  entryWindow: idx === 0 ? 'Início' : (playerTransfers[idx - 1]?.window || '-'),
+                  exitWindow: tr.window || '-',
+                  isCurrent: false
+                });
+              }
+              titlesAccountedInPast += titlesInStint;
+            }
+          });
+        }
+
+        // Calcula títulos no clube atual subtraindo os conquistados nas passagens anteriores (com piso 0)
+        const titlesInCurrentTeam = Math.max(0, totalTitles - titlesAccountedInPast);
+
+        const lastTr = playerTransfers.length > 0 ? playerTransfers[playerTransfers.length - 1] : null;
+        const isCurrentSemTime = /^sem\s*time$/i.test(currentTeamRes.name);
+
+        if (!isCurrentSemTime) {
+          stints.push({
+            team: currentTeamRes.name,
+            logo: currentTeamRes.logo || j.logo || '',
+            titles: titlesInCurrentTeam,
+            entryWindow: lastTr ? (lastTr.window || '-') : 'Elenco Base',
+            exitWindow: 'Atual',
+            isCurrent: true
+          });
+        } else if (stints.length === 0) {
+          stints.push({
+            team: 'Sem Time',
+            logo: '',
+            titles: totalTitles,
+            entryWindow: '-',
+            exitWindow: 'Atual',
+            isCurrent: true
+          });
+        }
+
+        // Conta MVPs por equipe na aba Histórico de MVPs (se houver registro detalhado)
+        const playerMvpRecords = mvpsByPlayer.get(pKey) || [];
+        stints.forEach(stint => {
+          const teamNorm = stint.team.toLowerCase().trim();
+          stint.mvps = playerMvpRecords.filter(rec => {
+            const recTeam = resolveCanonicalTeam(rec.team || '').name.toLowerCase().trim();
+            return recTeam === teamNorm;
+          }).length;
+        });
+
+        // Se o jogador nunca saiu do time atual e não há detalhamento individual na aba MVPs, atribui o total ao clube atual
+        const summedStintMvps = stints.reduce((acc, s) => acc + (s.mvps || 0), 0);
+        if (summedStintMvps === 0 && totalMvps > 0 && stints.length > 0) {
+          stints[stints.length - 1].mvps = totalMvps;
+        }
+
+        profiles.push({
+          name: j.name,
+          naturalidade: (j.naturalidade || 'N/I').toUpperCase(),
+          currentTeam: currentTeamRes.name,
+          currentTeamLogo: currentTeamRes.logo || j.logo || '',
+          currentTeamRegion,
+          totalTitles,
+          totalMvps,
+          transfersCount: playerTransfers.length,
+          stints
+        });
+      });
+
+      return profiles;
+    }
+
+    function renderSectionCarreira() {
+      const container = document.getElementById('container-carreira');
+      const counter = document.getElementById('carreira-counter');
+      if (!container) return;
+
+      const query = (document.getElementById('career-search-input')?.value || '').toLowerCase().trim();
+      const sortBy = document.getElementById('career-sort-select')?.value || 'titles';
+
+      let profiles = buildPlayersCareerProfiles();
+
+      // Filtra por região atual, naturalidade e texto de busca (nome do jogador ou qualquer time da carreira)
+      profiles = profiles.filter(p => {
+        if (!careerActiveTeamRegions.has(p.currentTeamRegion)) return false;
+        if (!careerActivePlayerNats.has(p.naturalidade)) return false;
+
+        if (!query) return true;
+        const matchName = p.name.toLowerCase().includes(query);
+        const matchCurrent = p.currentTeam.toLowerCase().includes(query);
+        const matchAnyStint = p.stints.some(s => s.team.toLowerCase().includes(query));
+        return matchName || matchCurrent || matchAnyStint;
+      });
+
+      // Ordenação selecionada
+      profiles.sort((a, b) => {
+        if (sortBy === 'mvps') return b.totalMvps - a.totalMvps || b.totalTitles - a.totalTitles || a.name.localeCompare(b.name);
+        if (sortBy === 'teams') return b.stints.length - a.stints.length || b.totalTitles - a.totalTitles || a.name.localeCompare(b.name);
+        if (sortBy === 'name') return a.name.localeCompare(b.name);
+        return b.totalTitles - a.totalTitles || b.totalMvps - a.totalMvps || a.name.localeCompare(b.name);
+      });
+
+      if (counter) {
+        counter.textContent = `${profiles.length} jogadores`;
+      }
+
+      if (profiles.length === 0) {
+        container.innerHTML = `<div class="col-span-full bg-dark-card border border-dark rounded-xl p-8 text-center text-xs text-gray-500 font-bold">Nenhum jogador encontrado com os filtros selecionados.</div>`;
+        return;
+      }
+
+      container.innerHTML = profiles.map(p => {
+        const currentLogoHtml = p.currentTeamLogo
+          ? createLogoHtml(p.currentTeamLogo, "w-9 h-9")
+          : `<span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-800 border border-gray-700 text-sm text-gray-400">🎮</span>`;
+
+        const stintsHtml = p.stints.map((st, idx) => {
+          const isSemTime = /^sem\s*time$/i.test(st.team);
+          const logoHtml = st.logo
+            ? createLogoHtml(st.logo, "w-5 h-5")
+            : (isSemTime ? `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-800 border border-gray-700 text-[10px] text-gray-400">🚫</span>` : '');
+
+          const periodLabel = st.isCurrent
+            ? (st.entryWindow && st.entryWindow !== 'Elenco Base' ? `Desde ${st.entryWindow} • Atual` : 'Elenco Atual')
+            : `${st.entryWindow !== 'Início' ? st.entryWindow + ' ➔ ' : 'Saiu em '}${st.exitWindow}`;
+
+          const titlesBadge = st.titles > 0
+            ? `<span class="px-2 py-0.5 rounded bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 font-extrabold text-[11px] font-mono">🏆 ${st.titles}</span>`
+            : `<span class="text-gray-500 font-mono text-[11px]">0</span>`;
+
+          const mvpsBadge = (st.mvps || 0) > 0
+            ? `<span class="px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-extrabold text-[11px] font-mono">⭐ ${st.mvps}</span>`
+            : `<span class="text-gray-500 font-mono text-[11px]">0</span>`;
+
+          return `
+            <tr class="${st.isCurrent ? 'bg-blue-500/5' : 'hover:bg-dark-hover/50'} transition">
+              <td class="px-3 py-2 text-center font-mono text-[11px] text-gray-500 font-bold">${idx + 1}º</td>
+              <td class="px-3 py-2 text-xs font-bold ${st.isCurrent ? 'text-white' : 'text-gray-300'}">
+                <div class="flex items-center gap-2">
+                  ${logoHtml}
+                  <span class="truncate">${st.team}</span>
+                  ${st.isCurrent ? `<span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">Atual</span>` : ''}
+                </div>
+              </td>
+              <td class="px-3 py-2 text-[10px] font-mono text-gray-400 whitespace-nowrap">${periodLabel}</td>
+              <td class="px-3 py-2 text-center">${titlesBadge}</td>
+              <td class="px-3 py-2 text-center">${mvpsBadge}</td>
+            </tr>
+          `;
+        }).join('');
+
+        return `
+          <div class="bg-dark-card border border-dark hover:border-blue-500/50 transition rounded-xl overflow-hidden shadow-lg flex flex-col">
+            <!-- Cabeçalho da Ficha do Jogador -->
+            <div class="bg-[#1f242d] px-4 py-3 border-b border-dark flex items-center justify-between gap-2">
+              <div class="flex items-center gap-3 min-w-0">
+                ${currentLogoHtml}
+                <div class="min-w-0">
+                  <h3 class="text-sm font-extrabold text-white truncate" title="${p.name}">${p.name}</h3>
+                  <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${p.naturalidade}</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${p.currentTeam}</span>
+                    <span class="text-[10px] font-mono font-semibold text-gray-400">${p.stints.length} ${p.stints.length === 1 ? 'clube' : 'clubes'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Totais na Carreira -->
+              <div class="flex items-center gap-1.5 shrink-0">
+                <div class="bg-[#161b22] border border-yellow-500/30 px-2.5 py-1 rounded-lg text-center">
+                  <span class="block text-[9px] uppercase font-bold text-gray-400">Títulos</span>
+                  <span class="text-sm font-black text-yellow-400 font-mono">${p.totalTitles}</span>
+                </div>
+                <div class="bg-[#161b22] border border-purple-500/30 px-2.5 py-1 rounded-lg text-center">
+                  <span class="block text-[9px] uppercase font-bold text-gray-400">MVPs</span>
+                  <span class="text-sm font-black text-purple-400 font-mono">${p.totalMvps}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabela de Trajetória / Passagens por Times -->
+            <div class="w-full overflow-x-auto custom-scroll">
+              <table class="w-full text-left">
+                <thead class="bg-[#161b22] border-b border-dark text-gray-400 text-[10px] uppercase font-bold">
+                  <tr>
+                    <th class="px-3 py-2 w-8 text-center">#</th>
+                    <th class="px-3 py-2">Time</th>
+                    <th class="px-3 py-2">Período / Janela</th>
+                    <th class="px-3 py-2 text-center">Títulos</th>
+                    <th class="px-3 py-2 text-center">MVPs</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-dark text-gray-200">
+                  ${stintsHtml}
                 </tbody>
               </table>
             </div>
@@ -1473,6 +1867,7 @@
       cancelEditTransfer();
       updateTransferDatalistsAndFilters();
       renderSectionTransferencias();
+      renderSectionCarreira();
     }
 
     function deleteTransferRow(id) {
@@ -1482,6 +1877,7 @@
         if (editingTransferId === id) cancelEditTransfer();
         updateTransferDatalistsAndFilters();
         renderSectionTransferencias();
+        renderSectionCarreira();
       }
     }
 
@@ -1494,6 +1890,7 @@
         cancelEditTransfer();
         updateTransferDatalistsAndFilters();
         renderSectionTransferencias();
+        renderSectionCarreira();
       }
     }
 
@@ -3803,6 +4200,7 @@
 
       updateAvailableRegions();
       setupComposicoesFilters();
+      setupCarreiraFilters();
       updateTransferDatalistsAndFilters();
       renderAllSections();
       setupCompetitionOptions();
