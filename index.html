@@ -259,6 +259,16 @@
               </div>
             </div>
 
+            <!-- Seletor da Janela de Referência para Sinalização de Novatos (🆕) -->
+            <div class="flex items-center gap-1.5 bg-[#21262d] border border-emerald-500/40 rounded-lg px-2.5 py-1 shadow-sm" title="Jogadores transferidos nesta janela ou nas posteriores recebem o selo 🆕 em Composições e Confronto">
+              <label for="select-rookie-cutoff-window" class="text-[11px] font-bold text-emerald-400 whitespace-nowrap flex items-center gap-1">
+                <span>🆕</span> Novatos a partir de:
+              </label>
+              <select id="select-rookie-cutoff-window" onchange="onRookieCutoffWindowChange(this.value)" class="bg-[#161b22] border border-dark rounded px-2 py-0.5 text-xs font-extrabold text-white focus:outline-none focus:border-emerald-500 max-w-[160px]">
+                <option value="">Última Janela (Auto)</option>
+              </select>
+            </div>
+
             <!-- Filtro Multi-seleção de Janelas (Separado) -->
             <div class="relative" id="transfer-window-filter-wrapper">
               <button type="button" onclick="toggleTransferWindowDropdown()" class="bg-[#21262d] border border-dark hover:border-blue-500/60 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-sm">
@@ -598,6 +608,7 @@
     // Estado da Aba Transferências
     let selectedTransferTeams = new Set(['ALL']);
     let selectedTransferWindows = new Set(['ALL']);
+    let rookieCutoffWindow = localStorage.getItem('gcr6_rookie_cutoff_window') || '';
     let transferOverrides = JSON.parse(localStorage.getItem('gcr6_transfer_overrides') || '{}');
     let deletedTransferIds = new Set(JSON.parse(localStorage.getItem('gcr6_transfer_deleted') || '[]'));
     let editingTransferId = null;
@@ -1038,15 +1049,20 @@
 
       container.innerHTML = filteredTeams.map(team => {
         const logoHtml = createLogoHtml(team.logo, "w-9 h-9");
-        const rowsHtml = team.players.map(p => `
+        const rowsHtml = team.players.map(p => {
+          const rookieBadge = getPlayerRookieBadgeHtml(p.name, team.name);
+          return `
           <tr class="hover:bg-dark-hover/50 transition">
-            <td class="px-3 py-2 font-bold text-white text-xs">${p.name}</td>
+            <td class="px-3 py-2 font-bold text-white text-xs">
+              <span class="inline-flex items-center flex-wrap gap-0.5"><span>${p.name}</span>${rookieBadge}</span>
+            </td>
             <td class="px-3 py-2 text-center">
               <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${p.naturalidade}</span>
             </td>
             <td class="px-3 py-2 text-right font-extrabold text-yellow-400 text-xs font-mono">${p.titles}</td>
           </tr>
-        `).join('');
+        `;
+        }).join('');
 
         return `
           <div class="bg-dark-card border border-dark hover:border-blue-500/50 transition rounded-xl overflow-hidden shadow-lg flex flex-col">
@@ -1708,6 +1724,119 @@
       return list.sort((a, b) => b.rowIndex - a.rowIndex);
     }
 
+    function getOrderedTransferWindows() {
+      const chronological = getEffectiveTransfersList().slice().sort((a, b) => a.rowIndex - b.rowIndex);
+      const ordered = [];
+      const seen = new Set();
+      chronological.forEach(tr => {
+        const w = (tr.window || '').trim();
+        if (w && !seen.has(w)) {
+          seen.add(w);
+          ordered.push(w);
+        }
+      });
+      return ordered; // Do mais antigo (index 0) ao mais recente (index length - 1)
+    }
+
+    function populateRookieCutoffSelect() {
+      const select = document.getElementById('select-rookie-cutoff-window');
+      if (!select) return;
+
+      const windows = getOrderedTransferWindows();
+      const latestWin = windows.length > 0 ? windows[windows.length - 1] : '';
+
+      if (rookieCutoffWindow && !windows.includes(rookieCutoffWindow)) {
+        rookieCutoffWindow = '';
+        localStorage.removeItem('gcr6_rookie_cutoff_window');
+      }
+
+      const autoLabel = latestWin ? `Última (${latestWin})` : 'Última Janela (Auto)';
+      let optionsHtml = `<option value="">${autoLabel}</option>`;
+      windows.slice().reverse().forEach(w => {
+        const selectedAttr = rookieCutoffWindow === w ? 'selected' : '';
+        optionsHtml += `<option value="${w.replace(/"/g, '&quot;')}" ${selectedAttr}>${w}</option>`;
+      });
+
+      select.innerHTML = optionsHtml;
+    }
+
+    function onRookieCutoffWindowChange(val) {
+      rookieCutoffWindow = val || '';
+      if (rookieCutoffWindow) {
+        localStorage.setItem('gcr6_rookie_cutoff_window', rookieCutoffWindow);
+      } else {
+        localStorage.removeItem('gcr6_rookie_cutoff_window');
+      }
+      renderSectionTransferencias();
+      renderSectionComposicoes();
+      renderConfronto();
+    }
+
+    function getRookieQualificationInfo() {
+      const windows = getOrderedTransferWindows();
+      if (windows.length === 0) return { activeWindows: new Set(), cutoffIndex: -1, cutoffLabel: '' };
+
+      let cutoffIndex = windows.length - 1;
+      if (rookieCutoffWindow && windows.includes(rookieCutoffWindow)) {
+        cutoffIndex = windows.indexOf(rookieCutoffWindow);
+      }
+
+      const activeWindows = new Set(windows.slice(cutoffIndex));
+      return {
+        activeWindows,
+        cutoffIndex,
+        cutoffLabel: windows[cutoffIndex] || ''
+      };
+    }
+
+    function getRookiePlayersMap() {
+      const { activeWindows } = getRookieQualificationInfo();
+      const rookieMap = new Map();
+      if (activeWindows.size === 0) return rookieMap;
+
+      // Ordem cronológica para pegar a movimentação mais recente de cada jogador
+      const chronological = getEffectiveTransfersList().slice().sort((a, b) => a.rowIndex - b.rowIndex);
+      const latestMoveByPlayer = new Map();
+
+      chronological.forEach(tr => {
+        const pKey = (tr.player || '').toLowerCase().trim();
+        if (!pKey) return;
+        latestMoveByPlayer.set(pKey, tr);
+      });
+
+      latestMoveByPlayer.forEach((tr, pKey) => {
+        const win = (tr.window || '').trim();
+        const toTeam = (tr.toTeam || '').trim();
+        const fromTeam = (tr.fromTeam || '').trim();
+        const isToSemTime = /^sem\s*time$/i.test(toTeam);
+
+        if (activeWindows.has(win) && toTeam && !isToSemTime && toTeam.toLowerCase() !== fromTeam.toLowerCase()) {
+          rookieMap.set(pKey, {
+            team: toTeam.toLowerCase(),
+            window: win,
+            fromTeam: fromTeam
+          });
+        }
+      });
+
+      return rookieMap;
+    }
+
+    function getPlayerRookieBadgeHtml(playerName, teamName) {
+      if (!playerName) return '';
+      const rookieMap = getRookiePlayersMap();
+      const info = rookieMap.get(playerName.toLowerCase().trim());
+      if (!info) return '';
+
+      if (teamName) {
+        const canonicalTeam = resolveCanonicalTeam(teamName).name.toLowerCase().trim();
+        if (canonicalTeam && info.team !== canonicalTeam) return '';
+      }
+
+      const titleText = `Novato na equipe (${info.window}${info.fromTeam ? ' • ex-' + info.fromTeam : ''})`;
+      return `<span class="inline-flex items-center align-middle ml-1 text-[10px] leading-none opacity-90 select-none" title="${titleText.replace(/"/g, '&quot;')}">🆕</span>`;
+    }
+
     function updateTransferDatalistsAndFilters() {
       const teamsDatalist = document.getElementById('transfer-teams-datalist');
       if (teamsDatalist) {
@@ -1726,6 +1855,7 @@
         resetBtn.classList.toggle('hidden', !hasLocalChanges);
       }
 
+      populateRookieCutoffSelect();
       renderTransferTeamDropdownOptions();
       renderTransferWindowDropdownOptions();
     }
@@ -1938,6 +2068,7 @@
         const fromTextClass = isFromSemTime ? 'text-gray-400 italic' : 'text-red-300';
         const toTextClass = isToSemTime ? 'text-gray-400 italic' : 'text-emerald-300';
 
+        const rookieBadgeInTr = getPlayerRookieBadgeHtml(tr.player, tr.toTeam);
         const isLatestBadge = idx === 0 && !query && isAllTeams && isAllWindows
           ? `<span class="ml-1.5 text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Mais Recente</span>`
           : '';
@@ -1955,7 +2086,7 @@
           <tr class="hover:bg-dark-hover/50 transition" ${tooltipAttr}>
             <td class="px-3.5 py-2.5 text-center font-mono text-gray-500 font-bold">${filtered.length - idx}º</td>
             <td class="px-3.5 py-2.5 font-extrabold text-white text-xs">
-              <span>${tr.player}</span>${isLatestBadge}
+              <span>${tr.player}</span>${rookieBadgeInTr}${isLatestBadge}
             </td>
             <td class="px-3.5 py-2.5 text-right font-bold ${fromTextClass} text-xs">
               <div class="flex items-center justify-end gap-2">
@@ -2038,6 +2169,8 @@
       cancelEditTransfer();
       updateTransferDatalistsAndFilters();
       renderSectionTransferencias();
+      renderSectionComposicoes();
+      renderConfronto();
       renderSectionCarreira();
     }
 
@@ -2864,9 +2997,12 @@
         
         let playerRows = players.map(p => {
           const nat = (p.naturalidade || 'N/I').toUpperCase();
+          const rookieBadge = getPlayerRookieBadgeHtml(p.name, team.name);
           return `
             <tr class="hover:bg-dark-hover/60 transition">
-              <td class="px-3.5 py-2.5 font-extrabold text-white text-sm">${p.name}</td>
+              <td class="px-3.5 py-2.5 font-extrabold text-white text-sm">
+                <span class="inline-flex items-center flex-wrap gap-0.5"><span>${p.name}</span>${rookieBadge}</span>
+              </td>
               <td class="px-2.5 py-2.5 text-center">
                 <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${nat}</span>
               </td>
