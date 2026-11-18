@@ -259,14 +259,22 @@
               </div>
             </div>
 
-            <!-- Seletor da Janela de Referência para Sinalização de Novatos (🆕) -->
-            <div class="flex items-center gap-1.5 bg-[#21262d] border border-emerald-500/40 rounded-lg px-2.5 py-1 shadow-sm" title="Jogadores transferidos nesta janela ou nas posteriores recebem o selo 🆕 em Composições e Confronto">
-              <label for="select-rookie-cutoff-window" class="text-[11px] font-bold text-emerald-400 whitespace-nowrap flex items-center gap-1">
-                <span>🆕</span> Novatos a partir de:
-              </label>
-              <select id="select-rookie-cutoff-window" onchange="onRookieCutoffWindowChange(this.value)" class="bg-[#161b22] border border-dark rounded px-2 py-0.5 text-xs font-extrabold text-white focus:outline-none focus:border-emerald-500 max-w-[160px]">
-                <option value="">Última Janela (Auto)</option>
-              </select>
+            <!-- Seletor Customizado (Busca + Seleção) da Janela de Referência para Novatos (🆕) -->
+            <div class="relative" id="rookie-cutoff-wrapper">
+              <button type="button" onclick="toggleRookieCutoffDropdown()" class="bg-[#21262d] border border-emerald-500/50 hover:border-emerald-400 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-sm transition" title="Clique para escrever ou selecionar a janela a partir da qual os jogadores recebem o selo 🆕">
+                <span>🆕</span>
+                <span class="text-emerald-400 font-extrabold">Novatos:</span>
+                <span id="label-rookie-cutoff-window" class="text-white font-extrabold max-w-[200px] truncate">Última Janela</span>
+                <span class="text-xs text-emerald-300 ml-0.5">▼</span>
+              </button>
+
+              <div id="dropdown-rookie-cutoff" class="hidden absolute right-0 top-full mt-1.5 bg-[#161b22] border border-emerald-500/50 rounded-xl shadow-2xl p-3 z-50 space-y-2 w-80 max-h-80 overflow-y-auto custom-scroll">
+                <div class="text-[11px] font-bold text-emerald-400 flex items-center justify-between">
+                  <span>🆕 Marcar novatos a partir de:</span>
+                </div>
+                <input type="text" id="input-search-rookie-window" oninput="renderRookieCutoffDropdownOptions()" onkeydown="handleRookieCutoffInputKeydown(event)" placeholder="Escreva ou filtre a janela..." class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                <div id="container-rookie-cutoff-options" class="space-y-1"></div>
+              </div>
             </div>
 
             <!-- Filtro Multi-seleção de Janelas (Separado) -->
@@ -659,6 +667,11 @@
       const trWinWrapper = document.getElementById('transfer-window-filter-wrapper');
       if (trWinWrapper && !trWinWrapper.contains(e.target)) {
         document.getElementById('dropdown-transfer-window-filter')?.classList.add('hidden');
+      }
+
+      const rookieWrapper = document.getElementById('rookie-cutoff-wrapper');
+      if (rookieWrapper && !rookieWrapper.contains(e.target)) {
+        document.getElementById('dropdown-rookie-cutoff')?.classList.add('hidden');
       }
     });
 
@@ -1738,10 +1751,50 @@
       return ordered; // Do mais antigo (index 0) ao mais recente (index length - 1)
     }
 
-    function populateRookieCutoffSelect() {
-      const select = document.getElementById('select-rookie-cutoff-window');
-      if (!select) return;
+    function toggleRookieCutoffDropdown() {
+      const dd = document.getElementById('dropdown-rookie-cutoff');
+      if (!dd) return;
+      dd.classList.toggle('hidden');
+      if (!dd.classList.contains('hidden')) {
+        const searchInput = document.getElementById('input-search-rookie-window');
+        if (searchInput) searchInput.value = '';
+        renderRookieCutoffDropdownOptions();
+        setTimeout(() => searchInput?.focus(), 10);
+      }
+    }
 
+    function handleRookieCutoffInputKeydown(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const searchVal = (document.getElementById('input-search-rookie-window')?.value || '').trim();
+        const windows = getOrderedTransferWindows();
+        if (!searchVal) {
+          selectRookieCutoffWindow('');
+          return;
+        }
+        const exact = windows.find(w => w.toLowerCase() === searchVal.toLowerCase());
+        const partial = windows.slice().reverse().find(w => w.toLowerCase().includes(searchVal.toLowerCase()));
+        if (exact) selectRookieCutoffWindow(exact);
+        else if (partial) selectRookieCutoffWindow(partial);
+      }
+    }
+
+    function selectRookieCutoffWindow(val) {
+      rookieCutoffWindow = val || '';
+      if (rookieCutoffWindow) {
+        localStorage.setItem('gcr6_rookie_cutoff_window', rookieCutoffWindow);
+      } else {
+        localStorage.removeItem('gcr6_rookie_cutoff_window');
+      }
+      document.getElementById('dropdown-rookie-cutoff')?.classList.add('hidden');
+      populateRookieCutoffSelect();
+      renderSectionTransferencias();
+      renderSectionComposicoes();
+      renderConfronto();
+    }
+
+    function populateRookieCutoffSelect() {
+      const label = document.getElementById('label-rookie-cutoff-window');
       const windows = getOrderedTransferWindows();
       const latestWin = windows.length > 0 ? windows[windows.length - 1] : '';
 
@@ -1750,26 +1803,64 @@
         localStorage.removeItem('gcr6_rookie_cutoff_window');
       }
 
-      const autoLabel = latestWin ? `Última (${latestWin})` : 'Última Janela (Auto)';
-      let optionsHtml = `<option value="">${autoLabel}</option>`;
-      windows.slice().reverse().forEach(w => {
-        const selectedAttr = rookieCutoffWindow === w ? 'selected' : '';
-        optionsHtml += `<option value="${w.replace(/"/g, '&quot;')}" ${selectedAttr}>${w}</option>`;
-      });
+      if (label) {
+        if (rookieCutoffWindow) {
+          label.textContent = rookieCutoffWindow;
+        } else {
+          label.textContent = latestWin ? `Última (${latestWin})` : 'Última Janela';
+        }
+      }
 
-      select.innerHTML = optionsHtml;
+      renderRookieCutoffDropdownOptions();
     }
 
-    function onRookieCutoffWindowChange(val) {
-      rookieCutoffWindow = val || '';
-      if (rookieCutoffWindow) {
-        localStorage.setItem('gcr6_rookie_cutoff_window', rookieCutoffWindow);
-      } else {
-        localStorage.removeItem('gcr6_rookie_cutoff_window');
+    function renderRookieCutoffDropdownOptions() {
+      const container = document.getElementById('container-rookie-cutoff-options');
+      if (!container) return;
+
+      const windows = getOrderedTransferWindows();
+      const latestWin = windows.length > 0 ? windows[windows.length - 1] : '';
+      const query = (document.getElementById('input-search-rookie-window')?.value || '').toLowerCase().trim();
+
+      const isAuto = !rookieCutoffWindow;
+      const autoText = latestWin ? `Última Janela (${latestWin})` : 'Última Janela (Automático)';
+
+      let html = '';
+      if (!query || autoText.toLowerCase().includes(query) || 'ultima'.includes(query)) {
+        html += `
+          <button type="button" onclick="selectRookieCutoffWindow('')" class="w-full text-left flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-xs font-extrabold transition border ${
+            isAuto
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+              : 'bg-[#1f242d] hover:bg-dark-hover text-gray-200 border-dark'
+          }">
+            <span class="truncate">✨ ${autoText}</span>
+            ${isAuto ? '<span class="text-emerald-400 font-black shrink-0">✓</span>' : ''}
+          </button>
+        `;
       }
-      renderSectionTransferencias();
-      renderSectionComposicoes();
-      renderConfronto();
+
+      const filteredWindows = windows.slice().reverse().filter(w => !query || w.toLowerCase().includes(query));
+
+      filteredWindows.forEach(w => {
+        const isSelected = rookieCutoffWindow === w;
+        const safeW = w.replace(/'/g, "\'");
+        html += `
+          <button type="button" onclick="selectRookieCutoffWindow('${safeW}')" class="w-full text-left flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-bold transition border ${
+            isSelected
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+              : 'bg-transparent hover:bg-dark-hover text-gray-200 border-transparent'
+          }">
+            <span class="truncate">🗓️ ${w}</span>
+            ${isSelected ? '<span class="text-emerald-400 font-black shrink-0">✓</span>' : ''}
+          </button>
+        `;
+      });
+
+      if (!html) {
+        html = `<div class="text-xs text-gray-500 text-center py-2 font-semibold">Nenhuma janela encontrada.</div>`;
+      }
+
+      container.innerHTML = html;
     }
 
     function getRookieQualificationInfo() {
@@ -1834,7 +1925,7 @@
       }
 
       const titleText = `Novato na equipe (${info.window}${info.fromTeam ? ' • ex-' + info.fromTeam : ''})`;
-      return `<span class="inline-flex items-center align-middle ml-1 text-[10px] leading-none opacity-90 select-none" title="${titleText.replace(/"/g, '&quot;')}">🆕</span>`;
+      return `<span class="inline-flex items-center justify-center align-middle ml-1.5 px-1.5 py-0.5 rounded bg-emerald-500/25 border border-emerald-400/60 text-xs leading-none shadow-sm select-none" title="${titleText.replace(/"/g, '&quot;')}">🆕</span>`;
     }
 
     function updateTransferDatalistsAndFilters() {
@@ -2181,6 +2272,8 @@
         if (editingTransferId === id) cancelEditTransfer();
         updateTransferDatalistsAndFilters();
         renderSectionTransferencias();
+        renderSectionComposicoes();
+        renderConfronto();
         renderSectionCarreira();
       }
     }
@@ -2194,6 +2287,8 @@
         cancelEditTransfer();
         updateTransferDatalistsAndFilters();
         renderSectionTransferencias();
+        renderSectionComposicoes();
+        renderConfronto();
         renderSectionCarreira();
       }
     }
