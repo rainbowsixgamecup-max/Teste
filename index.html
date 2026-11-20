@@ -259,10 +259,10 @@
               </div>
             </div>
 
-            <!-- Seletor Customizado (Busca + Seleção) da Janela de Referência para Novatos (🆕) -->
+            <!-- Seletor Customizado (Busca + Seleção) da Janela de Referência para Novatos -->
             <div class="relative" id="rookie-cutoff-wrapper">
-              <button type="button" onclick="toggleRookieCutoffDropdown()" class="bg-[#21262d] border border-emerald-500/50 hover:border-emerald-400 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-sm transition" title="Clique para escrever ou selecionar a janela a partir da qual os jogadores recebem o selo 🆕">
-                <span>🆕</span>
+              <button type="button" onclick="toggleRookieCutoffDropdown()" class="bg-[#21262d] border border-emerald-500/50 hover:border-emerald-400 rounded-lg px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1.5 shadow-sm transition" title="Clique para escrever ou selecionar a janela a partir da qual os jogadores recebem a bolinha amarela de novato">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400 shrink-0"></span>
                 <span class="text-emerald-400 font-extrabold">Novatos:</span>
                 <span id="label-rookie-cutoff-window" class="text-white font-extrabold max-w-[200px] truncate">Última Janela</span>
                 <span class="text-xs text-emerald-300 ml-0.5">▼</span>
@@ -270,7 +270,7 @@
 
               <div id="dropdown-rookie-cutoff" class="hidden absolute right-0 top-full mt-1.5 bg-[#161b22] border border-emerald-500/50 rounded-xl shadow-2xl p-3 z-50 space-y-2 w-80 max-h-80 overflow-y-auto custom-scroll">
                 <div class="text-[11px] font-bold text-emerald-400 flex items-center justify-between">
-                  <span>🆕 Marcar novatos a partir de:</span>
+                  <span class="inline-flex items-center gap-1.5"><span class="inline-block w-2 h-2 rounded-full bg-yellow-400 shrink-0"></span><span>Marcar novatos a partir de:</span></span>
                 </div>
                 <input type="text" id="input-search-rookie-window" oninput="renderRookieCutoffDropdownOptions()" onkeydown="handleRookieCutoffInputKeydown(event)" placeholder="Escreva ou filtre a janela..." class="w-full bg-[#21262d] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
                 <div id="container-rookie-cutoff-options" class="space-y-1"></div>
@@ -725,6 +725,22 @@
       return dataJogadores.find(j => j.name.toLowerCase().trim() === norm) || null;
     }
 
+    function getPlayerGender(playerName) {
+      const info = getPlayerInfoByName(playerName);
+      if (!info || !info.sexo) return '';
+      const s = info.sexo.toUpperCase().trim();
+      if (s === 'M' || s === 'MASCULINO') return 'M';
+      if (s === 'F' || s === 'FEMININO') return 'F';
+      return '';
+    }
+
+    function getPlayerNameColorClass(playerName, defaultClass = 'text-white') {
+      const g = getPlayerGender(playerName);
+      if (g === 'M') return 'text-blue-400';
+      if (g === 'F') return 'text-pink-400';
+      return defaultClass;
+    }
+
     function getLeagueByTeamOrRegion(teamName, regionName) {
       if (!dataListaCamps || dataListaCamps.length === 0) return '';
       const tNorm = (teamName || '').toLowerCase().trim();
@@ -1064,10 +1080,11 @@
         const logoHtml = createLogoHtml(team.logo, "w-9 h-9");
         const rowsHtml = team.players.map(p => {
           const rookieBadge = getPlayerRookieBadgeHtml(p.name, team.name);
+          const nameColorClass = getPlayerNameColorClass(p.name);
           return `
           <tr class="hover:bg-dark-hover/50 transition">
-            <td class="px-3 py-2 font-bold text-white text-xs">
-              <span class="inline-flex items-center flex-wrap gap-0.5"><span>${p.name}</span>${rookieBadge}</span>
+            <td class="px-3 py-2 font-bold ${nameColorClass} text-xs">
+              <span class="inline-flex items-center gap-1.5">${rookieBadge}<span>${p.name}</span></span>
             </td>
             <td class="px-3 py-2 text-center">
               <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${p.naturalidade}</span>
@@ -1308,6 +1325,8 @@
                 ${teamRoster.map(p => {
                   const isSelected = selectedCareerPlayerName.toLowerCase() === p.name.toLowerCase();
                   const safeName = p.name.replace(/'/g, "\\'");
+                  const rookieBadge = getPlayerRookieBadgeHtml(p.name, p.currentTeam);
+                  const nameColorClass = isSelected ? 'text-white' : getPlayerNameColorClass(p.name, 'text-gray-200');
                   return `
                     <button
                       type="button"
@@ -1318,7 +1337,7 @@
                           : 'bg-[#161b22] hover:bg-dark-hover text-gray-200 border-dark hover:border-blue-500/60'
                       }"
                     >
-                      <span>🎮 ${p.name}</span>
+                      <span class="inline-flex items-center gap-1.5">${rookieBadge}<span>🎮</span><span class="${nameColorClass}">${p.name}</span></span>
                       <span class="text-[10px] font-mono text-yellow-400 font-extrabold">🏆 ${p.totalTitles}</span>
                     </button>
                   `;
@@ -1351,7 +1370,7 @@
                     <div class="flex items-center gap-2 min-w-0">
                       ${logoHtml}
                       <div class="min-w-0">
-                        <span class="text-xs font-extrabold text-white block truncate">${p.name}</span>
+                        <span class="text-xs font-extrabold ${getPlayerNameColorClass(p.name)} flex items-center gap-1.5 truncate">${getPlayerRookieBadgeHtml(p.name, p.currentTeam)}<span class="truncate">${p.name}</span></span>
                         <span class="text-[10px] text-gray-400 font-semibold block truncate">${p.currentTeam} ${p.currentTeamTag ? '(' + p.currentTeamTag + ')' : ''}</span>
                       </div>
                     </div>
@@ -1514,7 +1533,7 @@
               <div class="flex items-center gap-3.5">
                 ${currentLogoHtml}
                 <div>
-                  <h3 class="text-lg font-extrabold text-white">${p.name}</h3>
+                  <h3 class="text-lg font-extrabold ${getPlayerNameColorClass(p.name)} flex items-center gap-2">${getPlayerRookieBadgeHtml(p.name, p.currentTeam)}<span>${p.name}</span></h3>
                   <div class="flex flex-wrap items-center gap-2 mt-1">
                     <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${p.naturalidade}</span>
                     <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">${p.currentTeam}${p.currentTeamTag ? ' (' + p.currentTeamTag + ')' : ''}</span>
@@ -1925,7 +1944,7 @@
       }
 
       const titleText = `Novato na equipe (${info.window}${info.fromTeam ? ' • ex-' + info.fromTeam : ''})`;
-      return `<span class="inline-flex items-center justify-center align-middle ml-1.5 px-1.5 py-0.5 rounded bg-emerald-500/25 border border-emerald-400/60 text-xs leading-none shadow-sm select-none" title="${titleText.replace(/"/g, '&quot;')}">🆕</span>`;
+      return `<span class="inline-block w-2 h-2 rounded-full bg-yellow-400 shrink-0 shadow-sm" title="${titleText.replace(/"/g, '&quot;')}"></span>`;
     }
 
     function updateTransferDatalistsAndFilters() {
@@ -2176,8 +2195,8 @@
         return `
           <tr class="hover:bg-dark-hover/50 transition" ${tooltipAttr}>
             <td class="px-3.5 py-2.5 text-center font-mono text-gray-500 font-bold">${filtered.length - idx}º</td>
-            <td class="px-3.5 py-2.5 font-extrabold text-white text-xs">
-              <span>${tr.player}</span>${rookieBadgeInTr}${isLatestBadge}
+            <td class="px-3.5 py-2.5 font-extrabold ${getPlayerNameColorClass(tr.player)} text-xs">
+              <span class="inline-flex items-center gap-1.5">${rookieBadgeInTr}<span>${tr.player}</span></span>${isLatestBadge}
             </td>
             <td class="px-3.5 py-2.5 text-right font-bold ${fromTextClass} text-xs">
               <div class="flex items-center justify-end gap-2">
@@ -2486,7 +2505,7 @@
               <td class="px-3.5 py-2.5 font-bold text-white text-xs whitespace-nowrap">${item.comp || '-'}</td>
               <td class="px-3.5 py-2.5 text-xs text-blue-400 font-mono font-bold whitespace-nowrap">${item.season || '-'}</td>
               ${phaseTd}
-              <td class="px-3.5 py-2.5 text-xs font-bold ${accentTextClass} whitespace-nowrap">
+              <td class="px-3.5 py-2.5 text-xs font-bold ${entityHeaderLabel === 'MVP' ? getPlayerNameColorClass(item.entity, accentTextClass) : accentTextClass} whitespace-nowrap">
                 <div class="flex items-center gap-2">${logo}<span>${item.entity || '-'}</span></div>
               </td>
               ${teamCell}
@@ -2703,10 +2722,11 @@
           const logo = createLogoHtml(item.logo, "w-6 h-6");
           const regionTd = group.isGeral ? `<td class="px-3 py-2.5 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.teamRegion || '-'}</td>` : '';
 
+          const rookieBadge = getPlayerRookieBadgeHtml(item.name, item.team);
           return `
             <tr class="hover:bg-dark-hover/50">
               <td class="px-3 py-2.5 text-center align-middle whitespace-nowrap">${pos}</td>
-              <td class="px-3 py-2.5 font-bold text-white text-xs whitespace-nowrap">${item.name}</td>
+              <td class="px-3 py-2.5 font-bold ${getPlayerNameColorClass(item.name)} text-xs whitespace-nowrap"><span class="inline-flex items-center gap-1.5">${rookieBadge}<span>${item.name}</span></span></td>
               <td class="px-3 py-2.5 font-semibold text-xs text-gray-300 whitespace-nowrap">
                 <div class="flex items-center gap-2">${logo}<span>${item.team}</span></div>
               </td>
@@ -2779,10 +2799,11 @@
           const logo = createLogoHtml(item.logo, "w-6 h-6");
           const regionTd = group.isGeral ? `<td class="px-3 py-2.5 text-xs font-semibold text-blue-400 whitespace-nowrap">${item.teamRegion || '-'}</td>` : '';
 
+          const rookieBadge = getPlayerRookieBadgeHtml(item.name, item.team);
           return `
             <tr class="hover:bg-dark-hover/50">
               <td class="px-3 py-2.5 text-center align-middle whitespace-nowrap">${pos}</td>
-              <td class="px-3 py-2.5 font-bold text-white text-xs whitespace-nowrap">${item.name}</td>
+              <td class="px-3 py-2.5 font-bold ${getPlayerNameColorClass(item.name)} text-xs whitespace-nowrap"><span class="inline-flex items-center gap-1.5">${rookieBadge}<span>${item.name}</span></span></td>
               <td class="px-3 py-2.5 font-semibold text-xs text-gray-300 whitespace-nowrap">
                 <div class="flex items-center gap-2">${logo}<span>${item.team}</span></div>
               </td>
@@ -3095,8 +3116,8 @@
           const rookieBadge = getPlayerRookieBadgeHtml(p.name, team.name);
           return `
             <tr class="hover:bg-dark-hover/60 transition">
-              <td class="px-3.5 py-2.5 font-extrabold text-white text-sm">
-                <span class="inline-flex items-center flex-wrap gap-0.5"><span>${p.name}</span>${rookieBadge}</span>
+              <td class="px-3.5 py-2.5 font-extrabold ${getPlayerNameColorClass(p.name)} text-sm">
+                <span class="inline-flex items-center gap-1.5">${rookieBadge}<span>${p.name}</span></span>
               </td>
               <td class="px-2.5 py-2.5 text-center">
                 <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${nat}</span>
@@ -3258,17 +3279,18 @@
 
         const hasChangedTeam = currentTeamName && goldenPlayer.matchTeam && currentTeamName.toLowerCase().trim() !== goldenPlayer.matchTeam.toLowerCase().trim();
 
+        const goldenColorClass = getPlayerNameColorClass(goldenPlayer.name);
         if (hasChangedTeam) {
           goldenPlayerDisplayHtml = `
             <div class="flex items-center gap-1 truncate">
-              <span class="text-xs font-extrabold text-white truncate">${goldenPlayer.name}</span>
+              <span class="text-xs font-extrabold ${goldenColorClass} truncate">${goldenPlayer.name}</span>
               <span class="flex items-center border-l border-dark pl-1 shrink-0" title="Time Atual: ${currentTeamName}">
                 ${currentLogoHtml}
               </span>
             </div>
           `;
         } else {
-          goldenPlayerDisplayHtml = `<span class="text-xs font-extrabold text-white truncate block">${goldenPlayer.name}</span>`;
+          goldenPlayerDisplayHtml = `<span class="text-xs font-extrabold ${goldenColorClass} truncate block">${goldenPlayer.name}</span>`;
         }
       }
 
@@ -3289,7 +3311,7 @@
               ${createLogoHtml(team1.logo, "w-4 h-4")}
               <div class="min-w-0">
                 <span class="text-[8px] uppercase font-black text-blue-400 block leading-none">Estrela (${shortTag1})</span>
-                <span class="text-[11px] font-bold text-white truncate block mt-0.5">${team1.starPlayer || 'Não informado'}</span>
+                <span class="text-[11px] font-bold ${team1.starPlayer ? getPlayerNameColorClass(team1.starPlayer) : 'text-white'} truncate block mt-0.5">${team1.starPlayer || 'Não informado'}</span>
               </div>
             </div>
 
@@ -3297,7 +3319,7 @@
               ${createLogoHtml(team2.logo, "w-4 h-4")}
               <div class="min-w-0">
                 <span class="text-[8px] uppercase font-black text-red-400 block leading-none">Estrela (${shortTag2})</span>
-                <span class="text-[11px] font-bold text-white truncate block mt-0.5">${team2.starPlayer || 'Não informado'}</span>
+                <span class="text-[11px] font-bold ${team2.starPlayer ? getPlayerNameColorClass(team2.starPlayer) : 'text-white'} truncate block mt-0.5">${team2.starPlayer || 'Não informado'}</span>
               </div>
             </div>
           </div>
@@ -4078,7 +4100,7 @@
         return `
           <span class="px-2.5 py-1 rounded bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 font-bold flex items-center gap-1.5">
             ${logoHtml}
-            <span>⭐ ${player}:</span>
+            <span class="${getPlayerNameColorClass(player, 'text-yellow-300')}">⭐ ${player}:</span>
             <span class="text-white font-mono font-black">${count}x</span>
           </span>
         `;
@@ -4144,7 +4166,7 @@
           mvpBadge = `
             <span class="px-2.5 py-1 rounded-lg bg-yellow-500/10 text-yellow-300 border border-yellow-500/30 font-bold text-xs inline-flex items-center gap-1.5 shadow-sm">
               ${matchLogoHtml}
-              <span>⭐ ${m.mvp}</span>
+              <span class="${getPlayerNameColorClass(m.mvp, 'text-yellow-300')}">⭐ ${m.mvp}</span>
               ${rightLogoHtml}
             </span>
           `;
@@ -4563,16 +4585,57 @@
 
     function parseJogadoresCsv(csvText) {
       const rows = parseCsvRows(csvText);
-      const invalidNames = ['jogador', 'nome', 'player', 'time atual'];
+      if (rows.length === 0) return [];
 
-      return rows.map(r => ({
-        name: r[0] || '',
-        team: r[1] || '',
-        logo: r[2] || '',
-        titles: parseInt(r[3] || '0', 10) || 0,
-        mvps: parseInt(r[4] || '0', 10) || 0,
-        naturalidade: (r[5] || '').toUpperCase()
-      })).filter(j => {
+      const invalidNames = ['jogador', 'nome', 'player', 'time atual'];
+      const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
+      const hasHeader = headerRow.some(h => invalidNames.includes(h) || h.includes('sexo') || h.includes('gener'));
+
+      let idxName = 0, idxTeam = 1, idxLogo = 2, idxTitles = 3, idxMvps = 4, idxNat = 5, idxSexo = 6;
+
+      if (hasHeader) {
+        const foundName = headerRow.findIndex(h => h === 'jogador' || h === 'nome' || h === 'player');
+        const foundTeam = headerRow.findIndex(h => h.includes('time') || h.includes('equipe') || h === 'team');
+        const foundLogo = headerRow.findIndex(h => h.includes('logo') || h.includes('escudo'));
+        const foundTitles = headerRow.findIndex(h => h.includes('titul'));
+        const foundMvps = headerRow.findIndex(h => h.includes('mvp'));
+        const foundNat = headerRow.findIndex(h => h.includes('natural') || h.includes('pais') || h.includes('regi'));
+        const foundSexo = headerRow.findIndex(h => h.includes('sexo') || h.includes('gener') || h === 'sex' || h === 'gender');
+
+        if (foundName !== -1) idxName = foundName;
+        if (foundTeam !== -1) idxTeam = foundTeam;
+        if (foundLogo !== -1) idxLogo = foundLogo;
+        if (foundTitles !== -1) idxTitles = foundTitles;
+        if (foundMvps !== -1) idxMvps = foundMvps;
+        if (foundNat !== -1) idxNat = foundNat;
+        if (foundSexo !== -1) idxSexo = foundSexo;
+      }
+
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+
+      return dataRows.map(r => {
+        let rawSexo = (r[idxSexo] || '').trim().toUpperCase();
+        if (!rawSexo) {
+          const fallbackSexo = r.slice(3).find(v => {
+            const up = (v || '').trim().toUpperCase();
+            return up === 'M' || up === 'F' || up === 'MASCULINO' || up === 'FEMININO';
+          });
+          if (fallbackSexo) rawSexo = fallbackSexo.trim().toUpperCase();
+        }
+        const normalizedSexo = (rawSexo === 'M' || rawSexo === 'MASCULINO')
+          ? 'M'
+          : ((rawSexo === 'F' || rawSexo === 'FEMININO') ? 'F' : '');
+
+        return {
+          name: r[idxName] || '',
+          team: r[idxTeam] || '',
+          logo: r[idxLogo] || '',
+          titles: parseInt(r[idxTitles] || '0', 10) || 0,
+          mvps: parseInt(r[idxMvps] || '0', 10) || 0,
+          naturalidade: (r[idxNat] || '').toUpperCase(),
+          sexo: normalizedSexo
+        };
+      }).filter(j => {
         if (!j.name) return false;
         const norm = j.name.toLowerCase().trim();
         return !invalidNames.includes(norm);
