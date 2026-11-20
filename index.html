@@ -44,6 +44,9 @@
         <button id="nav-times" onclick="switchMainTab('times')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-white bg-blue-600 shadow">
           Ranking Times
         </button>
+        <button id="nav-ranking-jogadores" onclick="switchMainTab('ranking-jogadores')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
+          ⭐ Ranking Jogadores
+        </button>
         <button id="nav-composicoes" onclick="switchMainTab('composicoes')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition whitespace-nowrap text-gray-400 hover:text-white">
           Composições
         </button>
@@ -94,6 +97,221 @@
         <span>🛡️</span> Ranking de Equipes (Geral + Regiões Selecionadas)
       </h2>
       <div class="flex flex-nowrap items-start gap-4 overflow-x-auto pb-3 custom-scroll w-full" id="container-times"></div>
+    </div>
+
+    <!-- PAINEL RANKING JOGADORES (PONTUAÇÃO & CLASSIFICAÇÃO POR ESTRELAS) -->
+    <div id="section-ranking-jogadores" class="space-y-4 w-full hidden">
+      <div class="bg-dark-card border border-dark rounded-xl p-4 shadow-xl space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-dark pb-3">
+          <div>
+            <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+              <span>⭐</span> Ranking de Jogadores (Pontuação & Estrelas)
+            </h2>
+            <p class="text-xs text-gray-400">A pontuação é vinculada individualmente ao jogador (mantida mesmo se mudar de equipe) e define sua classificação de 1 a 5 estrelas.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div id="star-tiers-live-legend" class="flex flex-wrap items-center gap-1.5 bg-[#1f242d] border border-dark px-3 py-1.5 rounded-lg text-[11px] font-bold"></div>
+            <button
+              type="button"
+              onclick="toggleStarConfigPanel()"
+              class="px-2.5 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 rounded-lg text-[11px] font-extrabold transition flex items-center gap-1"
+              title="Ajustar como as estrelas se adaptam aos pontos distribuídos"
+            >
+              <span>⚙️</span> Configurar Estrelas
+            </button>
+          </div>
+        </div>
+
+        <!-- Painel Configurável e Maleável de Classificação de Estrelas -->
+        <div id="star-config-panel" class="hidden bg-[#1f242d] border border-amber-500/40 rounded-xl p-3.5 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark pb-2">
+            <div>
+              <h3 class="text-xs font-extrabold text-amber-400 flex items-center gap-1.5">
+                <span>⭐</span> Calibração Maleável das Estrelas
+              </h3>
+              <p class="text-[11px] text-gray-400">Escolha entre ajuste automático proporcional aos pontos distribuídos ou defina manualmente os limites de pontos para cada estrela.</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                id="btn-star-mode-auto"
+                onclick="setStarRatingMode('auto')"
+                class="px-3 py-1 rounded-lg text-[11px] font-extrabold transition border"
+              >
+                🔄 Automático (Maleável)
+              </button>
+              <button
+                type="button"
+                id="btn-star-mode-manual"
+                onclick="setStarRatingMode('manual')"
+                class="px-3 py-1 rounded-lg text-[11px] font-extrabold transition border"
+              >
+                🎚️ Faixas Manuais
+              </button>
+            </div>
+          </div>
+
+          <!-- Configuração Modo Automático Maleável -->
+          <div id="star-config-auto-box" class="grid grid-cols-1 md:grid-cols-5 gap-2.5 items-end">
+            <div class="md:col-span-2 bg-[#161b22] border border-dark rounded-lg p-2.5 text-[11px] text-gray-300 space-y-1">
+              <div class="font-extrabold text-emerald-400">Como funciona o Modo Maleável:</div>
+              <div>As faixas se recalibram automaticamente conforme o teto de pontos distribuídos no campeonato (ou base mínima escolhida), mantendo a hierarquia equilibrada em qualquer temporada.</div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Base Mínima de Referência (pts)</label>
+              <input type="number" min="5" id="star-auto-min-base" onchange="saveStarConfigFromInputs()" class="w-full bg-[#161b22] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Teto Atual em Uso</label>
+              <div id="star-auto-current-ceiling" class="w-full bg-[#161b22] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-mono font-extrabold text-amber-300">17 pts</div>
+            </div>
+            <div>
+              <button type="button" onclick="resetStarConfigDefault()" class="w-full px-3 py-1.5 bg-gray-700/70 hover:bg-gray-600 text-gray-200 text-xs font-bold rounded-lg transition">
+                Restaurar Padrão
+              </button>
+            </div>
+          </div>
+
+          <!-- Configuração Modo Faixas Manuais -->
+          <div id="star-config-manual-box" class="hidden grid grid-cols-2 sm:grid-cols-5 gap-2.5 items-end">
+            <div>
+              <label class="block text-[10px] font-bold text-amber-400 mb-1">★★☆☆☆ (Mín. pts)</label>
+              <input type="number" min="1" id="star-manual-2" onchange="saveStarConfigFromInputs()" class="w-full bg-[#161b22] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-amber-400 mb-1">★★★☆☆ (Mín. pts)</label>
+              <input type="number" min="2" id="star-manual-3" onchange="saveStarConfigFromInputs()" class="w-full bg-[#161b22] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-amber-400 mb-1">★★★★☆ (Mín. pts)</label>
+              <input type="number" min="3" id="star-manual-4" onchange="saveStarConfigFromInputs()" class="w-full bg-[#161b22] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-amber-400 mb-1">★★★★★ (Mín. pts)</label>
+              <input type="number" min="4" id="star-manual-5" onchange="saveStarConfigFromInputs()" class="w-full bg-[#161b22] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <button type="button" onclick="resetStarConfigDefault()" class="w-full px-3 py-1.5 bg-gray-700/70 hover:bg-gray-600 text-gray-200 text-xs font-bold rounded-lg transition">
+                Restaurar Padrão
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de Comando por Texto + Tabela Rápida de Pontuação -->
+        <div class="bg-[#1f242d]/80 border border-blue-500/30 rounded-xl p-3.5 space-y-2.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <label for="input-comando-pontos" class="text-xs font-extrabold text-blue-400 flex items-center gap-1.5">
+              <span>⚡</span> Comando Rápido de Pontuação
+            </label>
+            <span class="text-[11px] text-gray-400">
+              Exemplos: <code class="text-gray-200 bg-[#161b22] px-1.5 py-0.5 rounded border border-dark">Adicionar 15 pontos a todos da Loud</code> ou <code class="text-gray-200 bg-[#161b22] px-1.5 py-0.5 rounded border border-dark">Adicionar 5 pontos a Ghost da Loud</code>
+            </span>
+          </div>
+
+          <!-- Atalhos da Tabela de Pontuação -->
+          <div class="flex flex-wrap items-center gap-1.5 text-[10px]">
+            <span class="font-bold text-gray-400 uppercase mr-0.5">Atalhos:</span>
+            <button type="button" onclick="preencherComandoPreset('Campeão Mundial', 17, true)" class="px-2 py-0.5 rounded bg-yellow-500/15 hover:bg-yellow-500/25 text-yellow-300 border border-yellow-500/30 font-bold">🏆 Campeão Mundial (+17)</button>
+            <button type="button" onclick="preencherComandoPreset('Campeão Regional', 15, true)" class="px-2 py-0.5 rounded bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 border border-blue-500/30 font-bold">🥇 Campeão Região (+15)</button>
+            <button type="button" onclick="preencherComandoPreset('Vice', 10, true)" class="px-2 py-0.5 rounded bg-gray-700/60 hover:bg-gray-600/70 text-gray-200 border border-gray-600 font-bold">🥈 Vice (+10)</button>
+            <button type="button" onclick="preencherComandoPreset('3º Lugar', 6, true)" class="px-2 py-0.5 rounded bg-gray-700/60 hover:bg-gray-600/70 text-gray-200 border border-gray-600 font-bold">🥉 3º (+6)</button>
+            <button type="button" onclick="preencherComandoPreset('4º Lugar', 5, true)" class="px-2 py-0.5 rounded bg-gray-700/60 hover:bg-gray-600/70 text-gray-200 border border-gray-600 font-bold">4º (+5)</button>
+            <button type="button" onclick="preencherComandoPreset('5º Lugar', 4, true)" class="px-2 py-0.5 rounded bg-gray-700/60 hover:bg-gray-600/70 text-gray-200 border border-gray-600 font-bold">5º (+4)</button>
+            <button type="button" onclick="preencherComandoPreset('6º Lugar', 3, true)" class="px-2 py-0.5 rounded bg-gray-700/60 hover:bg-gray-600/70 text-gray-200 border border-gray-600 font-bold">6º (+3)</button>
+            <button type="button" onclick="preencherComandoPreset('7º Lugar', 2, true)" class="px-2 py-0.5 rounded bg-gray-700/60 hover:bg-gray-600/70 text-gray-200 border border-gray-600 font-bold">7º (+2)</button>
+            <button type="button" onclick="preencherComandoPreset('8º Lugar', 1, true)" class="px-2 py-0.5 rounded bg-gray-700/60 hover:bg-gray-600/70 text-gray-200 border border-gray-600 font-bold">8º (+1)</button>
+            <button type="button" onclick="preencherComandoPreset('MVP Mundial', 7, false)" class="px-2 py-0.5 rounded bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 font-bold">🌟 MVP Mundial (+7)</button>
+            <button type="button" onclick="preencherComandoPreset('MVP Regional', 5, false)" class="px-2 py-0.5 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-bold">⭐ MVP Regional (+5)</button>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <input
+              type="text"
+              id="input-comando-pontos"
+              onkeydown="if(event.key === 'Enter') processarComandoPontos()"
+              placeholder='Digite o comando... Ex: "Adicionar 15 pontos a todos da Loud" ou "Adicionar 5 pontos a Ghost da Loud"'
+              class="flex-1 bg-[#161b22] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
+            >
+            <button
+              type="button"
+              onclick="processarComandoPontos()"
+              class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-lg shadow transition shrink-0 flex items-center justify-center gap-1.5"
+            >
+              <span>✓</span> Aplicar Pontos
+            </button>
+          </div>
+
+          <div id="feedback-comando-pontos" class="hidden text-xs font-bold px-3 py-1.5 rounded-lg"></div>
+        </div>
+
+        <!-- Filtros da Tabela de Ranking -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="relative">
+              <input
+                type="text"
+                id="ranking-player-search"
+                oninput="renderSectionRankingJogadores()"
+                placeholder="Pesquisar jogador..."
+                class="w-56 sm:w-64 bg-[#21262d] border border-dark rounded-lg pl-3 pr-8 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
+              >
+              <span class="absolute right-2.5 top-1.5 text-xs text-gray-400 pointer-events-none">🔍</span>
+            </div>
+
+            <select
+              id="ranking-team-filter"
+              onchange="renderSectionRankingJogadores()"
+              class="bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="ALL">Todas as Equipes</option>
+            </select>
+
+            <select
+              id="ranking-stars-filter"
+              onchange="renderSectionRankingJogadores()"
+              class="bg-[#21262d] border border-dark rounded-lg px-3 py-1.5 text-xs font-bold text-amber-400 focus:outline-none focus:border-amber-500"
+            >
+              <option value="ALL">Todas as Estrelas (1★ a 5★)</option>
+              <option value="5">★★★★★ (5 Estrelas)</option>
+              <option value="4">★★★★☆ (4 Estrelas)</option>
+              <option value="3">★★★☆☆ (3 Estrelas)</option>
+              <option value="2">★★☆☆☆ (2 Estrelas)</option>
+              <option value="1">★☆☆☆☆ (1 Estrela)</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span id="ranking-jogadores-counter" class="text-xs bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-1.5 rounded-lg font-bold">0 jogadores</span>
+            <button
+              type="button"
+              onclick="resetarPontuacaoJogadores()"
+              class="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold rounded-lg transition"
+              title="Zerar pontuação de todos os jogadores"
+            >
+              Zerar Pontos
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabela de Ranking de Jogadores -->
+        <div class="w-full max-h-[680px] overflow-y-auto overflow-x-auto custom-scroll border border-dark rounded-xl">
+          <table class="w-full text-left whitespace-nowrap">
+            <thead class="sticky top-0 z-10 bg-[#1f242d] text-gray-400 text-[11px] font-bold uppercase border-b border-dark">
+              <tr>
+                <th class="px-3.5 py-2.5 w-14 text-center">Pos</th>
+                <th class="px-3.5 py-2.5">Jogador</th>
+                <th class="px-3.5 py-2.5">Equipe Atual</th>
+                <th class="px-3.5 py-2.5 text-center">Classificação</th>
+                <th class="px-3.5 py-2.5 text-right">Pontos</th>
+                <th class="px-3.5 py-2.5 text-center w-36">Ajuste Rápido</th>
+              </tr>
+            </thead>
+            <tbody id="container-ranking-jogadores-body" class="divide-y divide-dark text-xs text-gray-200 bg-[#161b22]"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- PAINEL COMPOSIÇÕES -->
@@ -829,7 +1047,7 @@
     }
 
     function switchMainTab(tabId) {
-      const allTabs = ['times', 'composicoes', 'carreira', 'transferencias', 'hist-regioes', 'hist-competicoes', 'hist-campeoes', 'hist-mvps', 'jogadores-titulos', 'jogadores-mvps', 'confronto', 'hist-confrontos'];
+      const allTabs = ['times', 'ranking-jogadores', 'composicoes', 'carreira', 'transferencias', 'hist-regioes', 'hist-competicoes', 'hist-campeoes', 'hist-mvps', 'jogadores-titulos', 'jogadores-mvps', 'confronto', 'hist-confrontos'];
       allTabs.forEach(t => {
         const btn = document.getElementById(`nav-${t}`);
         const section = document.getElementById(`section-${t}`);
@@ -842,7 +1060,7 @@
           section.classList.add('hidden');
         }
       });
-      const hideGlobalRegionBar = ['composicoes', 'carreira', 'transferencias', 'hist-competicoes', 'confronto', 'hist-confrontos'].includes(tabId);
+      const hideGlobalRegionBar = ['ranking-jogadores', 'composicoes', 'carreira', 'transferencias', 'hist-competicoes', 'confronto', 'hist-confrontos'].includes(tabId);
       document.getElementById('region-filter-bar').style.display = hideGlobalRegionBar ? 'none' : 'flex';
     }
 
@@ -921,6 +1139,7 @@
 
     function renderAllSections() {
       renderSectionTimes();
+      renderSectionRankingJogadores();
       renderSectionComposicoes();
       renderSectionCarreira();
       renderSectionTransferencias();
@@ -930,6 +1149,494 @@
       renderSectionJogadoresTitulos();
       renderSectionJogadoresMVPs();
       renderRegisteredMatchesTable();
+    }
+
+    /* =========================================================================
+       SISTEMA DE RANKING DE JOGADORES (PONTUAÇÃO INDEPENDENTE & ESTRELAS MALEÁVEIS)
+    ========================================================================= */
+    const STORAGE_KEY_PLAYER_POINTS = 'gcr6_player_points_v1';
+    const STORAGE_KEY_STAR_CONFIG = 'gcr6_star_config_v1';
+
+    const DEFAULT_STAR_CONFIG = {
+      mode: 'auto',      // 'auto' (maleável à quantidade de pontos distribuídos) ou 'manual'
+      autoMinBase: 17,   // Base inicial compatível com a tabela (Campeão Mundial = 17, Regional = 15)
+      manual2: 5,
+      manual3: 12,
+      manual4: 22,
+      manual5: 35
+    };
+
+    let starConfig = {
+      ...DEFAULT_STAR_CONFIG,
+      ...JSON.parse(localStorage.getItem(STORAGE_KEY_STAR_CONFIG) || '{}')
+    };
+
+    let playerPointsStore = JSON.parse(localStorage.getItem(STORAGE_KEY_PLAYER_POINTS) || '{}');
+
+    function saveStarConfig() {
+      localStorage.setItem(STORAGE_KEY_STAR_CONFIG, JSON.stringify(starConfig));
+    }
+
+    function getMaxDistributedPoints() {
+      let maxPts = 0;
+      Object.values(playerPointsStore).forEach(item => {
+        const pts = Math.max(0, Number(item.points) || 0);
+        if (pts > maxPts) maxPts = pts;
+      });
+      return maxPts;
+    }
+
+    function getActiveStarThresholds() {
+      if (starConfig.mode === 'manual') {
+        const m2 = Math.max(1, Number(starConfig.manual2) || 5);
+        const m3 = Math.max(m2 + 1, Number(starConfig.manual3) || 12);
+        const m4 = Math.max(m3 + 1, Number(starConfig.manual4) || 22);
+        const m5 = Math.max(m4 + 1, Number(starConfig.manual5) || 35);
+        return {
+          ceiling: m5,
+          t2: m2,
+          t3: m3,
+          t4: m4,
+          t5: m5
+        };
+      }
+
+      // Modo Maleável ('auto'): adapta as faixas de 1 a 5 estrelas proporcionalmente aos pontos distribuídos
+      const maxPts = getMaxDistributedPoints();
+      const baseFloor = Math.max(5, Number(starConfig.autoMinBase) || 17);
+      const ceiling = Math.max(maxPts, baseFloor);
+
+      const t2 = Math.max(1, Math.round(ceiling * 0.12));
+      const t3 = Math.max(t2 + 1, Math.round(ceiling * 0.32));
+      const t4 = Math.max(t3 + 1, Math.round(ceiling * 0.58));
+      const t5 = Math.max(t4 + 1, Math.round(ceiling * 0.85));
+
+      return { ceiling, t2, t3, t4, t5 };
+    }
+
+    function toggleStarConfigPanel() {
+      const panel = document.getElementById('star-config-panel');
+      if (!panel) return;
+      panel.classList.toggle('hidden');
+      syncStarConfigUI();
+    }
+
+    function setStarRatingMode(mode) {
+      starConfig.mode = mode === 'manual' ? 'manual' : 'auto';
+      saveStarConfig();
+      syncStarConfigUI();
+      refreshAllStarViews();
+    }
+
+    function saveStarConfigFromInputs() {
+      const autoBaseInput = document.getElementById('star-auto-min-base');
+      const m2Input = document.getElementById('star-manual-2');
+      const m3Input = document.getElementById('star-manual-3');
+      const m4Input = document.getElementById('star-manual-4');
+      const m5Input = document.getElementById('star-manual-5');
+
+      if (autoBaseInput) starConfig.autoMinBase = Math.max(5, parseInt(autoBaseInput.value, 10) || 17);
+      if (m2Input) starConfig.manual2 = Math.max(1, parseInt(m2Input.value, 10) || 5);
+      if (m3Input) starConfig.manual3 = Math.max(starConfig.manual2 + 1, parseInt(m3Input.value, 10) || 12);
+      if (m4Input) starConfig.manual4 = Math.max(starConfig.manual3 + 1, parseInt(m4Input.value, 10) || 22);
+      if (m5Input) starConfig.manual5 = Math.max(starConfig.manual4 + 1, parseInt(m5Input.value, 10) || 35);
+
+      saveStarConfig();
+      syncStarConfigUI();
+      refreshAllStarViews();
+    }
+
+    function resetStarConfigDefault() {
+      starConfig = { ...DEFAULT_STAR_CONFIG };
+      saveStarConfig();
+      syncStarConfigUI();
+      refreshAllStarViews();
+    }
+
+    function syncStarConfigUI() {
+      const isAuto = starConfig.mode !== 'manual';
+      const btnAuto = document.getElementById('btn-star-mode-auto');
+      const btnManual = document.getElementById('btn-star-mode-manual');
+      const boxAuto = document.getElementById('star-config-auto-box');
+      const boxManual = document.getElementById('star-config-manual-box');
+
+      if (btnAuto && btnManual) {
+        btnAuto.className = isAuto
+          ? 'px-3 py-1 rounded-lg text-[11px] font-extrabold transition border bg-amber-500 text-black border-amber-400 shadow'
+          : 'px-3 py-1 rounded-lg text-[11px] font-extrabold transition border bg-[#161b22] text-gray-300 border-dark hover:text-white';
+        btnManual.className = !isAuto
+          ? 'px-3 py-1 rounded-lg text-[11px] font-extrabold transition border bg-amber-500 text-black border-amber-400 shadow'
+          : 'px-3 py-1 rounded-lg text-[11px] font-extrabold transition border bg-[#161b22] text-gray-300 border-dark hover:text-white';
+      }
+
+      if (boxAuto) boxAuto.classList.toggle('hidden', !isAuto);
+      if (boxManual) boxManual.classList.toggle('hidden', isAuto);
+
+      const thresholds = getActiveStarThresholds();
+      const autoBaseInput = document.getElementById('star-auto-min-base');
+      const ceilingLabel = document.getElementById('star-auto-current-ceiling');
+      if (autoBaseInput) autoBaseInput.value = starConfig.autoMinBase;
+      if (ceilingLabel) ceilingLabel.textContent = `${thresholds.ceiling} pts (Líder: ${getMaxDistributedPoints()} pts)`;
+
+      const m2Input = document.getElementById('star-manual-2');
+      const m3Input = document.getElementById('star-manual-3');
+      const m4Input = document.getElementById('star-manual-4');
+      const m5Input = document.getElementById('star-manual-5');
+      if (m2Input) m2Input.value = thresholds.t2;
+      if (m3Input) m3Input.value = thresholds.t3;
+      if (m4Input) m4Input.value = thresholds.t4;
+      if (m5Input) m5Input.value = thresholds.t5;
+
+      const legend = document.getElementById('star-tiers-live-legend');
+      if (legend) {
+        const modeTag = isAuto
+          ? `<span class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mr-1">Maleável</span>`
+          : `<span class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30 mr-1">Manual</span>`;
+
+        legend.innerHTML = `
+          ${modeTag}
+          <span class="text-amber-400">★☆☆☆☆ <span class="text-gray-400 font-mono">(0-${thresholds.t2 - 1})</span></span>
+          <span class="text-gray-600">•</span>
+          <span class="text-amber-400">★★☆☆☆ <span class="text-gray-400 font-mono">(${thresholds.t2}-${thresholds.t3 - 1})</span></span>
+          <span class="text-gray-600">•</span>
+          <span class="text-amber-400">★★★☆☆ <span class="text-gray-400 font-mono">(${thresholds.t3}-${thresholds.t4 - 1})</span></span>
+          <span class="text-gray-600">•</span>
+          <span class="text-amber-400">★★★★☆ <span class="text-gray-400 font-mono">(${thresholds.t4}-${thresholds.t5 - 1})</span></span>
+          <span class="text-gray-600">•</span>
+          <span class="text-amber-400">★★★★★ <span class="text-gray-400 font-mono">(${thresholds.t5}+)</span></span>
+        `;
+      }
+    }
+
+    function preencherComandoPreset(label, pts, isTeam) {
+      const input = document.getElementById('input-comando-pontos');
+      if (!input) return;
+      input.value = isTeam
+        ? `Adicionar ${pts} pontos a todos da `
+        : `Adicionar ${pts} pontos a `;
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+      showCommandPointsFeedback(`Preset "${label}" (+${pts} pts): complete com o nome ${isTeam ? 'da equipe' : 'do jogador'} e pressione Enter.`, false);
+    }
+
+    function normalizePlayerPointKey(name) {
+      return (name || '')
+        .toString()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLowerCase();
+    }
+
+    function savePlayerPointsStore() {
+      localStorage.setItem(STORAGE_KEY_PLAYER_POINTS, JSON.stringify(playerPointsStore));
+    }
+
+    function syncPlayersIntoPointsStore() {
+      let changed = false;
+      dataJogadores.forEach(j => {
+        const key = normalizePlayerPointKey(j.name);
+        if (!key) return;
+        if (!playerPointsStore[key]) {
+          playerPointsStore[key] = { name: j.name.trim(), points: 0 };
+          changed = true;
+        } else if (j.name && playerPointsStore[key].name !== j.name.trim()) {
+          playerPointsStore[key].name = j.name.trim();
+          changed = true;
+        }
+      });
+      if (changed) savePlayerPointsStore();
+    }
+
+    function getPlayerPoints(playerName) {
+      const key = normalizePlayerPointKey(playerName);
+      if (!key || !playerPointsStore[key]) return 0;
+      return Math.max(0, Number(playerPointsStore[key].points) || 0);
+    }
+
+    function calculatePlayerStars(points) {
+      const pts = Math.max(0, Number(points) || 0);
+      const { t2, t3, t4, t5 } = getActiveStarThresholds();
+      if (pts >= t5) return 5;
+      if (pts >= t4) return 4;
+      if (pts >= t3) return 3;
+      if (pts >= t2) return 2;
+      return 1;
+    }
+
+    function formatStarsGlyphs(starsCount) {
+      const s = Math.min(5, Math.max(1, Number(starsCount) || 1));
+      return '★'.repeat(s) + '☆'.repeat(5 - s);
+    }
+
+    function getPlayerStarsBadgeHtml(playerName, compact = true) {
+      if (!playerName) return '';
+      const pts = getPlayerPoints(playerName);
+      const stars = calculatePlayerStars(pts);
+      const glyphs = formatStarsGlyphs(stars);
+      const sizeClass = compact ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-0.5';
+      return `<span class="inline-flex items-center gap-0.5 font-mono font-black tracking-tighter text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded ${sizeClass} shrink-0" title="${playerName}: ${pts} pontos (${stars}/5 estrelas)">${glyphs}</span>`;
+    }
+
+    function updatePlayerPointsByName(playerName, delta, isAbsoluteSet = false) {
+      const key = normalizePlayerPointKey(playerName);
+      if (!key) return;
+      const rosterPlayer = dataJogadores.find(j => normalizePlayerPointKey(j.name) === key);
+      const displayName = rosterPlayer ? rosterPlayer.name.trim() : playerName.trim();
+
+      if (!playerPointsStore[key]) {
+        playerPointsStore[key] = { name: displayName, points: 0 };
+      } else {
+        playerPointsStore[key].name = displayName;
+      }
+
+      if (isAbsoluteSet) {
+        playerPointsStore[key].points = Math.max(0, delta);
+      } else {
+        playerPointsStore[key].points = Math.max(0, (Number(playerPointsStore[key].points) || 0) + delta);
+      }
+      savePlayerPointsStore();
+    }
+
+    function showCommandPointsFeedback(msg, isError = false) {
+      const el = document.getElementById('feedback-comando-pontos');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove('hidden', 'bg-emerald-500/15', 'text-emerald-300', 'border-emerald-500/30', 'bg-red-500/15', 'text-red-300', 'border-red-500/30');
+      if (isError) {
+        el.classList.add('bg-red-500/15', 'text-red-300', 'border', 'border-red-500/30');
+      } else {
+        el.classList.add('bg-emerald-500/15', 'text-emerald-300', 'border', 'border-emerald-500/30');
+      }
+    }
+
+    function resolveTeamMatchesByNameOrTag(teamQuery) {
+      const qNorm = normalizePlayerPointKey(teamQuery);
+      if (!qNorm) return [];
+
+      const canonical = resolveCanonicalTeam(teamQuery);
+      const canonicalNorm = normalizePlayerPointKey(canonical.name);
+
+      return dataJogadores.filter(j => {
+        const jTeamNorm = normalizePlayerPointKey(j.team);
+        const jTagNorm = normalizePlayerPointKey(getTeamTagByName(j.team));
+        return jTeamNorm === qNorm || (canonicalNorm && jTeamNorm === canonicalNorm) || (jTagNorm && jTagNorm === qNorm);
+      });
+    }
+
+    function processarComandoPontos() {
+      const input = document.getElementById('input-comando-pontos');
+      if (!input) return;
+      const rawCmd = input.value.trim();
+      if (!rawCmd) return;
+
+      syncPlayersIntoPointsStore();
+      syncStarConfigUI();
+
+      const regex = /^(adicionar|somar|dar|remover|tirar|subtrair|definir|setar)\s+(\d+)\s*(?:pontos?|pts?)?\s+(?:a|ao|à|aos|às|para|pro|pra|de|do|da|dos|das)\s+(.+)$/i;
+      const match = rawCmd.match(regex);
+
+      if (!match) {
+        showCommandPointsFeedback('Formato não reconhecido. Use ex: "Adicionar 10 pontos a todos da Loud" ou "Adicionar 10 pontos a Ghost da Loud".', true);
+        return;
+      }
+
+      const actionWord = normalizePlayerPointKey(match[1]);
+      const amount = parseInt(match[2], 10) || 0;
+      const targetRaw = match[3].trim();
+
+      const isSet = ['definir', 'setar'].includes(actionWord);
+      const isRemove = ['remover', 'tirar', 'subtrair'].includes(actionWord);
+      const delta = isRemove ? -amount : amount;
+
+      // Caso 1: Coletivo ("todos da Loud", "todos de LLL", "todos do Fluxo")
+      const matchAllTeam = targetRaw.match(/^todos\s+(?:da|do|de|das|dos)\s+(.+)$/i);
+      if (matchAllTeam) {
+        const teamQuery = matchAllTeam[1].trim();
+        const teamPlayers = resolveTeamMatchesByNameOrTag(teamQuery);
+
+        if (teamPlayers.length === 0) {
+          showCommandPointsFeedback(`Nenhum jogador encontrado na equipe "${teamQuery}".`, true);
+          return;
+        }
+
+        teamPlayers.forEach(p => updatePlayerPointsByName(p.name, delta, isSet));
+        const teamDisplay = teamPlayers[0].team;
+        const namesList = teamPlayers.map(p => p.name).join(', ');
+        const actionDesc = isSet ? `Definidos ${amount} pts` : `${delta >= 0 ? '+' : ''}${delta} pts aplicados`;
+
+        showCommandPointsFeedback(`✅ ${actionDesc} para todos da ${teamDisplay} (${namesList}).`, false);
+        input.value = '';
+        refreshAllStarViews();
+        return;
+      }
+
+      // Caso 2: Individual com ou sem equipe ("Ghost da Loud" ou "Ghost")
+      const matchPlayerTeam = targetRaw.match(/^(.+?)\s+(?:da|do|de|das|dos)\s+(.+)$/i);
+      let playerTargetName = targetRaw;
+      let teamFilterQuery = '';
+
+      if (matchPlayerTeam) {
+        playerTargetName = matchPlayerTeam[1].trim();
+        teamFilterQuery = matchPlayerTeam[2].trim();
+      }
+
+      const playerNorm = normalizePlayerPointKey(playerTargetName);
+      let matchedPlayer = null;
+
+      if (teamFilterQuery) {
+        const teamPlayers = resolveTeamMatchesByNameOrTag(teamFilterQuery);
+        matchedPlayer = teamPlayers.find(p => normalizePlayerPointKey(p.name) === playerNorm);
+        if (!matchedPlayer) {
+          showCommandPointsFeedback(`O jogador "${playerTargetName}" não foi encontrado na equipe "${teamFilterQuery}".`, true);
+          return;
+        }
+      } else {
+        matchedPlayer = dataJogadores.find(p => normalizePlayerPointKey(p.name) === playerNorm);
+      }
+
+      const finalPlayerName = matchedPlayer ? matchedPlayer.name : playerTargetName;
+      updatePlayerPointsByName(finalPlayerName, delta, isSet);
+
+      const newPts = getPlayerPoints(finalPlayerName);
+      const newStars = calculatePlayerStars(newPts);
+      const teamLabel = matchedPlayer && matchedPlayer.team ? ` (${matchedPlayer.team})` : '';
+      const actionDesc = isSet ? `Definidos ${amount} pts` : `${delta >= 0 ? '+' : ''}${delta} pts aplicados`;
+
+      showCommandPointsFeedback(`✅ ${actionDesc} para ${finalPlayerName}${teamLabel} — Total: ${newPts} pts (${formatStarsGlyphs(newStars)}).`, false);
+      input.value = '';
+      refreshAllStarViews();
+    }
+
+    function ajustarPontosJogadorRapido(playerName, delta) {
+      updatePlayerPointsByName(playerName, delta, false);
+      refreshAllStarViews();
+    }
+
+    function resetarPontuacaoJogadores() {
+      if (!confirm('Tem certeza que deseja zerar a pontuação de todos os jogadores?')) return;
+      Object.keys(playerPointsStore).forEach(k => {
+        playerPointsStore[k].points = 0;
+      });
+      savePlayerPointsStore();
+      showCommandPointsFeedback('Pontuação de todos os jogadores zerada.', false);
+      refreshAllStarViews();
+    }
+
+    function refreshAllStarViews() {
+      renderSectionRankingJogadores();
+      renderSectionComposicoes();
+      renderSectionTransferencias();
+      renderConfronto();
+      renderRegisteredMatchesTable();
+    }
+
+    function renderSectionRankingJogadores() {
+      const body = document.getElementById('container-ranking-jogadores-body');
+      const counter = document.getElementById('ranking-jogadores-counter');
+      const teamSelect = document.getElementById('ranking-team-filter');
+      if (!body) return;
+
+      syncPlayersIntoPointsStore();
+
+      const rosterMap = new Map();
+      const teamsSet = new Set();
+      dataJogadores.forEach(j => {
+        const key = normalizePlayerPointKey(j.name);
+        if (key) rosterMap.set(key, j);
+        if (j.team && j.team.trim()) teamsSet.add(j.team.trim());
+      });
+
+      if (teamSelect) {
+        const currentVal = teamSelect.value || 'ALL';
+        const sortedTeams = Array.from(teamsSet).sort((a, b) => a.localeCompare(b));
+        teamSelect.innerHTML = `<option value="ALL">Todas as Equipes</option>` +
+          sortedTeams.map(t => `<option value="${t.replace(/"/g, '&quot;')}">${t}</option>`).join('');
+        if ([...teamSelect.options].some(o => o.value === currentVal)) {
+          teamSelect.value = currentVal;
+        }
+      }
+
+      const searchQuery = normalizePlayerPointKey(document.getElementById('ranking-player-search')?.value || '');
+      const teamFilter = teamSelect ? teamSelect.value : 'ALL';
+      const starsFilter = document.getElementById('ranking-stars-filter')?.value || 'ALL';
+
+      const allEntries = Object.entries(playerPointsStore).map(([key, item]) => {
+        const rosterInfo = rosterMap.get(key);
+        const currentTeam = rosterInfo && rosterInfo.team ? rosterInfo.team.trim() : 'Sem Time';
+        const teamInfo = getTeamInfoByName(currentTeam);
+        const points = Math.max(0, Number(item.points) || 0);
+        const stars = calculatePlayerStars(points);
+
+        return {
+          key,
+          name: rosterInfo ? rosterInfo.name : item.name,
+          team: currentTeam,
+          teamLogo: (teamInfo && teamInfo.logo) ? teamInfo.logo : (rosterInfo ? rosterInfo.logo : ''),
+          teamTag: (teamInfo && teamInfo.tag) ? teamInfo.tag.toUpperCase() : '',
+          teamRegion: (teamInfo && teamInfo.region) ? teamInfo.region.toUpperCase() : '',
+          points,
+          stars
+        };
+      });
+
+      allEntries.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+
+      const filteredEntries = allEntries.filter(entry => {
+        if (searchQuery && !normalizePlayerPointKey(entry.name).includes(searchQuery)) return false;
+        if (teamFilter !== 'ALL' && entry.team !== teamFilter) return false;
+        if (starsFilter !== 'ALL' && String(entry.stars) !== starsFilter) return false;
+        return true;
+      });
+
+      if (counter) {
+        counter.textContent = `${filteredEntries.length} ${filteredEntries.length === 1 ? 'jogador' : 'jogadores'}`;
+      }
+
+      if (filteredEntries.length === 0) {
+        body.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-xs text-gray-500 font-bold">Nenhum jogador encontrado com os filtros atuais.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = filteredEntries.map((entry, idx) => {
+        const pos = getPosBadge(idx);
+        const isSemTime = /^sem\s*time$/i.test(entry.team);
+        const logoHtml = entry.teamLogo
+          ? createLogoHtml(entry.teamLogo, "w-6 h-6")
+          : (isSemTime ? `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-800 border border-gray-700 text-[11px] text-gray-400">🚫</span>` : '');
+        const rookieBadge = getPlayerRookieBadgeHtml(entry.name, entry.team);
+        const nameColorClass = getPlayerNameColorClass(entry.name);
+        const safeName = entry.name.replace(/'/g, "\'");
+
+        return `
+          <tr class="hover:bg-dark-hover/50 transition">
+            <td class="px-3.5 py-2.5 text-center align-middle">${pos}</td>
+            <td class="px-3.5 py-2.5 font-extrabold ${nameColorClass} text-xs">
+              <span class="inline-flex items-center gap-1.5">${rookieBadge}<span>${entry.name}</span></span>
+            </td>
+            <td class="px-3.5 py-2.5 text-xs font-bold text-gray-200">
+              <div class="flex items-center gap-2">
+                ${logoHtml}
+                <span>${entry.team}</span>
+                ${entry.teamTag ? `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">${entry.teamTag}</span>` : ''}
+                ${entry.teamRegion ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">${entry.teamRegion}</span>` : ''}
+              </div>
+            </td>
+            <td class="px-3.5 py-2.5 text-center">
+              ${getPlayerStarsBadgeHtml(entry.name, false)}
+            </td>
+            <td class="px-3.5 py-2.5 text-right font-black text-blue-300 text-sm font-mono">${entry.points} pts</td>
+            <td class="px-3.5 py-2.5 text-center whitespace-nowrap">
+              <div class="inline-flex items-center gap-1">
+                <button type="button" onclick="ajustarPontosJogadorRapido('${safeName}', -10)" class="px-1.5 py-0.5 rounded bg-red-500/15 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-[10px] font-mono font-bold">-10</button>
+                <button type="button" onclick="ajustarPontosJogadorRapido('${safeName}', -5)" class="px-1.5 py-0.5 rounded bg-red-500/15 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-[10px] font-mono font-bold">-5</button>
+                <button type="button" onclick="ajustarPontosJogadorRapido('${safeName}', 5)" class="px-1.5 py-0.5 rounded bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold">+5</button>
+                <button type="button" onclick="ajustarPontosJogadorRapido('${safeName}', 10)" class="px-1.5 py-0.5 rounded bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold">+10</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
     /* =========================================================================
@@ -1081,10 +1788,11 @@
         const rowsHtml = team.players.map(p => {
           const rookieBadge = getPlayerRookieBadgeHtml(p.name, team.name);
           const nameColorClass = getPlayerNameColorClass(p.name);
+          const starsBadge = getPlayerStarsBadgeHtml(p.name, true);
           return `
           <tr class="hover:bg-dark-hover/50 transition">
             <td class="px-3 py-2 font-bold ${nameColorClass} text-xs">
-              <span class="inline-flex items-center gap-1.5">${rookieBadge}<span>${p.name}</span></span>
+              <span class="inline-flex items-center gap-1.5 flex-wrap">${rookieBadge}<span>${p.name}</span>${starsBadge}</span>
             </td>
             <td class="px-3 py-2 text-center">
               <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${p.naturalidade}</span>
@@ -2196,7 +2904,7 @@
           <tr class="hover:bg-dark-hover/50 transition" ${tooltipAttr}>
             <td class="px-3.5 py-2.5 text-center font-mono text-gray-500 font-bold">${filtered.length - idx}º</td>
             <td class="px-3.5 py-2.5 font-extrabold ${getPlayerNameColorClass(tr.player)} text-xs">
-              <span class="inline-flex items-center gap-1.5">${rookieBadgeInTr}<span>${tr.player}</span></span>${isLatestBadge}
+              <span class="inline-flex items-center gap-1.5">${rookieBadgeInTr}<span>${tr.player}</span>${getPlayerStarsBadgeHtml(tr.player, true)}</span>${isLatestBadge}
             </td>
             <td class="px-3.5 py-2.5 text-right font-bold ${fromTextClass} text-xs">
               <div class="flex items-center justify-end gap-2">
@@ -3114,10 +3822,11 @@
         let playerRows = players.map(p => {
           const nat = (p.naturalidade || 'N/I').toUpperCase();
           const rookieBadge = getPlayerRookieBadgeHtml(p.name, team.name);
+          const starsBadge = getPlayerStarsBadgeHtml(p.name, true);
           return `
             <tr class="hover:bg-dark-hover/60 transition">
               <td class="px-3.5 py-2.5 font-extrabold ${getPlayerNameColorClass(p.name)} text-sm">
-                <span class="inline-flex items-center gap-1.5">${rookieBadge}<span>${p.name}</span></span>
+                <span class="inline-flex items-center gap-1.5 flex-wrap">${rookieBadge}<span>${p.name}</span>${starsBadge}</span>
               </td>
               <td class="px-2.5 py-2.5 text-center">
                 <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${nat}</span>
@@ -3280,17 +3989,19 @@
         const hasChangedTeam = currentTeamName && goldenPlayer.matchTeam && currentTeamName.toLowerCase().trim() !== goldenPlayer.matchTeam.toLowerCase().trim();
 
         const goldenColorClass = getPlayerNameColorClass(goldenPlayer.name);
+        const goldenStarsHtml = getPlayerStarsBadgeHtml(goldenPlayer.name, true);
         if (hasChangedTeam) {
           goldenPlayerDisplayHtml = `
             <div class="flex items-center gap-1 truncate">
               <span class="text-xs font-extrabold ${goldenColorClass} truncate">${goldenPlayer.name}</span>
+              ${goldenStarsHtml}
               <span class="flex items-center border-l border-dark pl-1 shrink-0" title="Time Atual: ${currentTeamName}">
                 ${currentLogoHtml}
               </span>
             </div>
           `;
         } else {
-          goldenPlayerDisplayHtml = `<span class="text-xs font-extrabold ${goldenColorClass} truncate block">${goldenPlayer.name}</span>`;
+          goldenPlayerDisplayHtml = `<div class="flex items-center gap-1 truncate"><span class="text-xs font-extrabold ${goldenColorClass} truncate">${goldenPlayer.name}</span>${goldenStarsHtml}</div>`;
         }
       }
 
@@ -3311,7 +4022,10 @@
               ${createLogoHtml(team1.logo, "w-4 h-4")}
               <div class="min-w-0">
                 <span class="text-[8px] uppercase font-black text-blue-400 block leading-none">Estrela (${shortTag1})</span>
-                <span class="text-[11px] font-bold ${team1.starPlayer ? getPlayerNameColorClass(team1.starPlayer) : 'text-white'} truncate block mt-0.5">${team1.starPlayer || 'Não informado'}</span>
+                <div class="flex items-center gap-1 mt-0.5 truncate">
+                  <span class="text-[11px] font-bold ${team1.starPlayer ? getPlayerNameColorClass(team1.starPlayer) : 'text-white'} truncate">${team1.starPlayer || 'Não informado'}</span>
+                  ${team1.starPlayer ? getPlayerStarsBadgeHtml(team1.starPlayer, true) : ''}
+                </div>
               </div>
             </div>
 
@@ -3319,7 +4033,10 @@
               ${createLogoHtml(team2.logo, "w-4 h-4")}
               <div class="min-w-0">
                 <span class="text-[8px] uppercase font-black text-red-400 block leading-none">Estrela (${shortTag2})</span>
-                <span class="text-[11px] font-bold ${team2.starPlayer ? getPlayerNameColorClass(team2.starPlayer) : 'text-white'} truncate block mt-0.5">${team2.starPlayer || 'Não informado'}</span>
+                <div class="flex items-center gap-1 mt-0.5 truncate">
+                  <span class="text-[11px] font-bold ${team2.starPlayer ? getPlayerNameColorClass(team2.starPlayer) : 'text-white'} truncate">${team2.starPlayer || 'Não informado'}</span>
+                  ${team2.starPlayer ? getPlayerStarsBadgeHtml(team2.starPlayer, true) : ''}
+                </div>
               </div>
             </div>
           </div>
@@ -4167,6 +4884,7 @@
             <span class="px-2.5 py-1 rounded-lg bg-yellow-500/10 text-yellow-300 border border-yellow-500/30 font-bold text-xs inline-flex items-center gap-1.5 shadow-sm">
               ${matchLogoHtml}
               <span class="${getPlayerNameColorClass(m.mvp, 'text-yellow-300')}">⭐ ${m.mvp}</span>
+              ${getPlayerStarsBadgeHtml(m.mvp, true)}
               ${rightLogoHtml}
             </span>
           `;
