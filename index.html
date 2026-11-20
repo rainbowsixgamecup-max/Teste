@@ -156,14 +156,14 @@
           <div id="star-config-auto-box" class="grid grid-cols-1 md:grid-cols-5 gap-2.5 items-end">
             <div class="md:col-span-2 bg-[#161b22] border border-dark rounded-lg p-2.5 text-[11px] text-gray-300 space-y-1">
               <div class="font-extrabold text-emerald-400">Como funciona o Modo Maleável:</div>
-              <div>As faixas se recalibram automaticamente conforme o teto de pontos distribuídos no campeonato (ou base mínima escolhida), mantendo a hierarquia equilibrada em qualquer temporada.</div>
+              <div>As faixas se recalibram automaticamente com base na <strong>média do Top 3</strong> (90%, limitado a 82% do líder), garantindo que jogadores de elite próximos no topo dividam as 5 estrelas de forma justa.</div>
             </div>
             <div>
               <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Base Mínima de Referência (pts)</label>
               <input type="number" min="5" id="star-auto-min-base" onchange="saveStarConfigFromInputs()" class="w-full bg-[#161b22] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-amber-500">
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Teto Atual em Uso</label>
+              <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Referência Elite Atual</label>
               <div id="star-auto-current-ceiling" class="w-full bg-[#161b22] border border-dark rounded-lg px-2.5 py-1.5 text-xs font-mono font-extrabold text-amber-300">17 pts</div>
             </div>
             <div>
@@ -1179,13 +1179,23 @@
       localStorage.setItem(STORAGE_KEY_STAR_CONFIG, JSON.stringify(starConfig));
     }
 
+    function getSortedActivePlayerPoints() {
+      return Object.values(playerPointsStore)
+        .map(item => Math.max(0, Number(item.points) || 0))
+        .filter(pts => pts > 0)
+        .sort((a, b) => b - a);
+    }
+
     function getMaxDistributedPoints() {
-      let maxPts = 0;
-      Object.values(playerPointsStore).forEach(item => {
-        const pts = Math.max(0, Number(item.points) || 0);
-        if (pts > maxPts) maxPts = pts;
-      });
-      return maxPts;
+      const active = getSortedActivePlayerPoints();
+      return active.length > 0 ? active[0] : 0;
+    }
+
+    function getTop3AveragePoints() {
+      const active = getSortedActivePlayerPoints();
+      if (active.length === 0) return 0;
+      const topN = active.slice(0, Math.min(3, active.length));
+      return topN.reduce((acc, v) => acc + v, 0) / topN.length;
     }
 
     function getActiveStarThresholds() {
@@ -1203,15 +1213,27 @@
         };
       }
 
-      // Modo Maleável ('auto'): adapta as faixas de 1 a 5 estrelas proporcionalmente aos pontos distribuídos
+      // Modo Maleável Justo ('auto'): ancora o corte de 5 estrelas na média do Top 3 (90%)
+      // com teto máximo de 82% do líder, evitando que um único líder isole o topo.
       const maxPts = getMaxDistributedPoints();
+      const top3Avg = getTop3AveragePoints();
       const baseFloor = Math.max(5, Number(starConfig.autoMinBase) || 17);
-      const ceiling = Math.max(maxPts, baseFloor);
 
-      const t2 = Math.max(1, Math.round(ceiling * 0.12));
-      const t3 = Math.max(t2 + 1, Math.round(ceiling * 0.32));
-      const t4 = Math.max(t3 + 1, Math.round(ceiling * 0.58));
-      const t5 = Math.max(t4 + 1, Math.round(ceiling * 0.85));
+      let rawT5;
+      if (maxPts <= baseFloor) {
+        rawT5 = Math.round(baseFloor * 0.85);
+      } else {
+        const refBenchmark = Math.max(baseFloor, top3Avg);
+        const byTop3 = Math.round(refBenchmark * 0.90);
+        const byLeaderCap = Math.round(maxPts * 0.82);
+        rawT5 = Math.min(byTop3, byLeaderCap);
+      }
+
+      const t2 = Math.max(1, Math.round(rawT5 * 0.25));
+      const t3 = Math.max(t2 + 1, Math.round(rawT5 * 0.50));
+      const t4 = Math.max(t3 + 1, Math.round(rawT5 * 0.75));
+      const t5 = Math.max(t4 + 1, rawT5);
+      const ceiling = Math.max(maxPts, baseFloor);
 
       return { ceiling, t2, t3, t4, t5 };
     }
@@ -1278,7 +1300,7 @@
       const autoBaseInput = document.getElementById('star-auto-min-base');
       const ceilingLabel = document.getElementById('star-auto-current-ceiling');
       if (autoBaseInput) autoBaseInput.value = starConfig.autoMinBase;
-      if (ceilingLabel) ceilingLabel.textContent = `${thresholds.ceiling} pts (Líder: ${getMaxDistributedPoints()} pts)`;
+      if (ceilingLabel) ceilingLabel.textContent = `⭐5: ${thresholds.t5}+ pts (Média Top 3: ${getTop3AveragePoints().toFixed(1)} • Líder: ${getMaxDistributedPoints()})`;
 
       const m2Input = document.getElementById('star-manual-2');
       const m3Input = document.getElementById('star-manual-3');
@@ -1598,6 +1620,7 @@
     }
 
     function refreshAllStarViews() {
+      syncStarConfigUI();
       renderSectionRankingJogadores();
       renderSectionComposicoes();
       renderSectionTransferencias();
@@ -5469,6 +5492,7 @@
       updateAvailableRegions();
       setupComposicoesFilters();
       updateTransferDatalistsAndFilters();
+      syncStarConfigUI();
       renderAllSections();
       setupCompetitionOptions();
       setupConfrontoOptions();
