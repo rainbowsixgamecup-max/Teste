@@ -31,11 +31,18 @@
         <h1 class="text-2xl font-extrabold text-white flex items-center gap-2">
           <span>🏆</span> Game Cup Rainbow Six Siege
         </h1>
-        <div class="flex items-center gap-3 mt-1">
-          <p class="text-xs text-gray-400" id="last-updated">A carregar dados...</p>
+        <div class="flex flex-wrap items-center gap-2 mt-1">
+          <p class="text-xs text-gray-400 mr-1" id="last-updated">A carregar dados...</p>
           <button onclick="init(true)" id="btn-refresh" class="px-2.5 py-1 text-xs font-bold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded transition flex items-center gap-1">
             <span>🔄</span> Atualizar Dados
           </button>
+          <button onclick="exportarBackupLocalStorage()" class="px-2.5 py-1 text-xs font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded transition flex items-center gap-1" title="Baixar arquivo JSON com todos os dados salvos neste navegador">
+            <span>💾</span> Baixar Backup
+          </button>
+          <button onclick="document.getElementById('input-import-backup').click()" class="px-2.5 py-1 text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded transition flex items-center gap-1" title="Importar arquivo JSON de backup de outro PC">
+            <span>📥</span> Importar Backup
+          </button>
+          <input type="file" id="input-import-backup" accept=".json,application/json" class="hidden" onchange="importarBackupLocalStorage(event)">
         </div>
       </div>
       
@@ -1703,7 +1710,7 @@
           : (isSemTime ? `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-800 border border-gray-700 text-[11px] text-gray-400">🚫</span>` : '');
         const rookieBadge = getPlayerRookieBadgeHtml(entry.name, entry.team);
         const nameColorClass = getPlayerNameColorClass(entry.name);
-        const safeName = entry.name.replace(/'/g, "\'");
+        const safeName = entry.name.replace(/'/g, "\\'");
 
         return `
           <tr class="hover:bg-dark-hover/50 transition">
@@ -2671,7 +2678,7 @@
 
       filteredWindows.forEach(w => {
         const isSelected = rookieCutoffWindow === w;
-        const safeW = w.replace(/'/g, "\'");
+        const safeW = w.replace(/'/g, "\\'");
         html += `
           <button type="button" onclick="selectRookieCutoffWindow('${safeW}')" class="w-full text-left flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-bold transition border ${
             isSelected
@@ -3933,7 +3940,7 @@
               <td class="px-2.5 py-2.5 text-center">
                 <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${nat}</span>
               </td>
-              <td class="px-3 py-2.5 text-right font-extrabold text-yellow-400 text-sm font-mono">${p.titles}</td>
+              <td class="px-3.5 py-2.5 text-right font-extrabold text-yellow-400 text-sm font-mono">${p.titles}</td>
               <td class="px-3.5 py-2.5 text-right font-extrabold text-purple-400 text-sm font-mono">${p.mvps}</td>
             </tr>
           `;
@@ -3977,7 +3984,7 @@
                     <tr>
                       <th class="px-3.5 py-2.5">Jogador</th>
                       <th class="px-2.5 py-2.5 text-center">Naturalidade</th>
-                      <th class="px-3 py-2.5 text-right">Títulos</th>
+                      <th class="px-3.5 py-2.5 text-right">Títulos</th>
                       <th class="px-3.5 py-2.5 text-right">MVPs</th>
                     </tr>
                   </thead>
@@ -4316,13 +4323,13 @@
 
       let html = `
         <label class="flex items-center gap-2 text-xs font-extrabold text-blue-400 bg-[#1f242d] p-2 rounded-lg cursor-pointer border border-blue-500/30">
-          <input type="checkbox" ${isAllSelected ? 'checked' : ''} onchange="toggleTableCompSelection('ALL')" class="rounded accent-blue-600">
+          <input type="checkbox" ${isAllSelected ? 'checked' : ''} onchange="toggleTableCompKey('ALL')" class="rounded accent-blue-600">
           <span>Selecionar Todas as Competições e Fases</span>
         </label>
         <div class="space-y-2">
       `;
 
-      let hasAnyMatch = false;
+      let hasAnyResult = false;
 
       Object.keys(compPhaseMap).sort().forEach(comp => {
         const phases = Array.from(compPhaseMap[comp]).sort();
@@ -4330,7 +4337,7 @@
         const matchingPhases = compMatchesSearch ? phases : phases.filter(p => p.toLowerCase().includes(q));
 
         if (matchingPhases.length > 0) {
-          hasAnyMatch = true;
+          hasAnyResult = true;
           const compKeys = phases.map(p => `${comp}::${p}`);
           const isCompChecked = isAllSelected || (compKeys.length > 0 && compKeys.every(k => selectedTableCompKeys.has(k)));
           const safeComp = comp.replace(/'/g, "\\'");
@@ -4347,11 +4354,10 @@
           matchingPhases.forEach(phase => {
             const key = `${comp}::${phase}`;
             const isChecked = isAllSelected || selectedTableCompKeys.has(key);
-            const safeKey = key.replace(/'/g, "\\'");
 
             html += `
               <label class="flex items-center gap-2 text-[11px] font-semibold text-gray-300 hover:text-white cursor-pointer">
-                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTableCompSelection('${safeKey}')" class="rounded accent-blue-600">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTableCompKey('${key.replace(/'/g, "\\'")}')" class="rounded accent-blue-600">
                 <span>${phase}</span>
               </label>
             `;
@@ -4361,36 +4367,21 @@
         }
       });
 
-      if (!hasAnyMatch) {
-        html += `<div class="text-xs text-gray-500 p-2 text-center">Nenhuma competição ou fase encontrada.</div>`;
+      if (!hasAnyResult) {
+        html += `<div class="p-3 text-center text-xs text-gray-500">Nenhuma competição ou fase encontrada.</div>`;
       }
 
       html += `</div>`;
       container.innerHTML = html;
     }
 
-    function toggleTableCompDropdown() {
-      const dropdown = document.getElementById('dropdown-table-comp-filter');
-      if (dropdown) {
-        dropdown.classList.toggle('hidden');
-        if (!dropdown.classList.contains('hidden')) {
-          const searchInput = document.getElementById('input-search-table-comp');
-          if (searchInput) {
-            searchInput.value = tableCompSearchQuery;
-            setTimeout(() => searchInput.focus(), 10);
-          }
-          renderTableCompFilterDropdown();
-        }
-      }
-    }
-
     function toggleTableCompGroup(compName) {
       const { allKeys } = getTableCompPhaseStructure();
       const compPrefix = `${compName}::`;
       const compKeys = allKeys.filter(k => k.startsWith(compPrefix));
-      const isAllSelected = selectedTableCompKeys.has('ALL');
+      const isAllGlobal = selectedTableCompKeys.has('ALL');
 
-      if (isAllSelected) {
+      if (isAllGlobal) {
         selectedTableCompKeys = new Set(allKeys.filter(k => !k.startsWith(compPrefix)));
       } else {
         const allCompSelected = compKeys.every(k => selectedTableCompKeys.has(k));
@@ -4408,8 +4399,9 @@
       renderRegisteredMatchesTable();
     }
 
-    function toggleTableCompSelection(key) {
+    function toggleTableCompKey(key) {
       const { allKeys } = getTableCompPhaseStructure();
+
       if (key === 'ALL') {
         if (selectedTableCompKeys.has('ALL')) {
           selectedTableCompKeys.clear();
@@ -4436,353 +4428,314 @@
       renderRegisteredMatchesTable();
     }
 
-    function getFilteredRegisteredMatches() {
+    function toggleTableCompDropdown() {
+      const dd = document.getElementById('dropdown-table-comp-filter');
+      if (dd) {
+        dd.classList.toggle('hidden');
+        if (!dd.classList.contains('hidden')) {
+          renderTableCompFilterDropdown();
+          setTimeout(() => document.getElementById('input-search-table-comp')?.focus(), 10);
+        }
+      }
+    }
+
+    function getFilteredHistoryMatches() {
       const query = (document.getElementById('search-history-query')?.value || '').toLowerCase().trim();
-      const isAllSelected = selectedTableCompKeys.has('ALL');
+      const isAllComps = selectedTableCompKeys.has('ALL');
 
       return registeredConfrontos.filter(m => {
-        const { comp, phase } = getMatchCompAndPhase(m);
-        const key = `${comp}::${phase}`;
-
-        if (!isAllSelected && !selectedTableCompKeys.has(key)) {
-          return false;
+        if (!isAllComps) {
+          const { comp, phase } = getMatchCompAndPhase(m);
+          if (!selectedTableCompKeys.has(`${comp}::${phase}`)) {
+            return false;
+          }
         }
 
         if (!query) return true;
-        
-        const compMatch = (m.competition || '').toLowerCase().includes(query) || comp.toLowerCase().includes(query) || phase.toLowerCase().includes(query);
-        const t1Match = (m.team1 || '').toLowerCase().includes(query);
-        const t2Match = (m.team2 || '').toLowerCase().includes(query);
-        const mvpMatch = (m.mvp || '').toLowerCase().includes(query);
-        const resMatch = (m.resultText || '').toLowerCase().includes(query);
 
-        const t1Obj = dataListaTimes.find(t => t.name.toLowerCase() === (m.team1||'').toLowerCase());
-        const t2Obj = dataListaTimes.find(t => t.name.toLowerCase() === (m.team2||'').toLowerCase());
-        const reg1Match = t1Obj && (t1Obj.region || '').toLowerCase().includes(query);
-        const reg2Match = t2Obj && (t2Obj.region || '').toLowerCase().includes(query);
+        const t1Info = getTeamInfoByName(m.team1);
+        const t2Info = getTeamInfoByName(m.team2);
+        const t1Region = (t1Info?.region || '').toLowerCase();
+        const t2Region = (t2Info?.region || '').toLowerCase();
 
-        const mapMatch = m.maps && m.maps.some(mp => (mp.location || '').toLowerCase().includes(query) || (mp.winner || '').toLowerCase().includes(query));
+        const matchComp = (m.competition || '').toLowerCase().includes(query);
+        const matchPhase = (m.phase || '').toLowerCase().includes(query);
+        const matchT1 = (m.team1 || '').toLowerCase().includes(query);
+        const matchT2 = (m.team2 || '').toLowerCase().includes(query);
+        const matchRegion = t1Region.includes(query) || t2Region.includes(query);
+        const matchMvp = (m.mvp || '').toLowerCase().includes(query);
+        const matchMaps = (m.maps || []).some(mp => (mp.location || '').toLowerCase().includes(query) || (mp.winner || '').toLowerCase().includes(query));
 
-        return compMatch || t1Match || t2Match || mvpMatch || resMatch || reg1Match || reg2Match || mapMatch;
+        return matchComp || matchPhase || matchT1 || matchT2 || matchRegion || matchMvp || matchMaps;
       });
     }
 
-    /* =========================================================================
-       SISTEMA DE GERENCIAMENTO E CONSULTA DE MAPAS E TAGS
-    ========================================================================= */
-    function getRegisteredMapsList() {
-      const set = new Set(DEFAULT_R6_MAPS);
+    function toggleMvpStatsModal() {
+      const panel = document.getElementById('mvp-stats-panel');
+      if (!panel) return;
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden')) {
+        renderMvpStatsPanel();
+      }
+    }
+
+    function renderMvpStatsPanel() {
+      const listEl = document.getElementById('mvp-stats-list');
+      if (!listEl) return;
+
+      const filtered = getFilteredHistoryMatches();
+      const counts = {};
+
+      filtered.forEach(m => {
+        if (m.mvp && m.mvp.trim()) {
+          const name = m.mvp.trim();
+          const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === name.toLowerCase());
+          const currentTeam = pObj ? pObj.team : '';
+          if (!counts[name]) {
+            counts[name] = {
+              name,
+              count: 0,
+              team: m.mvpTeam || currentTeam,
+              logo: m.mvpTeamLogo || getTeamLogoByName(m.mvpTeam || currentTeam)
+            };
+          }
+          counts[name].count += 1;
+        }
+      });
+
+      const sorted = Object.values(counts).sort((a, b) => b.count - a.count);
+
+      if (sorted.length === 0) {
+        listEl.innerHTML = `<span class="text-xs text-gray-500">Nenhum MVP registrado para os filtros atuais.</span>`;
+        return;
+      }
+
+      listEl.innerHTML = sorted.map(item => {
+        const logo = createLogoHtml(item.logo, "w-4 h-4");
+        return `
+          <div class="bg-[#161b22] border border-yellow-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-bold">
+            ${logo}
+            <span class="${getPlayerNameColorClass(item.name, 'text-white')}">${item.name}</span>
+            ${getPlayerStarsBadgeHtml(item.name, true)}
+            <span class="text-yellow-400 font-mono">(${item.count}x)</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function populateMapDatalist() {
+      const dl = document.getElementById('registered-maps-list');
+      if (!dl) return;
+
+      const mapsSet = new Set(DEFAULT_R6_MAPS);
       registeredConfrontos.forEach(m => {
         if (m.maps && Array.isArray(m.maps)) {
           m.maps.forEach(mp => {
-            if (mp.location && mp.location.trim()) {
-              set.add(mp.location.trim());
-            }
+            if (mp.location && mp.location.trim()) mapsSet.add(mp.location.trim());
           });
         }
       });
-      return Array.from(set).sort();
+
+      dl.innerHTML = Array.from(mapsSet).sort().map(loc => `<option value="${loc}"></option>`).join('');
     }
 
-    function updateRegisteredMapsDatalist() {
-      const datalist = document.getElementById('registered-maps-list');
-      if (!datalist) return;
-      const maps = getRegisteredMapsList();
-      datalist.innerHTML = maps.map(m => `<option value="${m}">${m}</option>`).join('');
-    }
+    function populateMvpPlayersDatalist(team1Name, team2Name) {
+      const dl = document.getElementById('mvp-players-list');
+      if (!dl) return;
 
-    function pickRandomMapForRow(rowId) {
-      const row = document.getElementById(rowId);
-      if (!row) return;
-      const input = row.querySelector('.map-location-name');
-      if (!input) return;
+      const t1 = (team1Name || '').toLowerCase().trim();
+      const t2 = (team2Name || '').toLowerCase().trim();
 
-      const mapsList = getRegisteredMapsList();
-      if (mapsList.length === 0) return;
-
-      const randomMap = mapsList[Math.floor(Math.random() * mapsList.length)];
-      input.value = randomMap;
-    }
-
-    function expandTeamTagsInText(text) {
-      if (!text) return text;
-      let result = text;
-      
-      const allTeams = [...dataListaTimes, ...dataTimes].filter(t => t.tag && t.tag.trim().length >= 2);
-      allTeams.sort((a, b) => b.tag.length - a.tag.length);
-
-      const uniqueTagTeams = [];
-      allTeams.forEach(t => {
-        if (!uniqueTagTeams.some(u => u.tag.toUpperCase() === t.tag.toUpperCase())) {
-          uniqueTagTeams.push(t);
-        }
-      });
-
-      uniqueTagTeams.forEach(t => {
-        const tagRegex = new RegExp(`(?:^|\\b)${escapeRegExp(t.tag)}(?:$|\\b)`, 'gi');
-        result = result.replace(tagRegex, t.name);
-      });
-
-      return result;
-    }
-
-    /* =========================================================================
-       SISTEMA DE REGISTRO E EDIÇÃO DE CONFRONTOS
-    ========================================================================= */
-    function updateMvpPlayerDropdown() {
-      const descText = (document.getElementById('text-match-desc').value || '').trim();
-      const datalist = document.getElementById('mvp-players-list');
-      if (!datalist) return;
-
-      datalist.innerHTML = '';
-
-      if (!descText) {
-        dataJogadores.forEach(j => {
-          const opt = document.createElement('option');
-          opt.value = j.name;
-          opt.label = `${j.name} (${j.team})`;
-          datalist.appendChild(opt);
-        });
-        return;
-      }
-
-      const parsed = parseMatchText(descText);
-      let playersFiltered = [];
-
-      if (parsed && (parsed.team1 || parsed.team2)) {
-        playersFiltered = dataJogadores.filter(j => {
-          const tNorm = j.team.toLowerCase().trim();
-          const t1Norm = parsed.team1.toLowerCase().trim();
-          const t2Norm = parsed.team2.toLowerCase().trim();
-          return tNorm === t1Norm || tNorm === t2Norm;
+      let players = [];
+      if (t1 || t2) {
+        players = dataJogadores.filter(j => {
+          const jTeam = (j.team || '').toLowerCase().trim();
+          return (t1 && jTeam === t1) || (t2 && jTeam === t2);
         });
       }
+      if (players.length === 0) {
+        players = dataJogadores;
+      }
 
-      if (playersFiltered.length === 0) playersFiltered = dataJogadores;
-
-      playersFiltered.forEach(j => {
-        const opt = document.createElement('option');
-        opt.value = j.name;
-        opt.label = `${j.name} (${j.team})`;
-        datalist.appendChild(opt);
-      });
+      const uniqueNames = Array.from(new Set(players.map(p => p.name))).sort();
+      dl.innerHTML = uniqueNames.map(n => `<option value="${n}"></option>`).join('');
     }
 
-    function pickRandomMvp(onlyWinner = false) {
-      const descText = (document.getElementById('text-match-desc').value || '').trim();
-      if (!descText) {
-        alert('⚠️ Digite primeiro o resumo do confronto no campo de texto para identificar as equipes.');
-        return;
-      }
-
-      const parsed = parseMatchText(descText);
-      if (!parsed) {
-        alert('⚠️ Não foi possível identificar as equipes no resumo digitado.');
-        return;
-      }
-
-      let candidatePlayers = [];
-
-      if (onlyWinner) {
-        let winnerTeamName = '';
-        if (parsed.score1 > parsed.score2) winnerTeamName = parsed.team1;
-        else if (parsed.score2 > parsed.score1) winnerTeamName = parsed.team2;
-        
-        if (!winnerTeamName) {
-          alert('⚠️ O confronto terminou em empate! Escolha "Qualquer" para sortear entre os dois times.');
-          return;
-        }
-
-        candidatePlayers = dataJogadores.filter(j => j.team.toLowerCase().trim() === winnerTeamName.toLowerCase().trim());
-      } else {
-        candidatePlayers = dataJogadores.filter(j => {
-          const tNorm = j.team.toLowerCase().trim();
-          return tNorm === parsed.team1.toLowerCase().trim() || tNorm === parsed.team2.toLowerCase().trim();
-        });
-      }
-
-      if (candidatePlayers.length === 0) {
-        alert('⚠️ Nenhum jogador encontrado cadastrado para esta(s) equipe(s).');
-        return;
-      }
-
-      const randomPlayer = candidatePlayers[Math.floor(Math.random() * candidatePlayers.length)];
-      document.getElementById('text-match-mvp').value = randomPlayer.name;
-    }
-
-    function addMapRow(locationVal = '', winnerVal = '') {
+    function addMapRow(locVal = '', winVal = '') {
       const container = document.getElementById('map-rows-container');
-      const rowId = 'map-row-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+      if (!container) return;
 
-      const div = document.createElement('div');
-      div.id = rowId;
-      div.className = "flex flex-col md:flex-row items-center gap-2 bg-[#21262d] border border-dark p-1.5 rounded-lg";
-
-      div.innerHTML = `
-        <div class="flex-1 w-full flex items-center gap-1">
-          <input type="text" list="registered-maps-list" class="map-location-name w-full bg-[#161b22] border border-dark rounded px-2.5 py-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500" value="${locationVal}" placeholder="Nome do Mapa / Local (escreva ou escolha)">
-          <button type="button" onclick="pickRandomMapForRow('${rowId}')" title="Escolher Mapa Aleatório" class="px-2 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/40 text-[10px] font-bold rounded shrink-0 flex items-center gap-1">
-            🎲 <span class="hidden sm:inline">Aleatório</span>
-          </button>
-        </div>
-        <div class="flex-1 w-full">
-          <input type="text" class="map-winner-desc w-full bg-[#161b22] border border-dark rounded px-2.5 py-1 text-xs font-bold text-yellow-400 focus:outline-none focus:border-blue-500" value="${winnerVal}" placeholder="Vencedor / Placar do Mapa (ex: LLL 7x5 ou Loud)">
-        </div>
-        <button type="button" onclick="document.getElementById('${rowId}').remove()" class="text-red-400 hover:text-red-300 font-bold p-1">❌</button>
+      const rowId = 'map-row-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+      const row = document.createElement('div');
+      row.id = rowId;
+      row.className = "flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-[#161b22] border border-dark p-2 rounded-lg";
+      row.innerHTML = `
+        <input type="text" list="registered-maps-list" value="${locVal.replace(/"/g, '&quot;')}" placeholder="Nome do Mapa / Local (ex: Chalé, Oregon...)" class="map-loc flex-1 bg-[#21262d] border border-dark rounded px-2.5 py-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500">
+        <input type="text" value="${winVal.replace(/"/g, '&quot;')}" placeholder="Vencedor do Mapa (ex: LLL ou 7x5)" class="map-win flex-1 bg-[#21262d] border border-dark rounded px-2.5 py-1 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500">
+        <button type="button" onclick="document.getElementById('${rowId}').remove()" class="px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold rounded transition">✕</button>
       `;
-
-      container.appendChild(div);
-      updateRegisteredMapsDatalist();
+      container.appendChild(row);
     }
 
-    function parseMatchText(descText) {
-      if (!descText) return null;
-      const text = descText.trim();
+    function findTeamByNameOrTag(token) {
+      const cleanToken = token.replace(/^[(\[]+|[)\]]+$/g, '').toLowerCase().trim();
+      if (!cleanToken) return null;
 
-      const allKnownTeams = [...dataListaTimes, ...dataTimes];
-      const uniqueTeamsMap = new Map();
-      allKnownTeams.forEach(t => {
-        if (t && t.name && !uniqueTeamsMap.has(t.name.toLowerCase().trim())) {
-          uniqueTeamsMap.set(t.name.toLowerCase().trim(), t);
+      let found = dataListaTimes.find(t => t.name.toLowerCase().trim() === cleanToken)
+               || dataTimes.find(t => t.name.toLowerCase().trim() === cleanToken);
+      if (found) return found;
+
+      found = dataListaTimes.find(t => t.tag && t.tag.toLowerCase().trim() === cleanToken)
+           || dataTimes.find(t => t.tag && t.tag.toLowerCase().trim() === cleanToken);
+      if (found) return found;
+
+      found = dataListaTimes.find(t => t.name.toLowerCase().includes(cleanToken))
+           || dataTimes.find(t => t.name.toLowerCase().includes(cleanToken));
+      if (found) return found;
+
+      return null;
+    }
+
+    function parseMatchDescription(text) {
+      if (!text) return null;
+      const clean = text.trim();
+
+      const scoreMatch = clean.match(/(\d+)\s*[xX×-]\s*(\d+)/);
+      if (!scoreMatch) return null;
+
+      let s1 = parseInt(scoreMatch[1], 10);
+      let s2 = parseInt(scoreMatch[2], 10);
+
+      const beforeScore = clean.substring(0, scoreMatch.index).trim();
+      const afterScore = clean.substring(scoreMatch.index + scoreMatch[0].length).trim();
+
+      const venceRegex = /^(.*?)\s+(?:venceu|ganhou|bateu|derrotou|superou|passou\s+por|eliminou)\s+(.*)$/i;
+      const matchVerb = beforeScore.match(venceRegex);
+
+      let rawTeamA = '';
+      let rawTeamB = '';
+      let isWinnerFirst = false;
+
+      if (matchVerb) {
+        rawTeamA = matchVerb[1].trim();
+        rawTeamB = matchVerb[2].trim();
+        isWinnerFirst = true;
+      } else {
+        const vsRegex = /^(.*?)\s+(?:vs|versus|contra|x)\s+(.*)$/i;
+        const matchVsBefore = beforeScore.match(vsRegex);
+        if (matchVsBefore) {
+          rawTeamA = matchVsBefore[1].trim();
+          rawTeamB = matchVsBefore[2].trim();
+        } else {
+          rawTeamA = beforeScore;
+          rawTeamB = afterScore;
         }
-      });
-      const teamsList = Array.from(uniqueTeamsMap.values());
+      }
 
-      let candidateMatches = [];
+      rawTeamB = rawTeamB.replace(/^(?:por|de|em)\s+/i, '').trim();
 
-      teamsList.forEach(t => {
-        const nameNorm = (t.name || '').toLowerCase().trim();
-        const tagNorm = (t.tag || '').toLowerCase().trim();
+      const tAObj = findTeamByNameOrTag(rawTeamA);
+      const tBObj = findTeamByNameOrTag(rawTeamB);
 
-        if (nameNorm.length >= 2) {
-          const nameRegex = new RegExp(`(?:^|\\b)${escapeRegExp(nameNorm)}(?:$|\\b)`, 'gi');
-          let m;
-          while ((m = nameRegex.exec(text)) !== null) {
-            candidateMatches.push({
-              team: t,
-              start: m.index,
-              end: m.index + nameNorm.length,
-              length: nameNorm.length
-            });
-          }
-        }
+      const teamAName = tAObj ? tAObj.name : (rawTeamA || 'Time A');
+      const teamBName = tBObj ? tBObj.name : (rawTeamB || 'Time B');
 
-        if (tagNorm.length >= 2) {
-          const tagRegex = new RegExp(`(?:^|\\b)${escapeRegExp(tagNorm)}(?:$|\\b)`, 'gi');
-          let m;
-          while ((m = tagRegex.exec(text)) !== null) {
-            candidateMatches.push({
-              team: t,
-              start: m.index,
-              end: m.index + tagNorm.length,
-              length: tagNorm.length
-            });
-          }
-        }
-      });
+      let finalTeam1 = teamAName;
+      let finalTeam2 = teamBName;
+      let finalScore1 = s1;
+      let finalScore2 = s2;
 
-      candidateMatches.sort((a, b) => b.length - a.length);
-
-      const nonOverlapping = [];
-      candidateMatches.forEach(cand => {
-        const hasOverlap = nonOverlapping.some(existing => {
-          return !(cand.end <= existing.start || cand.start >= existing.end);
-        });
-        if (!hasOverlap) {
-          nonOverlapping.push(cand);
-        }
-      });
-
-      nonOverlapping.sort((a, b) => a.start - b.start);
-
-      const uniqueMatches = [];
-      nonOverlapping.forEach(m => {
-        if (!uniqueMatches.some(u => u.team.name.toLowerCase().trim() === m.team.name.toLowerCase().trim())) {
-          uniqueMatches.push(m);
-        }
-      });
-
-      if (uniqueMatches.length < 2) return null;
-
-      const team1Obj = uniqueMatches[0].team;
-      const team2Obj = uniqueMatches[1].team;
-
-      let s1 = 0, s2 = 0;
-      const scoreMatch = text.match(/([0-9]+)\s*[:x-]\s*([0-9]+)/i);
-
-      if (scoreMatch) {
-        s1 = parseInt(scoreMatch[1], 10);
-        s2 = parseInt(scoreMatch[2], 10);
+      if (isWinnerFirst && s2 > s1) {
+        finalScore1 = s2;
+        finalScore2 = s1;
       }
 
       return {
-        team1: team1Obj.name,
-        logo1: team1Obj.logo,
-        team2: team2Obj.name,
-        logo2: team2Obj.logo,
-        score1: s1,
-        score2: s2
+        team1: finalTeam1,
+        team2: finalTeam2,
+        score1: finalScore1,
+        score2: finalScore2
       };
     }
 
+    function updateMvpPlayerDropdown() {
+      const descText = document.getElementById('text-match-desc').value;
+      const parsed = parseMatchDescription(descText);
+      if (parsed) {
+        populateMvpPlayersDatalist(parsed.team1, parsed.team2);
+      } else {
+        populateMvpPlayersDatalist('', '');
+      }
+    }
+
+    function pickRandomMvp(onlyWinner = false) {
+      const descText = document.getElementById('text-match-desc').value;
+      const parsed = parseMatchDescription(descText);
+      
+      let candidatePlayers = [];
+      if (parsed) {
+        const t1 = parsed.team1.toLowerCase().trim();
+        const t2 = parsed.team2.toLowerCase().trim();
+
+        if (onlyWinner) {
+          const winnerTeam = parsed.score1 >= parsed.score2 ? t1 : t2;
+          candidatePlayers = dataJogadores.filter(j => j.team.toLowerCase().trim() === winnerTeam);
+        } else {
+          candidatePlayers = dataJogadores.filter(j => {
+            const jTeam = j.team.toLowerCase().trim();
+            return jTeam === t1 || jTeam === t2;
+          });
+        }
+      }
+
+      if (candidatePlayers.length === 0) {
+        candidatePlayers = dataJogadores;
+      }
+
+      if (candidatePlayers.length === 0) return;
+
+      const randomIdx = Math.floor(Math.random() * candidatePlayers.length);
+      document.getElementById('text-match-mvp').value = candidatePlayers[randomIdx].name;
+    }
+
     function submitTextMatch() {
-      const comp = (document.getElementById('text-match-comp').value || 'Campeonato').trim();
-      const phase = (document.getElementById('text-match-phase').value || '').trim();
-      const descText = (document.getElementById('text-match-desc').value || '').trim();
-      const mvpVal = (document.getElementById('text-match-mvp').value || '').trim();
+      const compInput = document.getElementById('text-match-comp').value.trim();
+      const phaseInput = document.getElementById('text-match-phase').value.trim();
+      const descText = document.getElementById('text-match-desc').value.trim();
+      const mvpText = document.getElementById('text-match-mvp').value.trim();
 
       if (!descText) {
-        alert('⚠️ Digite o resumo do confronto no campo de texto.');
+        alert('⚠️ Digite o resumo do confronto (ex: "LLL venceu C9 por 2x0").');
         return;
       }
 
-      const parsed = parseMatchText(descText);
+      const parsed = parseMatchDescription(descText);
       if (!parsed) {
-        alert('⚠️ Não foi possível identificar as duas equipes no texto. Certifique-se de usar os nomes ou TAGs cadastrados.');
+        alert('⚠️ Não foi possível identificar o placar (ex: 2x0, 7x5, 1x1). Verifique a escrita.');
         return;
       }
 
-      localStorage.setItem('gcr6_last_comp', comp);
-      localStorage.setItem('gcr6_last_phase', phase);
-
-      let mvpTeamVal = '';
-      let mvpTeamLogoVal = '';
-      if (mvpVal) {
-        const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === mvpVal.toLowerCase().trim());
-        if (pObj) {
-          if (pObj.team.toLowerCase().trim() === parsed.team1.toLowerCase().trim() || pObj.team.toLowerCase().trim() === parsed.team2.toLowerCase().trim()) {
-            mvpTeamVal = pObj.team;
-          } else {
-            mvpTeamVal = parsed.score1 >= parsed.score2 ? parsed.team1 : parsed.team2;
-          }
-        } else {
-          mvpTeamVal = parsed.score1 >= parsed.score2 ? parsed.team1 : parsed.team2;
-        }
-        mvpTeamLogoVal = getTeamLogoByName(mvpTeamVal);
-      }
-
-      const mapRows = document.querySelectorAll('#map-rows-container > div');
-      const mapsData = [];
-
-      mapRows.forEach(row => {
-        const loc = (row.querySelector('.map-location-name').value || '').trim();
-        let win = (row.querySelector('.map-winner-desc').value || '').trim();
-        win = expandTeamTagsInText(win);
-
+      const mapsArray = [];
+      document.querySelectorAll('#map-rows-container > div').forEach(row => {
+        const loc = row.querySelector('.map-loc').value.trim();
+        const win = row.querySelector('.map-win').value.trim();
         if (loc || win) {
-          mapsData.push({ location: loc || 'Local/Mapa', winner: win || '-' });
+          mapsArray.push({ location: loc || 'Mapa', winner: win });
         }
       });
 
-      let formattedComp = phase ? `${comp} - ${phase}` : comp;
+      const finalComp = compInput || 'Campeonato';
+      const finalPhase = phaseInput || 'Fase Geral';
+      const displayCompetition = phaseInput ? `${finalComp} - ${finalPhase}` : finalComp;
 
-      let resultText = descText;
-      if (parsed.score1 > parsed.score2) {
-        resultText = `Vitória da ${parsed.team1} ${parsed.score1}x${parsed.score2}`;
-      } else if (parsed.score2 > parsed.score1) {
-        resultText = `Vitória da ${parsed.team2} ${parsed.score2}x${parsed.score1}`;
-      } else if (parsed.score1 === parsed.score2 && parsed.score1 > 0) {
-        resultText = `Empate ${parsed.score1}x${parsed.score2}`;
+      let mvpTeam = '';
+      let mvpTeamLogo = '';
+      if (mvpText) {
+        const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === mvpText.toLowerCase().trim());
+        if (pObj) {
+          mvpTeam = pObj.team;
+          mvpTeamLogo = getTeamLogoByName(pObj.team);
+        }
       }
 
       if (editingMatchId) {
@@ -4790,714 +4743,547 @@
         if (index !== -1) {
           registeredConfrontos[index] = {
             ...registeredConfrontos[index],
-            competition: formattedComp,
-            rawComp: comp,
-            phase: phase,
+            competition: displayCompetition,
+            rawComp: finalComp,
+            phase: finalPhase,
             team1: parsed.team1,
-            logo1: parsed.logo1,
             score1: parsed.score1,
-            score2: parsed.score2,
             team2: parsed.team2,
-            logo2: parsed.logo2,
-            resultText: resultText,
-            originalText: descText,
-            mvp: mvpVal,
-            mvpTeam: mvpTeamVal || registeredConfrontos[index].mvpTeam || '',
-            mvpTeamLogo: mvpTeamLogoVal || getTeamLogoByName(mvpTeamVal) || registeredConfrontos[index].mvpTeamLogo || '',
-            maps: mapsData
+            score2: parsed.score2,
+            mvp: mvpText,
+            mvpTeam: mvpTeam,
+            mvpTeamLogo: mvpTeamLogo,
+            maps: mapsArray
           };
         }
-        alert(`✅ Confronto atualizado com sucesso!`);
+        cancelMatchEdit();
       } else {
         const matchObj = {
-          id: Date.now() + Math.random(),
-          competition: formattedComp,
-          rawComp: comp,
-          phase: phase,
+          id: Date.now().toString(),
+          competition: displayCompetition,
+          rawComp: finalComp,
+          phase: finalPhase,
           team1: parsed.team1,
-          logo1: parsed.logo1,
           score1: parsed.score1,
-          score2: parsed.score2,
           team2: parsed.team2,
-          logo2: parsed.logo2,
-          resultText: resultText,
-          originalText: descText,
-          mvp: mvpVal,
-          mvpTeam: mvpTeamVal,
-          mvpTeamLogo: mvpTeamLogoVal,
-          maps: mapsData,
-          date: new Date().toLocaleDateString('pt-BR')
+          score2: parsed.score2,
+          mvp: mvpText,
+          mvpTeam: mvpTeam,
+          mvpTeamLogo: mvpTeamLogo,
+          maps: mapsArray
         };
         registeredConfrontos.unshift(matchObj);
-        alert(`✅ Confronto registrado com sucesso!`);
       }
 
       localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
+      localStorage.setItem('gcr6_last_comp', finalComp);
+      localStorage.setItem('gcr6_last_phase', finalPhase);
 
-      cancelMatchEdit();
-      renderRegisteredMatchesTable();
-      renderConfronto();
-      updateRegisteredMapsDatalist();
-    }
-
-    function editMatchFromHistory(id) {
-      const match = registeredConfrontos.find(m => m.id === id);
-      if (!match) return;
-
-      editingMatchId = id;
-
-      document.getElementById('text-match-comp').value = match.rawComp || match.competition || '';
-      document.getElementById('text-match-phase').value = match.phase || '';
-      document.getElementById('text-match-desc').value = match.originalText || match.resultText || '';
-      document.getElementById('text-match-mvp').value = match.mvp || '';
-
-      updateMvpPlayerDropdown();
-
-      const container = document.getElementById('map-rows-container');
-      container.innerHTML = '';
-      if (match.maps && match.maps.length > 0) {
-        match.maps.forEach(mp => addMapRow(mp.location, mp.winner));
+      if (!editingMatchId) {
+        document.getElementById('text-match-desc').value = '';
+        document.getElementById('text-match-mvp').value = '';
+        document.getElementById('map-rows-container').innerHTML = '';
       }
 
-      document.getElementById('form-match-title').innerHTML = `<span>✏️</span> Editar Confronto Registrado`;
-      document.getElementById('btn-submit-match').innerHTML = `<span>💾</span> Salvar Alterações`;
+      populateMapDatalist();
+      renderTableCompFilterDropdown();
+      renderRegisteredMatchesTable();
+      renderConfronto();
+    }
+
+    function editMatch(id) {
+      const m = registeredConfrontos.find(item => item.id === id);
+      if (!m) return;
+
+      editingMatchId = id;
+      document.getElementById('form-match-title').innerHTML = `<span>✏️</span> Editando Confronto`;
+      document.getElementById('btn-submit-match').innerHTML = `<span>💾</span> Atualizar Confronto`;
+      document.getElementById('btn-submit-match').className = "px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-lg shadow transition flex items-center gap-1.5";
       document.getElementById('btn-cancel-edit').classList.remove('hidden');
 
+      const { comp, phase } = getMatchCompAndPhase(m);
+      document.getElementById('text-match-comp').value = comp;
+      document.getElementById('text-match-phase').value = phase !== 'Fase Geral' ? phase : '';
+      document.getElementById('text-match-desc').value = `${m.team1} ${m.score1}x${m.score2} ${m.team2}`;
+      document.getElementById('text-match-mvp').value = m.mvp || '';
+
+      const mapContainer = document.getElementById('map-rows-container');
+      mapContainer.innerHTML = '';
+      if (m.maps && Array.isArray(m.maps)) {
+        m.maps.forEach(mp => addMapRow(mp.location, mp.winner));
+      }
+
+      updateMvpPlayerDropdown();
       document.getElementById('form-match-container').scrollIntoView({ behavior: 'smooth' });
     }
 
     function cancelMatchEdit() {
       editingMatchId = null;
+      document.getElementById('form-match-title').innerHTML = `<span>📝</span> Registrar Confronto`;
+      document.getElementById('btn-submit-match').innerHTML = `<span>💾</span> Salvar Confronto`;
+      document.getElementById('btn-submit-match').className = "px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-lg shadow transition flex items-center gap-1.5";
+      document.getElementById('btn-cancel-edit').classList.add('hidden');
 
-      const lastComp = localStorage.getItem('gcr6_last_comp') || '';
-      const lastPhase = localStorage.getItem('gcr6_last_phase') || '';
-      document.getElementById('text-match-comp').value = lastComp;
-      document.getElementById('text-match-phase').value = lastPhase;
       document.getElementById('text-match-desc').value = '';
       document.getElementById('text-match-mvp').value = '';
       document.getElementById('map-rows-container').innerHTML = '';
-
-      document.getElementById('form-match-title').innerHTML = `<span>📝</span> Registrar Confronto`;
-      document.getElementById('btn-submit-match').innerHTML = `<span>💾</span> Salvar Confronto`;
-      document.getElementById('btn-cancel-edit').classList.add('hidden');
-    }
-
-    function toggleMvpStatsModal() {
-      const panel = document.getElementById('mvp-stats-panel');
-      if (panel) {
-        panel.classList.toggle('hidden');
-        if (!panel.classList.contains('hidden')) {
-          renderMvpStatsPanel(getFilteredRegisteredMatches());
-        }
-      }
-    }
-
-    function renderMvpStatsPanel(matchesList = null) {
-      const listContainer = document.getElementById('mvp-stats-list');
-      if (!listContainer) return;
-
-      const sourceMatches = matchesList || getFilteredRegisteredMatches();
-      const counts = {};
-
-      sourceMatches.forEach(m => {
-        if (m.mvp && m.mvp.trim()) {
-          const name = m.mvp.trim();
-          counts[name] = (counts[name] || 0) + 1;
-        }
-      });
-
-      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-
-      if (sorted.length === 0) {
-        listContainer.innerHTML = `<span class="text-gray-500">Nenhum MVP registrado para os filtros atuais.</span>`;
-        return;
-      }
-
-      listContainer.innerHTML = sorted.map(([player, count]) => {
-        const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === player.toLowerCase().trim());
-        const currentTeamName = pObj ? pObj.team : '';
-        const logoUrl = getTeamLogoByName(currentTeamName);
-        const logoHtml = logoUrl ? createLogoHtml(logoUrl, "w-4 h-4") : '';
-
-        return `
-          <span class="px-2.5 py-1 rounded bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 font-bold flex items-center gap-1.5">
-            ${logoHtml}
-            <span class="${getPlayerNameColorClass(player, 'text-yellow-300')}">⭐ ${player}:</span>
-            <span class="text-white font-mono font-black">${count}x</span>
-          </span>
-        `;
-      }).join('');
     }
 
     function renderRegisteredMatchesTable() {
-      const body = document.getElementById('registered-matches-body');
-      if (!body) return;
+      const tbody = document.getElementById('registered-matches-body');
+      if (!tbody) return;
 
-      const filtered = getFilteredRegisteredMatches();
+      const filteredMatches = getFilteredHistoryMatches();
 
-      renderTableCompFilterDropdown();
-      renderMvpStatsPanel(filtered);
-
-      if (filtered.length === 0) {
-        body.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-xs text-gray-500">Nenhum confronto encontrado com os filtros selecionados.</td></tr>`;
+      if (filteredMatches.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-xs text-gray-500">Nenhum confronto encontrado.</td></tr>`;
         return;
       }
 
-      body.innerHTML = filtered.map(m => {
-        const logo1Html = createLogoHtml(m.logo1, "w-5 h-5");
-        const logo2Html = createLogoHtml(m.logo2, "w-5 h-5");
+      tbody.innerHTML = filteredMatches.map(m => {
+        const logo1 = createLogoHtml(getTeamLogoByName(m.team1), "w-5 h-5");
+        const logo2 = createLogoHtml(getTeamLogoByName(m.team2), "w-5 h-5");
 
-        const isEmpate = m.score1 === m.score2;
+        const s1 = parseInt(m.score1, 10);
+        const s2 = parseInt(m.score2, 10);
 
-        let mapsHtml = '-';
-        if (m.maps && m.maps.length > 0) {
-          mapsHtml = m.maps.map(mp => `
-            <div class="text-[10px] bg-[#161b22] border border-dark px-1.5 py-0.5 rounded my-0.5 flex items-center justify-between gap-1.5">
-              <span class="text-gray-300 font-bold truncate">${mp.location}:</span>
-              <span class="text-yellow-400 font-extrabold shrink-0">${mp.winner}</span>
-            </div>
-          `).join('');
+        let resultBadge = `<span class="text-xs font-bold px-2.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">Empate</span>`;
+        if (s1 > s2) {
+          resultBadge = `<span class="text-xs font-bold px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">Vitória ${m.team1}</span>`;
+        } else if (s2 > s1) {
+          resultBadge = `<span class="text-xs font-bold px-2.5 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30">Vitória ${m.team2}</span>`;
         }
 
-        let mvpBadge = '<span class="text-gray-500">-</span>';
+        let mapsHtml = '<span class="text-gray-500 text-xs">-</span>';
+        if (m.maps && m.maps.length > 0) {
+          mapsHtml = `<div class="flex flex-col gap-0.5 text-[11px]">` + 
+            m.maps.map(mp => `<div class="bg-[#21262d] px-1.5 py-0.5 rounded border border-dark/50 inline-block"><strong class="text-white">${mp.location}</strong>${mp.winner ? ` <span class="text-emerald-400">(${mp.winner})</span>` : ''}</div>`).join('') + 
+          `</div>`;
+        }
 
+        let mvpHtml = '<span class="text-gray-500 text-xs">-</span>';
         if (m.mvp && m.mvp.trim()) {
-          const pObjCurrent = dataJogadores.find(j => j.name.toLowerCase().trim() === m.mvp.toLowerCase().trim());
-          const currentTeamName = pObjCurrent ? pObjCurrent.team : '';
-          const currentTeamLogoUrl = getTeamLogoByName(currentTeamName);
+          const pName = m.mvp.trim();
+          const pObj = dataJogadores.find(j => j.name.toLowerCase().trim() === pName.toLowerCase());
+          const currentTeam = pObj ? pObj.team : '';
+          const matchTeam = m.mvpTeam || currentTeam;
 
-          let matchTeamName = m.mvpTeam || '';
-          if (!matchTeamName) {
-            matchTeamName = (pObjCurrent && (pObjCurrent.team.toLowerCase().trim() === m.team1.toLowerCase().trim() || pObjCurrent.team.toLowerCase().trim() === m.team2.toLowerCase().trim()))
-              ? pObjCurrent.team
-              : m.team1;
+          const matchLogoUrl = m.mvpTeamLogo || getTeamLogoByName(matchTeam);
+          const matchLogoHtml = matchLogoUrl ? createLogoHtml(matchLogoUrl, "w-4 h-4") : '';
+
+          const currentLogoUrl = getTeamLogoByName(currentTeam);
+          const currentLogoHtml = currentLogoUrl ? createLogoHtml(currentLogoUrl, "w-4 h-4") : '';
+
+          const hasChangedTeam = currentTeam && matchTeam && currentTeam.toLowerCase().trim() !== matchTeam.toLowerCase().trim();
+
+          const mvpColorClass = getPlayerNameColorClass(pName, 'text-yellow-300');
+          const mvpStarsBadge = getPlayerStarsBadgeHtml(pName, true);
+          if (hasChangedTeam) {
+            mvpHtml = `
+              <div class="inline-flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 px-2 py-0.5 rounded-full text-xs font-bold ${mvpColorClass}">
+                ${matchLogoHtml}
+                <span>${pName}</span>
+                ${mvpStarsBadge}
+                <span class="flex items-center border-l border-yellow-500/30 pl-1.5 ml-0.5" title="Time Atual: ${currentTeam}">
+                  ${currentLogoHtml}
+                </span>
+              </div>
+            `;
+          } else {
+            mvpHtml = `
+              <div class="inline-flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 px-2 py-0.5 rounded-full text-xs font-bold ${mvpColorClass}">
+                ${matchLogoHtml}
+                <span>${pName}</span>
+                ${mvpStarsBadge}
+              </div>
+            `;
           }
-
-          const matchTeamLogoUrl = m.mvpTeamLogo || getTeamLogoByName(matchTeamName);
-
-          const matchLogoHtml = matchTeamLogoUrl ? createLogoHtml(matchTeamLogoUrl, "w-4 h-4") : '';
-          const currentLogoHtml = currentTeamLogoUrl ? createLogoHtml(currentTeamLogoUrl, "w-4 h-4") : '';
-
-          const hasChangedTeam = currentTeamName && matchTeamName && currentTeamName.toLowerCase().trim() !== matchTeamName.toLowerCase().trim();
-
-          let rightLogoHtml = '';
-          if (hasChangedTeam && currentLogoHtml) {
-            rightLogoHtml = `<span class="flex items-center gap-1 text-[10px] text-gray-400 font-semibold border-l border-dark pl-1.5 ml-1" title="Time Atual: ${currentTeamName}">${currentLogoHtml}</span>`;
-          }
-
-          mvpBadge = `
-            <span class="px-2.5 py-1 rounded-lg bg-yellow-500/10 text-yellow-300 border border-yellow-500/30 font-bold text-xs inline-flex items-center gap-1.5 shadow-sm">
-              ${matchLogoHtml}
-              <span class="${getPlayerNameColorClass(m.mvp, 'text-yellow-300')}">⭐ ${m.mvp}</span>
-              ${getPlayerStarsBadgeHtml(m.mvp, true)}
-              ${rightLogoHtml}
-            </span>
-          `;
         }
 
         return `
           <tr class="hover:bg-dark-hover/50">
-            <td class="px-3 py-2.5 font-semibold text-blue-400">${m.competition}</td>
-            <td class="px-3 py-2.5 text-right font-bold text-white">
-              <div class="flex items-center justify-end gap-1.5">
-                <span>${m.team1}</span>
-                ${logo1Html}
-              </div>
+            <td class="px-3 py-2.5 text-xs font-bold text-blue-400">${m.competition}</td>
+            <td class="px-3 py-2.5 text-right font-bold text-white text-xs">
+              <div class="flex items-center justify-end gap-1.5"><span>${m.team1}</span>${logo1}</div>
             </td>
-            <td class="px-3 py-2.5 text-center font-black text-yellow-400 bg-black/20 font-mono">${m.score1} x ${m.score2}</td>
-            <td class="px-3 py-2.5 font-bold text-white">
-              <div class="flex items-center gap-1.5">
-                ${logo2Html}
-                <span>${m.team2}</span>
-              </div>
+            <td class="px-3 py-2.5 text-center font-black text-white text-sm font-mono bg-[#1f242d]/40 rounded">${m.score1} x ${m.score2}</td>
+            <td class="px-3 py-2.5 font-bold text-white text-xs">
+              <div class="flex items-center gap-1.5">${logo2}<span>${m.team2}</span></div>
             </td>
-            <td class="px-3 py-2.5 text-center font-extrabold ${isEmpate ? 'text-amber-400' : 'text-emerald-400'}">${m.resultText || m.originalText}</td>
+            <td class="px-3 py-2.5 text-center">${resultBadge}</td>
             <td class="px-3 py-2.5">${mapsHtml}</td>
-            <td class="px-3 py-2.5 text-center">${mvpBadge}</td>
+            <td class="px-3 py-2.5 text-center">${mvpHtml}</td>
             <td class="px-3 py-2.5 text-center whitespace-nowrap">
-              <button onclick="editMatchFromHistory(${m.id})" class="text-xs text-blue-400 hover:text-blue-300 font-bold p-1 mr-1" title="Editar Confronto">✏️</button>
-              <button onclick="deleteMatchFromHistory(${m.id})" class="text-xs text-red-400 hover:text-red-300 font-bold p-1" title="Excluir Confronto">🗑️</button>
+              <button onclick="editMatch('${m.id}')" class="text-xs text-blue-400 hover:text-blue-300 font-bold p-1 mr-1" title="Editar">✏️</button>
+              <button onclick="deleteMatch('${m.id}')" class="text-xs text-red-400 hover:text-red-300 font-bold p-1" title="Excluir">🗑️</button>
             </td>
           </tr>
         `;
       }).join('');
+
+      const mvpPanel = document.getElementById('mvp-stats-panel');
+      if (mvpPanel && !mvpPanel.classList.contains('hidden')) {
+        renderMvpStatsPanel();
+      }
     }
 
-    function deleteMatchFromHistory(id) {
-      if (confirm('Deseja realmente remover este confronto do histórico?')) {
+    function deleteMatch(id) {
+      if (confirm('Deseja realmente excluir este confronto?')) {
         registeredConfrontos = registeredConfrontos.filter(m => m.id !== id);
         localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
+        if (editingMatchId === id) cancelMatchEdit();
+        renderTableCompFilterDropdown();
         renderRegisteredMatchesTable();
         renderConfronto();
-        updateRegisteredMapsDatalist();
       }
     }
 
     function clearMatchHistory() {
-      if (confirm('Tem certeza que deseja apagar todo o histórico de confrontos registrados?')) {
+      if (confirm('Deseja limpar todo o histórico de confrontos salvos?')) {
         registeredConfrontos = [];
-        localStorage.removeItem('gcr6_match_history');
+        localStorage.setItem('gcr6_match_history', JSON.stringify([]));
+        selectedTableCompKeys = new Set(['ALL']);
+        cancelMatchEdit();
+        renderTableCompFilterDropdown();
         renderRegisteredMatchesTable();
         renderConfronto();
-        updateRegisteredMapsDatalist();
       }
     }
 
-    async function fetchCsvData(url, parseFn) {
-      if (!url) return [];
-      let cleanUrl = url.trim();
-      if (cleanUrl.includes('/pubhtml')) cleanUrl = cleanUrl.replace('/pubhtml', '/pub?output=csv');
-      if (cleanUrl.includes('/edit')) cleanUrl = cleanUrl.replace(/\/edit.*$/, '/export?format=csv');
-      
-      cleanUrl += (cleanUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+    /* =========================================================================
+       CARREGAMENTO DE DADOS DO GOOGLE SHEETS (INCLUINDO LISTA DE CAMPS)
+    ========================================================================= */
+    async function init(isManualRefresh = false) {
+      const btn = document.getElementById('btn-refresh');
+      const lastUpdated = document.getElementById('last-updated');
+      if (btn) btn.disabled = true;
+      if (lastUpdated) lastUpdated.textContent = 'A carregar dados...';
+
+      const cacheBuster = `&t=${Date.now()}`;
 
       try {
-        const res = await fetch(cleanUrl, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
+        const [
+          resTimes,
+          resHist,
+          resJog,
+          resListaTimes,
+          resHistCamp,
+          resHistMvp,
+          resListaCamps,
+          resTransferencias
+        ] = await Promise.all([
+          fetch(CSV_URL_TIMES + cacheBuster),
+          fetch(CSV_URL_HISTORICO + cacheBuster),
+          fetch(CSV_URL_JOGADORES + cacheBuster),
+          fetch(CSV_URL_LISTA_TIMES + cacheBuster),
+          fetch(CSV_URL_HIST_CAMPEOES + cacheBuster),
+          fetch(CSV_URL_HIST_MVPS + cacheBuster),
+          fetch(CSV_URL_LISTA_CAMPS + cacheBuster),
+          fetch(CSV_URL_TRANSFERENCIAS + cacheBuster)
+        ]);
+
+        const [
+          textTimes,
+          textHist,
+          textJog,
+          textListaTimes,
+          textHistCamp,
+          textHistMvp,
+          textListaCamps,
+          textTransferencias
+        ] = await Promise.all([
+          resTimes.text(),
+          resHist.text(),
+          resJog.text(),
+          resListaTimes.text(),
+          resHistCamp.text(),
+          resHistMvp.text(),
+          resListaCamps.text(),
+          resTransferencias.text()
+        ]);
+
+        const rowsListaTimes = parseCsvRows(textListaTimes).slice(1);
+        dataListaTimes = rowsListaTimes.map(r => ({
+          name: r[0] || '',
+          logo: r[1] || '',
+          tag: r[2] || '',
+          region: (r[3] || '').toUpperCase(),
+          titles: parseInt(r[4] || '0', 10) || 0,
+          starPlayer: r[5] || ''
+        })).filter(t => t.name);
+
+        const rowsTimes = parseCsvRows(textTimes).slice(1);
+        dataTimes = rowsTimes.map(r => {
+          const name = r[0] || '';
+          const logoFromSheet = r[1] || '';
+          const tagFromSheet = r[2] || '';
+          const regionFromSheet = (r[3] || '').toUpperCase();
+          const titles = parseInt(r[4] || '0', 10) || 0;
+
+          const matchedTeam = dataListaTimes.find(t => t.name.toLowerCase().trim() === name.toLowerCase().trim());
+
+          return {
+            name: name,
+            logo: logoFromSheet || (matchedTeam ? matchedTeam.logo : ''),
+            tag: tagFromSheet || (matchedTeam ? matchedTeam.tag : ''),
+            region: regionFromSheet || (matchedTeam ? matchedTeam.region : ''),
+            titles: titles
+          };
+        }).filter(t => t.name);
+
+        const rowsHist = parseCsvRows(textHist).slice(1);
+        dataHistorico = rowsHist.map(r => {
+          const champ = r[2] || '';
+          const logoFromSheet = r[3] || '';
+          const tagFromSheet = r[4] || '';
+          const regionFromSheet = (r[5] || '').toUpperCase();
+
+          const matchedTeam = dataListaTimes.find(t => t.name.toLowerCase().trim() === champ.toLowerCase().trim())
+                           || dataTimes.find(t => t.name.toLowerCase().trim() === champ.toLowerCase().trim());
+
+          return {
+            comp: r[0] || '',
+            season: r[1] || '',
+            champion: champ,
+            logo: logoFromSheet || (matchedTeam ? matchedTeam.logo : ''),
+            tag: tagFromSheet || (matchedTeam ? matchedTeam.tag : ''),
+            region: regionFromSheet || (matchedTeam ? matchedTeam.region : '')
+          };
+        }).filter(h => h.comp || h.champion);
+
+        const rowsHistCamp = parseCsvRows(textHistCamp).slice(1);
+        dataHistCampeoes = rowsHistCamp.map(r => {
+          const entity = r[2] || '';
+          const logoFromSheet = r[3] || '';
+          const teamCol = r[4] || '';
+          const regionFromSheet = (r[5] || '').toUpperCase();
+
+          const matchedTeam = (teamCol ? dataListaTimes.find(t => t.name.toLowerCase().trim() === teamCol.toLowerCase().trim()) : null)
+                           || dataListaTimes.find(t => t.name.toLowerCase().trim() === entity.toLowerCase().trim());
+
+          return {
+            comp: r[0] || '',
+            season: r[1] || '',
+            entity: entity,
+            logo: logoFromSheet || (matchedTeam ? matchedTeam.logo : ''),
+            team: teamCol,
+            tag: matchedTeam ? matchedTeam.tag : '',
+            region: regionFromSheet || (matchedTeam ? matchedTeam.region : '')
+          };
+        }).filter(h => h.comp || h.entity);
+
+        const rowsHistMvp = parseCsvRows(textHistMvp).slice(1);
+        dataHistMvps = rowsHistMvp.map(r => {
+          const entity = r[2] || '';
+          const logoFromSheet = r[3] || '';
+          const phaseCol = r[4] || '';
+          const teamCol = r[5] || '';
+          const regionFromSheet = (r[6] || '').toUpperCase();
+
+          const matchedTeam = (teamCol ? dataListaTimes.find(t => t.name.toLowerCase().trim() === teamCol.toLowerCase().trim()) : null);
+
+          return {
+            comp: r[0] || '',
+            season: r[1] || '',
+            entity: entity,
+            logo: logoFromSheet || (matchedTeam ? matchedTeam.logo : ''),
+            phase: phaseCol,
+            team: teamCol,
+            tag: matchedTeam ? matchedTeam.tag : '',
+            region: regionFromSheet || (matchedTeam ? matchedTeam.region : '')
+          };
+        }).filter(h => h.comp || h.entity);
+
+        const rowsListaCamps = parseCsvRows(textListaCamps).slice(1);
+        dataListaCamps = rowsListaCamps.map(r => ({
+          league: r[0] || '',
+          type: r[1] || '',
+          team: r[2] || '',
+          region: (r[3] || '').toUpperCase()
+        })).filter(c => c.league || c.team || c.region);
+
+        const rowsJog = parseCsvRows(textJog).slice(1);
+        dataJogadores = rowsJog.map(r => {
+          const name = r[0] || '';
+          const logoFromSheet = r[1] || '';
+          const team = r[2] || 'Sem Time';
+          const naturalidade = (r[3] || '').toUpperCase();
+          const titles = parseInt(r[4] || '0', 10) || 0;
+          const mvps = parseInt(r[5] || '0', 10) || 0;
+          const sexo = (r[6] || '').toUpperCase().trim();
+
+          const matchedTeam = dataListaTimes.find(t => t.name.toLowerCase().trim() === team.toLowerCase().trim());
+
+          return {
+            name: name,
+            logo: logoFromSheet || (matchedTeam ? matchedTeam.logo : ''),
+            team: team,
+            naturalidade: naturalidade,
+            titles: titles,
+            mvps: mvps,
+            sexo: sexo
+          };
+        }).filter(j => j.name);
+
+        // Colunas da aba Transferências:
+        // [0] Jogador | [1] Histórico de Alteração | [2] Detalhe de Títulos | [3] Janela
+        const rowsTransferencias = parseCsvRows(textTransferencias).slice(1);
+        dataTransferenciasRaw = rowsTransferencias.map((r, idx) => {
+          const playerCol = (r[0] || '').trim();
+          const historyComment = (r[1] || '').trim();
+          const titlesDetail = (r[2] || '').trim();
+          const win = (r[3] || '').trim();
+          const titlesWon = parseTitlesDetailValue(titlesDetail);
+
+          const parsed = parseTransferHistoryComment(historyComment, playerCol);
+
+          return {
+            id: `sheet_tr_${idx}_${(parsed.player || playerCol).toLowerCase().replace(/[^a-z0-9]/g, '')}_${win.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+            rowIndex: idx,
+            player: parsed.player || playerCol,
+            historyComment,
+            titlesDetail,
+            titlesWon,
+            fromTeam: parsed.fromTeam,
+            fromLogo: parsed.fromLogo,
+            toTeam: parsed.toTeam,
+            toLogo: parsed.toLogo,
+            window: win
+          };
+        }).filter(tr => tr.player || tr.historyComment);
+
+        syncPlayersIntoPointsStore();
+        syncStarConfigUI();
+
+        updateAvailableRegions();
+        setupComposicoesFilters();
+        setupCompetitionOptions();
+        setupConfrontoOptions();
+        updateTransferDatalistsAndFilters();
+
+        const lastComp = localStorage.getItem('gcr6_last_comp');
+        const lastPhase = localStorage.getItem('gcr6_last_phase');
+        if (lastComp) document.getElementById('text-match-comp').value = lastComp;
+        if (lastPhase) document.getElementById('text-match-phase').value = lastPhase;
+
+        populateMapDatalist();
+        populateMvpPlayersDatalist(selectedTeam1, selectedTeam2);
+        renderTableCompFilterDropdown();
+        renderAllSections();
+
+        if (lastUpdated) {
+          lastUpdated.textContent = `Atualizado em: ${new Date().toLocaleTimeString('pt-BR')}`;
+        }
+      } catch (err) {
+        console.error(err);
+        if (lastUpdated) {
+          lastUpdated.textContent = '❌ Erro ao carregar dados do Google Sheets';
+        }
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    /* =========================================================================
+       BACKUP E RESTAURAÇÃO DO LOCALSTORAGE (EXPORTAR / IMPORTAR JSON)
+    ========================================================================= */
+    function exportarBackupLocalStorage() {
+      const storageData = {};
+      let keysCount = 0;
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('gcr6_')) {
+          storageData[key] = localStorage.getItem(key);
+          keysCount++;
+        }
+      }
+
+      if (keysCount === 0) {
+        alert('⚠️ Não há dados salvos no localStorage deste navegador para exportar.');
+        return;
+      }
+
+      const backupPayload = {
+        app: 'Game Cup Rainbow Six Siege',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        storage: storageData
+      };
+
+      const jsonStr = JSON.stringify(backupPayload, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+
+      const now = new Date();
+      const dateTag = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}h${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup_gcr6_${dateTag}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importarBackupLocalStorage(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+
+          if (!parsed || typeof parsed !== 'object' || !parsed.storage || typeof parsed.storage !== 'object') {
+            alert('❌ Arquivo inválido: este JSON não corresponde a um backup do Game Cup R6.');
+            return;
           }
-        });
-        const text = await res.text();
-        if (text.includes('<!DOCTYPE') || text.includes('<html')) return [];
-        return parseFn(text);
-      } catch (e) {
-        console.error('Erro ao carregar CSV:', e);
-        return [];
-      }
-    }
 
-    function parseTimesCsv(csvText) {
-      const rows = parseCsvRows(csvText);
-      const invalidNames = ['ranking geral', 'time', 'equipe', 'clube', 'nome', 'team'];
+          const entries = Object.entries(parsed.storage).filter(([k]) => k.startsWith('gcr6_'));
+          if (entries.length === 0) {
+            alert('⚠️ O arquivo selecionado não contém registros válidos (gcr6_*).');
+            return;
+          }
 
-      return rows.map(r => ({
-        name: r[0] || '',
-        logo: r[1] || '',
-        region: (r[2] || '').toUpperCase(),
-        tag: (r[3] || '').toUpperCase(),
-        titles: parseInt(r[4] || '0', 10) || 0
-      })).filter(t => {
-        if (!t.name) return false;
-        const norm = t.name.toLowerCase().trim();
-        return !invalidNames.includes(norm);
-      });
-    }
+          const dataFormatada = parsed.exportedAt
+            ? new Date(parsed.exportedAt).toLocaleString('pt-BR')
+            : 'Data desconhecida';
 
-    function parseListaTimesCsv(csvText) {
-      const rows = parseCsvRows(csvText);
-      const invalidNames = ['time', 'equipe', 'clube', 'nome', 'team'];
+          const confirmar = confirm(
+            `Deseja restaurar este backup?\n\n` +
+            `• Data do backup: ${dataFormatada}\n` +
+            `• Categorias de dados: ${entries.length}\n\n` +
+            `⚠️ Isso substituirá os dados atuais salvos neste navegador.`
+          );
 
-      return rows.map(r => ({
-        name: r[0] || '',
-        logo: r[1] || '',
-        tag: (r[2] || '').toUpperCase(),
-        region: (r[3] || '').toUpperCase(),
-        titles: parseInt(r[4] || '0', 10) || 0,
-        starPlayer: r[5] || ''
-      })).filter(t => {
-        if (!t.name) return false;
-        const norm = t.name.toLowerCase().trim();
-        return !invalidNames.includes(norm);
-      });
-    }
+          if (!confirmar) return;
 
-    function parseHistoricoCsv(csvText) {
-      const rows = parseCsvRows(csvText);
-      const invalidWords = ['região', 'regiao', 'geral', 'competição', 'competicao'];
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('gcr6_')) keysToRemove.push(k);
+          }
+          keysToRemove.forEach(k => localStorage.removeItem(k));
 
-      return rows.map(r => ({
-        region: (r[0] || '').toUpperCase(),
-        comp: r[1] || '',
-        season: r[2] || '',
-        champion: r[3] || '',
-        logo: r[4] || '',
-        tag: (r[5] || '').toUpperCase()
-      })).filter(h => {
-        if (!h.comp && !h.champion) return false;
-        const normComp = (h.comp || '').toLowerCase().trim();
-        const normReg = (h.region || '').toLowerCase().trim();
-        return !invalidWords.includes(normComp) && !invalidWords.includes(normReg);
-      });
-    }
-
-    function parseTransferenciasCsv(csvText) {
-      const rows = parseCsvRows(csvText);
-      if (rows.length === 0) return [];
-
-      const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
-      const headerKeywords = ['jogador', 'player', 'nome', 'historico', 'alterac', 'coment', 'descri', 'moviment', 'detalhe', 'titulo', 'janela', 'momento', 'temporada'];
-      const hasHeader = headerRow.some(h => headerKeywords.some(k => h === k || h.includes(k)));
-
-      let idxPlayer = -1, idxHistory = -1, idxFrom = -1, idxTo = -1, idxTitles = -1, idxWindow = -1, idxFromLogo = -1, idxToLogo = -1;
-
-      if (hasHeader) {
-        headerRow.forEach((h, i) => {
-          if (idxPlayer === -1 && (h.includes('jog') || h.includes('player') || h === 'nome')) idxPlayer = i;
-          else if (idxHistory === -1 && (h.includes('histor') || h.includes('alterac') || h.includes('coment') || h.includes('descri') || h.includes('moviment') || h.includes('mudanc'))) idxHistory = i;
-          else if (idxFromLogo === -1 && h.includes('logo') && (h.includes('sai') || h.includes('ant') || h.includes('de') || h.includes('orig'))) idxFromLogo = i;
-          else if (idxToLogo === -1 && h.includes('logo') && (h.includes('ent') || h.includes('nov') || h.includes('atu') || h.includes('para') || h.includes('dest'))) idxToLogo = i;
-          else if (idxFrom === -1 && (h.includes('sai') || h.includes('ant') || h.includes('orig') || h === 'de' || h.includes('ex-'))) idxFrom = i;
-          else if (idxTo === -1 && (h.includes('ent') || h.includes('nov') || h.includes('atu') || h.includes('dest') || h === 'para')) idxTo = i;
-          else if (idxTitles === -1 && (h.includes('detalhe') || h.includes('titul'))) idxTitles = i;
-          else if (idxWindow === -1 && (h.includes('janel') || h.includes('moment') || h.includes('temp') || h.includes('edicao'))) idxWindow = i;
-        });
-      }
-
-      const dataRows = hasHeader ? rows.slice(1) : rows;
-      const invalidNames = ['jogador', 'player', 'nome', 'transferencias', 'transferências', 'historico de alteracao', 'histórico de alteração'];
-
-      return dataRows.map((r, rowIdx) => {
-        const urlCols = r.filter(v => /^https?:\/\//i.test(v));
-        const nonUrlCols = r.filter(v => !/^https?:\/\//i.test(v));
-
-        const detectedHistoryColIdx = r.findIndex(v => /mudou-se\s+de\s+time|\bde\s+.+?\s+para\s+.+/i.test(v || ''));
-        const effectiveHistoryIdx = idxHistory !== -1 ? idxHistory : detectedHistoryColIdx;
-
-        const detectedDetailColIdx = r.findIndex((v, i) => i !== effectiveHistoryIdx && /conquistou\s+\d+\s*t[íi]tulo|n[ãa]o\s+conquistou\s+t[íi]tulo/i.test(v || ''));
-        const effectiveTitlesIdx = idxTitles !== -1 ? idxTitles : detectedDetailColIdx;
-
-        let historyComment = effectiveHistoryIdx !== -1 ? (r[effectiveHistoryIdx] || '').trim() : '';
-        let titlesDetail = effectiveTitlesIdx !== -1 ? (r[effectiveTitlesIdx] || '').trim() : '';
-        let player = idxPlayer !== -1 ? (r[idxPlayer] || '').trim() : '';
-        let titlesWon = effectiveTitlesIdx !== -1 ? parseTitlesDetailValue(titlesDetail) : 0;
-        let win = idxWindow !== -1 ? (r[idxWindow] || '').trim() : '';
-        let fromTeam = idxFrom !== -1 ? (r[idxFrom] || '').trim() : '';
-        let toTeam = idxTo !== -1 ? (r[idxTo] || '').trim() : '';
-        let fromLogo = idxFromLogo !== -1 ? (r[idxFromLogo] || '').trim() : (urlCols[0] || '');
-        let toLogo = idxToLogo !== -1 ? (r[idxToLogo] || '').trim() : (urlCols[1] || '');
-
-        if (historyComment) {
-          const parsedComment = parseTransferHistoryComment(historyComment, player);
-          if (!player) player = parsedComment.player;
-          if (!fromTeam) fromTeam = parsedComment.fromTeam;
-          if (!toTeam) toTeam = parsedComment.toTeam;
-
-          const remainingCols = r.filter((v, idx) => {
-            if (!v || /^https?:\/\//i.test(v)) return false;
-            if (idx === idxPlayer || idx === effectiveHistoryIdx || idx === effectiveTitlesIdx) return false;
-            if (v.trim() === player) return false;
-            return true;
-          });
-
-          if (effectiveTitlesIdx === -1) {
-            const detailOrNumCol = remainingCols.find(v => /^\d+$/.test(v.trim()) || /conquistou|t[íi]tulo/i.test(v.trim()));
-            if (detailOrNumCol !== undefined) {
-              titlesDetail = detailOrNumCol.trim();
-              titlesWon = parseTitlesDetailValue(titlesDetail);
+          entries.forEach(([key, value]) => {
+            if (value !== null && value !== undefined) {
+              localStorage.setItem(key, String(value));
             }
-          }
-          if (idxWindow === -1) {
-            const winCol = remainingCols.find(v =>
-              !/^\d+$/.test(v.trim()) &&
-              !/conquistou|t[íi]tulo/i.test(v.trim()) &&
-              v.trim() !== fromTeam &&
-              v.trim() !== toTeam
-            );
-            if (winCol !== undefined) win = winCol.trim();
-          }
-        } else if (!hasHeader) {
-          player = nonUrlCols[0] || '';
-          fromTeam = nonUrlCols[1] || '';
-          toTeam = nonUrlCols[2] || '';
-          titlesDetail = nonUrlCols[3] || '';
-          titlesWon = parseTitlesDetailValue(titlesDetail);
-          win = nonUrlCols[4] || '';
-        }
-
-        return {
-          id: `tr_${rowIdx}_${player}_${historyComment || (fromTeam + '_' + toTeam)}_${win}`.replace(/\s+/g, '_'),
-          rowIndex: rowIdx,
-          player: player.trim(),
-          historyComment,
-          titlesDetail,
-          fromTeam: fromTeam.trim(),
-          fromLogo,
-          toTeam: toTeam.trim(),
-          toLogo,
-          titlesWon,
-          window: win.trim()
-        };
-      }).filter(item => {
-        if (!item.player && !item.historyComment) return false;
-        return !invalidNames.includes(item.player.toLowerCase());
-      });
-    }
-
-    function isKnownTeamName(val) {
-      if (!val) return false;
-      const norm = val.toLowerCase().trim();
-      return dataListaTimes.some(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm))
-          || dataTimes.some(t => t.name.toLowerCase().trim() === norm || (t.tag && t.tag.toLowerCase().trim() === norm));
-    }
-
-    function isKnownPlayerName(val) {
-      if (!val) return false;
-      const norm = val.toLowerCase().trim();
-      return dataJogadores.some(j => j.name.toLowerCase().trim() === norm);
-    }
-
-    function parseHistoryEntityCsv(csvText) {
-      const rows = parseCsvRows(csvText);
-      if (rows.length === 0) return [];
-
-      const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
-      const headerKeywords = ['regiao', 'competicao', 'torneio', 'temporada', 'edicao', 'fase', 'etapa', 'stage', 'campeao', 'jogador', 'mvp', 'player', 'time', 'equipe', 'logo', 'tag'];
-      const hasHeader = headerRow.some(h => headerKeywords.some(k => h === k || h.includes(k)));
-
-      let idxReg = -1, idxComp = -1, idxSeason = -1, idxPhase = -1, idxEntity = -1, idxTeam = -1, idxLogo = -1, idxTag = -1;
-
-      if (hasHeader) {
-        headerRow.forEach((h, i) => {
-          if (idxReg === -1 && h.includes('regi')) idxReg = i;
-          else if (idxComp === -1 && (h.includes('comp') || h.includes('torneio') || h.includes('liga'))) idxComp = i;
-          else if (idxSeason === -1 && (h.includes('temp') || h.includes('edicao') || h.includes('ano'))) idxSeason = i;
-          else if (idxPhase === -1 && (h.includes('fase') || h.includes('etapa') || h.includes('stage') || h.includes('rodada'))) idxPhase = i;
-          else if (idxEntity === -1 && (h.includes('campe') || h.includes('mvp') || h.includes('jogador') || h.includes('player') || h.includes('vencedor'))) idxEntity = i;
-          else if (idxTeam === -1 && (h.includes('time') || h.includes('equipe') || h.includes('clube'))) idxTeam = i;
-          else if (idxLogo === -1 && (h.includes('logo') || h.includes('escudo') || h.includes('img'))) idxLogo = i;
-          else if (idxTag === -1 && h.includes('tag')) idxTag = i;
-        });
-      }
-
-      const dataRows = hasHeader ? rows.slice(1) : rows;
-      const invalidWords = ['região', 'regiao', 'geral', 'competição', 'competicao', 'campeão', 'campeao', 'mvp', 'jogador'];
-
-      return dataRows.map(r => {
-        if (hasHeader) {
-          const entityVal = idxEntity !== -1 ? (r[idxEntity] || '') : (r[3] || r[0] || '');
-          const teamVal = idxTeam !== -1 ? (r[idxTeam] || '') : '';
-          const phaseVal = idxPhase !== -1 ? (r[idxPhase] || '') : '';
-          const logoVal = idxLogo !== -1 ? (r[idxLogo] || '') : (r.find(v => /^https?:\/\//i.test(v)) || '');
-          const tagVal = idxTag !== -1 ? (r[idxTag] || '').toUpperCase() : '';
-          let regionVal = idxReg !== -1 ? (r[idxReg] || '').toUpperCase() : (r[0] || '').toUpperCase();
-          const compVal = idxComp !== -1 ? (r[idxComp] || '') : (r[1] || '');
-          const seasonVal = idxSeason !== -1 ? (r[idxSeason] || '') : (r[2] || '');
-
-          if (!regionVal && teamVal) regionVal = getTeamRegionByName(teamVal);
-          if (!regionVal && entityVal) {
-            const pInfo = getPlayerInfoByName(entityVal);
-            regionVal = pInfo ? (getTeamRegionByName(pInfo.team) || pInfo.naturalidade) : getTeamRegionByName(entityVal);
-          }
-
-          return {
-            region: regionVal,
-            comp: compVal,
-            season: seasonVal,
-            phase: phaseVal,
-            entity: entityVal,
-            team: teamVal,
-            logo: logoVal,
-            tag: tagVal
-          };
-        }
-
-        const logoIdx = r.findIndex(v => /^https?:\/\//i.test(v));
-        const logoVal = logoIdx !== -1 ? r[logoIdx] : '';
-        const regionVal = (r[0] || '').toUpperCase();
-        const compVal = r[1] || '';
-        const seasonVal = r[2] || '';
-
-        const extraCols = r.slice(3).filter((v, idx) => (idx + 3) !== logoIdx && v !== '');
-        let phaseVal = '';
-        let entityVal = '';
-        let teamVal = '';
-        let tagVal = '';
-
-        if (extraCols.length >= 3) {
-          const teamColIdx = extraCols.findIndex(v => isKnownTeamName(v));
-          const playerColIdx = extraCols.findIndex(v => isKnownPlayerName(v));
-
-          if (teamColIdx !== -1 && playerColIdx !== -1 && teamColIdx !== playerColIdx) {
-            teamVal = extraCols[teamColIdx];
-            entityVal = extraCols[playerColIdx];
-            const remIdx = extraCols.findIndex((_, i) => i !== teamColIdx && i !== playerColIdx);
-            if (remIdx !== -1) phaseVal = extraCols[remIdx];
-          } else if (teamColIdx === 2) {
-            phaseVal = extraCols[0];
-            entityVal = extraCols[1];
-            teamVal = extraCols[2];
-          } else {
-            entityVal = extraCols[0];
-            teamVal = extraCols[1];
-            phaseVal = extraCols[2];
-          }
-        } else if (extraCols.length === 2) {
-          entityVal = extraCols[0];
-          if (extraCols[1].length <= 5 && extraCols[1] === extraCols[1].toUpperCase() && !isKnownTeamName(extraCols[1])) {
-            tagVal = extraCols[1];
-          } else {
-            teamVal = extraCols[1];
-          }
-        } else if (extraCols.length === 1) {
-          entityVal = extraCols[0];
-        }
-
-        return {
-          region: regionVal,
-          comp: compVal,
-          season: seasonVal,
-          phase: phaseVal,
-          entity: entityVal,
-          team: teamVal,
-          logo: logoVal,
-          tag: tagVal
-        };
-      }).filter(item => {
-        if (!item.entity && !item.comp) return false;
-        const normEntity = (item.entity || '').toLowerCase().trim();
-        const normComp = (item.comp || '').toLowerCase().trim();
-        return !invalidWords.includes(normEntity) && !invalidWords.includes(normComp);
-      });
-    }
-
-    function parseListaCampsCsv(csvText) {
-      const rows = parseCsvRows(csvText);
-      if (rows.length === 0) return [];
-
-      const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
-      const headerKeywords = ['liga', 'camp', 'comp', 'nome', 'regi', 'tipo', 'time', 'equipe', 'logo'];
-      const hasHeader = headerRow.some(h => headerKeywords.some(k => h === k || h.includes(k)));
-
-      let idxRegion = -1, idxLeague = -1, idxType = -1, idxTeam = -1;
-
-      if (hasHeader) {
-        headerRow.forEach((h, i) => {
-          if (idxRegion === -1 && h.includes('regi')) idxRegion = i;
-          else if (idxLeague === -1 && (h.includes('liga') || h.includes('camp') || h.includes('comp') || h.includes('nome'))) idxLeague = i;
-          else if (idxType === -1 && (h.includes('tipo') || h.includes('categ') || h.includes('formato'))) idxType = i;
-          else if (idxTeam === -1 && (h.includes('time') || h.includes('equipe'))) idxTeam = i;
-        });
-      }
-
-      const dataRows = hasHeader ? rows.slice(1) : rows;
-      const knownRegionCodes = new Set(['BR', 'NA', 'EMEA', 'EU', 'LATAM', 'APAC', 'JP', 'KR', 'CN', 'SEA', 'OCE', 'MENA', 'MUNDIAL', 'GLOBAL']);
-
-      return dataRows.map(r => {
-        if (hasHeader) {
-          return {
-            region: idxRegion !== -1 ? (r[idxRegion] || '').toUpperCase().trim() : '',
-            league: idxLeague !== -1 ? (r[idxLeague] || '').trim() : '',
-            type: idxType !== -1 ? (r[idxType] || '').trim() : '',
-            team: idxTeam !== -1 ? (r[idxTeam] || '').trim() : ''
-          };
-        }
-
-        const nonUrlCols = r.filter(v => v && !/^https?:\/\//i.test(v));
-        const regIdx = nonUrlCols.findIndex(v => knownRegionCodes.has(v.toUpperCase().trim()));
-        if (regIdx !== -1) {
-          const region = nonUrlCols[regIdx].toUpperCase().trim();
-          const otherCols = nonUrlCols.filter((_, i) => i !== regIdx);
-          return {
-            region,
-            league: otherCols[0] || '',
-            type: otherCols[1] || '',
-            team: ''
-          };
-        }
-
-        return {
-          region: (nonUrlCols[0] || '').toUpperCase().trim(),
-          league: nonUrlCols[1] || '',
-          type: nonUrlCols[2] || '',
-          team: ''
-        };
-      }).filter(item => item.league && (item.region || item.team));
-    }
-
-    function parseJogadoresCsv(csvText) {
-      const rows = parseCsvRows(csvText);
-      if (rows.length === 0) return [];
-
-      const invalidNames = ['jogador', 'nome', 'player', 'time atual'];
-      const headerRow = rows[0].map(c => (c || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim());
-      const hasHeader = headerRow.some(h => invalidNames.includes(h) || h.includes('sexo') || h.includes('gener'));
-
-      let idxName = 0, idxTeam = 1, idxLogo = 2, idxTitles = 3, idxMvps = 4, idxNat = 5, idxSexo = 6;
-
-      if (hasHeader) {
-        const foundName = headerRow.findIndex(h => h === 'jogador' || h === 'nome' || h === 'player');
-        const foundTeam = headerRow.findIndex(h => h.includes('time') || h.includes('equipe') || h === 'team');
-        const foundLogo = headerRow.findIndex(h => h.includes('logo') || h.includes('escudo'));
-        const foundTitles = headerRow.findIndex(h => h.includes('titul'));
-        const foundMvps = headerRow.findIndex(h => h.includes('mvp'));
-        const foundNat = headerRow.findIndex(h => h.includes('natural') || h.includes('pais') || h.includes('regi'));
-        const foundSexo = headerRow.findIndex(h => h.includes('sexo') || h.includes('gener') || h === 'sex' || h === 'gender');
-
-        if (foundName !== -1) idxName = foundName;
-        if (foundTeam !== -1) idxTeam = foundTeam;
-        if (foundLogo !== -1) idxLogo = foundLogo;
-        if (foundTitles !== -1) idxTitles = foundTitles;
-        if (foundMvps !== -1) idxMvps = foundMvps;
-        if (foundNat !== -1) idxNat = foundNat;
-        if (foundSexo !== -1) idxSexo = foundSexo;
-      }
-
-      const dataRows = hasHeader ? rows.slice(1) : rows;
-
-      return dataRows.map(r => {
-        let rawSexo = (r[idxSexo] || '').trim().toUpperCase();
-        if (!rawSexo) {
-          const fallbackSexo = r.slice(3).find(v => {
-            const up = (v || '').trim().toUpperCase();
-            return up === 'M' || up === 'F' || up === 'MASCULINO' || up === 'FEMININO';
           });
-          if (fallbackSexo) rawSexo = fallbackSexo.trim().toUpperCase();
+
+          alert('✅ Backup restaurado com sucesso! A página será recarregada para aplicar os dados.');
+          location.reload();
+        } catch (err) {
+          console.error('Erro ao importar backup:', err);
+          alert('❌ Erro ao ler o arquivo JSON. Verifique se o arquivo não está corrompido.');
+        } finally {
+          event.target.value = '';
         }
-        const normalizedSexo = (rawSexo === 'M' || rawSexo === 'MASCULINO')
-          ? 'M'
-          : ((rawSexo === 'F' || rawSexo === 'FEMININO') ? 'F' : '');
+      };
 
-        return {
-          name: r[idxName] || '',
-          team: r[idxTeam] || '',
-          logo: r[idxLogo] || '',
-          titles: parseInt(r[idxTitles] || '0', 10) || 0,
-          mvps: parseInt(r[idxMvps] || '0', 10) || 0,
-          naturalidade: (r[idxNat] || '').toUpperCase(),
-          sexo: normalizedSexo
-        };
-      }).filter(j => {
-        if (!j.name) return false;
-        const norm = j.name.toLowerCase().trim();
-        return !invalidNames.includes(norm);
-      });
-    }
-
-    async function init(isManual = false) {
-      const label = document.getElementById('last-updated');
-      label.textContent = isManual ? "A atualizar..." : "Sincronizado em tempo real";
-
-      dataTimes = await fetchCsvData(CSV_URL_TIMES, parseTimesCsv);
-      dataHistorico = await fetchCsvData(CSV_URL_HISTORICO, parseHistoricoCsv);
-      dataJogadores = await fetchCsvData(CSV_URL_JOGADORES, parseJogadoresCsv);
-      dataListaTimes = await fetchCsvData(CSV_URL_LISTA_TIMES, parseListaTimesCsv);
-      dataHistCampeoes = await fetchCsvData(CSV_URL_HIST_CAMPEOES, parseHistoryEntityCsv);
-      dataHistMvps = await fetchCsvData(CSV_URL_HIST_MVPS, parseHistoryEntityCsv);
-      dataListaCamps = await fetchCsvData(CSV_URL_LISTA_CAMPS, parseListaCampsCsv);
-      dataTransferenciasRaw = await fetchCsvData(CSV_URL_TRANSFERENCIAS, parseTransferenciasCsv);
-
-      label.textContent = `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')}`;
-
-      const lastComp = localStorage.getItem('gcr6_last_comp') || '';
-      const lastPhase = localStorage.getItem('gcr6_last_phase') || '';
-      if (lastComp && document.getElementById('text-match-comp')) {
-        document.getElementById('text-match-comp').value = lastComp;
-      }
-      if (lastPhase && document.getElementById('text-match-phase')) {
-        document.getElementById('text-match-phase').value = lastPhase;
-      }
-
-      updateAvailableRegions();
-      setupComposicoesFilters();
-      updateTransferDatalistsAndFilters();
-      syncStarConfigUI();
-      renderAllSections();
-      setupCompetitionOptions();
-      setupConfrontoOptions();
-      updateMvpPlayerDropdown();
-      updateRegisteredMapsDatalist();
+      reader.readAsText(file, 'UTF-8');
     }
 
     init();
