@@ -31,11 +31,18 @@
         <h1 class="text-2xl font-extrabold text-white flex items-center gap-2">
           <span>🏆</span> Game Cup Rainbow Six Siege
         </h1>
-        <div class="flex items-center gap-3 mt-1">
-          <p class="text-xs text-gray-400" id="last-updated">A carregar dados...</p>
+        <div class="flex flex-wrap items-center gap-2 mt-1">
+          <p class="text-xs text-gray-400 mr-1" id="last-updated">A carregar dados...</p>
           <button onclick="init(true)" id="btn-refresh" class="px-2.5 py-1 text-xs font-bold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded transition flex items-center gap-1">
             <span>🔄</span> Atualizar Dados
           </button>
+          <button onclick="exportarBackupLocal()" class="px-2.5 py-1 text-xs font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded transition flex items-center gap-1" title="Exportar dados salvos no navegador (pontuações, estrelas, confrontos, transferências)">
+            <span>💾</span> Baixar Backup
+          </button>
+          <button onclick="document.getElementById('input-importar-backup').click()" class="px-2.5 py-1 text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded transition flex items-center gap-1" title="Restaurar dados de um arquivo de backup JSON">
+            <span>📂</span> Importar Backup
+          </button>
+          <input type="file" id="input-importar-backup" accept=".json,application/json" class="hidden" onchange="importarBackupLocal(event)">
         </div>
       </div>
       
@@ -206,7 +213,7 @@
               <span>⚡</span> Comando Rápido de Pontuação
             </label>
             <span class="text-[11px] text-gray-400">
-              Exemplos: <code class="text-gray-200 bg-[#161b22] px-1.5 py-0.5 rounded border border-dark">Adicionar 15 pontos a todos da Loud</code> ou <code class="text-gray-200 bg-[#161b22] px-1.5 py-0.5 rounded border border-dark">Adicionar 10 Pontos para GW Couto da LLL; Remover 5 Pontos da Cruzz da FUR</code>
+              Exemplos: <code class="text-gray-200 bg-[#161b22] px-1.5 py-0.5 rounded border border-dark">Adicionar 15 pontos a todos da Loud</code> ou <code class="text-gray-200 bg-[#161b22] px-1.5 py-0.5 rounded border border-dark">Adicionar 10 Pontos a GW Couto; Ghost. Cruzz</code>
             </span>
           </div>
 
@@ -233,7 +240,7 @@
               type="text"
               id="input-comando-pontos"
               onkeydown="if(event.key === 'Enter') processarComandoPontos()"
-              placeholder='Digite um ou mais comandos separados por ";" Ex: Adicionar 10 Pontos para GW Couto da LLL; Remover 5 Pontos da Cruzz da FUR'
+              placeholder='Ex: Adicionar 10 Pontos a GW Couto; Ghost. Cruzz ou Adicionar 10 Pontos para GW Couto da LLL; Remover 5 Pontos da Cruzz da FUR'
               class="flex-1 bg-[#161b22] border border-dark rounded-lg px-3.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
             >
             <button
@@ -1500,10 +1507,24 @@
       syncPlayersIntoPointsStore();
       syncStarConfigUI();
 
-      const segments = rawCmd.split(';').map(s => s.trim()).filter(Boolean);
+      const regex = /^(adicionar|somar|dar|remover|tirar|subtrair|definir|setar)\s+(\d+)\s*(?:pontos?|pts?)?\s+(?:a|ao|à|aos|às|para|pro|pra|de|do|da|dos|das)\s+(.+)$/i;
+
+      // Divide por ";" apenas quando o trecho seguinte inicia um novo verbo de comando;
+      // caso contrário, mantém o ";" como separador de lista de jogadores dentro do mesmo comando
+      // (ex.: "Adicionar 10 Pontos a GW Couto; Ghost. Cruzz").
+      const rawParts = rawCmd.split(';').map(s => s.trim()).filter(Boolean);
+      const segments = [];
+      for (let i = 0; i < rawParts.length; i++) {
+        const part = rawParts[i];
+        if (i === 0 || regex.test(part)) {
+          segments.push(part);
+        } else {
+          segments[segments.length - 1] += '; ' + part;
+        }
+      }
+
       if (segments.length === 0) return;
 
-      const regex = /^(adicionar|somar|dar|remover|tirar|subtrair|definir|setar)\s+(\d+)\s*(?:pontos?|pts?)?\s+(?:a|ao|à|aos|às|para|pro|pra|de|do|da|dos|das)\s+(.+)$/i;
       const parsedOperations = [];
 
       for (let i = 0; i < segments.length; i++) {
@@ -1511,7 +1532,7 @@
         const match = seg.match(regex);
 
         if (!match) {
-          showCommandPointsFeedback(`Formato não reconhecido no comando ${i + 1} ("${seg}"). Use ex: "Adicionar 10 Pontos para GW Couto da LLL".`, true);
+          showCommandPointsFeedback(`Formato não reconhecido no comando ${i + 1} ("${seg}"). Use ex: "Adicionar 10 Pontos a GW Couto; Ghost. Cruzz".`, true);
           return;
         }
 
@@ -1545,39 +1566,53 @@
           continue;
         }
 
-        // Caso 2: Individual com ou sem equipe ("GW Couto da LLL" ou "Ghost")
-        const matchPlayerTeam = targetRaw.match(/^(.+)\s+(?:da|do|de|das|dos)\s+(.+)$/i);
-        let playerTargetName = targetRaw;
-        let teamFilterQuery = '';
+        // Caso 2: Um ou mais jogadores separados por ";", "." ou ","
+        // Suporta tanto "GW Couto; Ghost. Cruzz" quanto "GW Couto da LLL, Ghost da FUR"
+        const targetEntries = targetRaw
+          .split(/[;.,]+/)
+          .map(t => t.trim())
+          .filter(Boolean);
 
-        if (matchPlayerTeam) {
-          playerTargetName = matchPlayerTeam[1].trim();
-          teamFilterQuery = matchPlayerTeam[2].trim();
+        if (targetEntries.length === 0) {
+          showCommandPointsFeedback(`Nenhum jogador informado no comando ${i + 1} ("${seg}").`, true);
+          return;
         }
 
-        const playerNorm = normalizePlayerPointKey(playerTargetName);
-        let matchedPlayer = null;
+        for (let j = 0; j < targetEntries.length; j++) {
+          const entry = targetEntries[j];
+          const matchPlayerTeam = entry.match(/^(.+)\s+(?:da|do|de|das|dos)\s+(.+)$/i);
+          let playerTargetName = entry;
+          let teamFilterQuery = '';
 
-        if (teamFilterQuery) {
-          const teamPlayers = resolveTeamMatchesByNameOrTag(teamFilterQuery);
-          matchedPlayer = teamPlayers.find(p => normalizePlayerPointKey(p.name) === playerNorm);
-          if (!matchedPlayer) {
-            showCommandPointsFeedback(`O jogador "${playerTargetName}" não foi encontrado na equipe "${teamFilterQuery}" (comando ${i + 1}).`, true);
-            return;
+          if (matchPlayerTeam) {
+            playerTargetName = matchPlayerTeam[1].trim();
+            teamFilterQuery = matchPlayerTeam[2].trim();
           }
-        } else {
-          matchedPlayer = dataJogadores.find(p => normalizePlayerPointKey(p.name) === playerNorm);
-        }
 
-        const finalPlayerName = matchedPlayer ? matchedPlayer.name : playerTargetName;
-        parsedOperations.push({
-          type: 'player',
-          amount,
-          delta,
-          isSet,
-          finalPlayerName,
-          matchedPlayer
-        });
+          const playerNorm = normalizePlayerPointKey(playerTargetName);
+          let matchedPlayer = null;
+
+          if (teamFilterQuery) {
+            const teamPlayers = resolveTeamMatchesByNameOrTag(teamFilterQuery);
+            matchedPlayer = teamPlayers.find(p => normalizePlayerPointKey(p.name) === playerNorm);
+            if (!matchedPlayer) {
+              showCommandPointsFeedback(`O jogador "${playerTargetName}" não foi encontrado na equipe "${teamFilterQuery}" (comando ${i + 1}).`, true);
+              return;
+            }
+          } else {
+            matchedPlayer = dataJogadores.find(p => normalizePlayerPointKey(p.name) === playerNorm);
+          }
+
+          const finalPlayerName = matchedPlayer ? matchedPlayer.name : playerTargetName;
+          parsedOperations.push({
+            type: 'player',
+            amount,
+            delta,
+            isSet,
+            finalPlayerName,
+            matchedPlayer
+          });
+        }
       }
 
       // Execução em lote após validação completa
@@ -1598,10 +1633,64 @@
         }
       });
 
-      const prefix = summaries.length > 1 ? `✅ ${summaries.length} comandos aplicados: ` : '✅ ';
+      const prefix = summaries.length > 1 ? `✅ ${summaries.length} atualizações aplicadas: ` : '✅ ';
       showCommandPointsFeedback(`${prefix}${summaries.join(' | ')}.`, false);
       input.value = '';
       refreshAllStarViews();
+    }
+
+    function exportarBackupLocal() {
+      const backupData = {
+        app: 'Game Cup Rainbow Six Siege',
+        exportedAt: new Date().toISOString(),
+        storage: {}
+      };
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('gcr6_')) {
+          backupData.storage[key] = localStorage.getItem(key);
+        }
+      }
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `backup_gcr6_${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importarBackupLocal(event) {
+      const file = event && event.target && event.target.files ? event.target.files[0] : null;
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const entries = parsed && parsed.storage && typeof parsed.storage === 'object' ? parsed.storage : parsed;
+          let count = 0;
+          Object.keys(entries).forEach(key => {
+            if (key.startsWith('gcr6_') && typeof entries[key] === 'string') {
+              localStorage.setItem(key, entries[key]);
+              count++;
+            }
+          });
+          if (count === 0) {
+            alert('Nenhuma chave válida do Game Cup R6 foi encontrada no arquivo selecionado.');
+            return;
+          }
+          alert(`Backup restaurado com sucesso (${count} registros). A página será recarregada.`);
+          location.reload();
+        } catch (err) {
+          alert('Erro ao ler o arquivo de backup JSON: ' + err.message);
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file, 'utf-8');
     }
 
     function ajustarPontosJogadorRapido(playerName, delta) {
