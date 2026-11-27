@@ -812,6 +812,170 @@
     const CSV_URL_LISTA_CAMPS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=186098930&single=true&output=csv';
     const CSV_URL_TRANSFERENCIAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Jhme0h-7ZEeSgPyb3jD6ZowZQOQmDr1LxVP8CP5T64v9XFIZFtAASAy5o7UhmK9NBYedr6PQyn9L/pub?gid=1257576838&single=true&output=csv';
 
+
+    /* =========================================================================
+       SINCRONIZAÇÃO NA NUVEM — GOOGLE SHEETS / APPS SCRIPT
+       O Apps Script grava em abas auxiliares, sem sobrescrever as abas públicas
+       usadas como fonte de dados do site.
+    ========================================================================= */
+    const GCR6_CLOUD_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxRL2lmiGxc0RWE4FLhGH2be0VZdu3VrMQeOPnHqqFja_DjJ9y-BypPVO3jlK9VN2I/exec';
+    const GCR6_CLOUD_ACCESS_KEY = 'GCR6_R6_SYNC_2026_9f2c7a61b8d44e31';
+    let cloudSyncReady = false;
+    let cloudSaveTimers = { ranking: null, matches: null };
+
+    function isCloudSyncConfigured() {
+      return /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(GCR6_CLOUD_WEB_APP_URL);
+    }
+
+    function cloudJsonp(action) {
+      return new Promise((resolve, reject) => {
+        if (!isCloudSyncConfigured()) return reject(new Error('URL do Apps Script ainda não configurada.'));
+        const callbackName = '__gcr6CloudCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+        const script = document.createElement('script');
+        let settled = false;
+        const cleanup = () => {
+          if (script.parentNode) script.parentNode.removeChild(script);
+          try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
+        };
+        const timer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new Error('Tempo limite ao consultar o Google Sheets.'));
+        }, 18000);
+        window[callbackName] = (data) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          cleanup();
+          if (data && data.ok) resolve(data);
+          else reject(new Error((data && data.error) || 'Falha ao consultar a nuvem.'));
+        };
+        script.onerror = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          cleanup();
+          reject(new Error('Não foi possível acessar o Apps Script.'));
+        };
+        const params = new URLSearchParams({ action, token: GCR6_CLOUD_ACCESS_KEY, callback: callbackName, t: String(Date.now()) });
+        script.src = GCR6_CLOUD_WEB_APP_URL + '?' + params.toString();
+        document.head.appendChild(script);
+      });
+    }
+
+    function postCloudPayload(payload) {
+      return new Promise((resolve, reject) => {
+        if (!isCloudSyncConfigured()) return reject(new Error('URL do Apps Script ainda não configurada.'));
+        const requestId = 'gcr6_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+        const iframeName = 'gcr6_cloud_frame_' + requestId;
+        const iframe = document.createElement('iframe');
+        iframe.name = iframeName;
+        iframe.style.display = 'none';
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = GCR6_CLOUD_WEB_APP_URL;
+        form.target = iframeName;
+        form.style.display = 'none';
+        const fields = {
+          action: 'save',
+          token: GCR6_CLOUD_ACCESS_KEY,
+          requestId,
+          payload: JSON.stringify(payload)
+        };
+        Object.entries(fields).forEach(([name, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        });
+        let settled = false;
+        const cleanup = () => {
+          window.removeEventListener('message', onMessage);
+          clearTimeout(timer);
+          form.remove();
+          iframe.remove();
+        };
+        const onMessage = (event) => {
+          const data = event.data;
+          if (!data || data.source !== 'GCR6_CLOUD' || data.requestId !== requestId || settled) return;
+          settled = true;
+          cleanup();
+          if (data.ok) resolve(data);
+          else reject(new Error(data.error || 'O Google Sheets recusou a gravação.'));
+        };
+        const timer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new Error('A gravação foi enviada, mas não houve confirmação do Google Sheets.'));
+        }, 20000);
+        window.addEventListener('message', onMessage);
+        document.body.appendChild(iframe);
+        document.body.appendChild(form);
+        form.submit();
+      });
+    }
+
+    function setCloudSyncStatus(message, isError = false) {
+      const label = document.getElementById('last-updated');
+      if (!label) return;
+      label.textContent = message;
+      label.classList.toggle('text-red-400', !!isError);
+    }
+
+    function scheduleCloudSave(dataset) {
+      if (!cloudSyncReady || !isCloudSyncConfigured()) return;
+      clearTimeout(cloudSaveTimers[dataset]);
+      cloudSaveTimers[dataset] = setTimeout(async () => {
+        try {
+          const payload = dataset === 'ranking'
+            ? { dataset: 'ranking', playerPoints: playerPointsStore, starConfig }
+            : { dataset: 'matches', matches: registeredConfrontos };
+          await postCloudPayload(payload);
+          setCloudSyncStatus('Dados salvos no Google Sheets • ' + new Date().toLocaleTimeString('pt-BR'));
+        } catch (error) {
+          console.error('Erro ao sincronizar com Google Sheets:', error);
+          setCloudSyncStatus('Falha na sincronização com a nuvem. Os dados continuam salvos neste PC.', true);
+        }
+      }, 650);
+    }
+
+    async function loadCloudState() {
+      if (!isCloudSyncConfigured()) {
+        console.info('Sincronização Google Sheets aguardando configuração da URL do Apps Script.');
+        return;
+      }
+      try {
+        const remote = await cloudJsonp('load');
+        if (remote.ranking) {
+          playerPointsStore = remote.ranking.playerPoints || {};
+          starConfig = { ...DEFAULT_STAR_CONFIG, ...(remote.ranking.starConfig || {}) };
+          localStorage.setItem(STORAGE_KEY_PLAYER_POINTS, JSON.stringify(playerPointsStore));
+          localStorage.setItem(STORAGE_KEY_STAR_CONFIG, JSON.stringify(starConfig));
+        }
+        if (Array.isArray(remote.matches)) {
+          registeredConfrontos = remote.matches;
+          localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
+        }
+        cloudSyncReady = true;
+
+        // Migração inicial: se a nuvem ainda estiver vazia, envia os dados locais existentes.
+        if (!remote.ranking && (Object.keys(playerPointsStore || {}).length || JSON.stringify(starConfig) !== JSON.stringify(DEFAULT_STAR_CONFIG))) {
+          scheduleCloudSave('ranking');
+        }
+        if (!Array.isArray(remote.matches) && registeredConfrontos.length) {
+          scheduleCloudSave('matches');
+        }
+        setCloudSyncStatus('Google Sheets conectado • ' + new Date().toLocaleTimeString('pt-BR'));
+      } catch (error) {
+        cloudSyncReady = false;
+        console.error('Não foi possível carregar os dados da nuvem:', error);
+        setCloudSyncStatus('Nuvem indisponível; usando os dados locais deste PC.', true);
+      }
+    }
+
     const DEFAULT_R6_MAPS = [
       'Banco', 'Fronteira', 'Chalé', 'Consulado', 'Café Dostoyevsky', 
       'Oregon', 'Arranha-Céu', 'Parque Temático', 'Outback', 'Mansão', 
@@ -1184,6 +1348,7 @@
 
     function saveStarConfig() {
       localStorage.setItem(STORAGE_KEY_STAR_CONFIG, JSON.stringify(starConfig));
+      scheduleCloudSave('ranking');
     }
 
     function getSortedActivePlayerPoints() {
@@ -1365,6 +1530,7 @@
 
     function savePlayerPointsStore() {
       localStorage.setItem(STORAGE_KEY_PLAYER_POINTS, JSON.stringify(playerPointsStore));
+      scheduleCloudSave('ranking');
     }
 
     function syncPlayersIntoPointsStore() {
@@ -4922,6 +5088,7 @@
       }
 
       localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
+      scheduleCloudSave('matches');
 
       cancelMatchEdit();
       renderRegisteredMatchesTable();
@@ -5116,6 +5283,7 @@
       if (confirm('Deseja realmente remover este confronto do histórico?')) {
         registeredConfrontos = registeredConfrontos.filter(m => m.id !== id);
         localStorage.setItem('gcr6_match_history', JSON.stringify(registeredConfrontos));
+        scheduleCloudSave('matches');
         renderRegisteredMatchesTable();
         renderConfronto();
         updateRegisteredMapsDatalist();
@@ -5126,6 +5294,7 @@
       if (confirm('Tem certeza que deseja apagar todo o histórico de confrontos registrados?')) {
         registeredConfrontos = [];
         localStorage.removeItem('gcr6_match_history');
+        scheduleCloudSave('matches');
         renderRegisteredMatchesTable();
         renderConfronto();
         updateRegisteredMapsDatalist();
@@ -5556,8 +5725,9 @@
 
     async function init(isManual = false) {
       const label = document.getElementById('last-updated');
-      label.textContent = isManual ? "A atualizar..." : "Sincronizado em tempo real";
+      label.textContent = isManual ? "A atualizar..." : "Conectando ao Google Sheets...";
 
+      await loadCloudState();
       dataTimes = await fetchCsvData(CSV_URL_TIMES, parseTimesCsv);
       dataHistorico = await fetchCsvData(CSV_URL_HISTORICO, parseHistoricoCsv);
       dataJogadores = await fetchCsvData(CSV_URL_JOGADORES, parseJogadoresCsv);
